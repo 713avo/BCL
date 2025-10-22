@@ -1,0 +1,221 @@
+#!/usr/bin/env bcl
+# ============================================================================
+# BCL - Demostración del Comando CLOCK
+# ============================================================================
+# Este script demuestra las capacidades del comando CLOCK en BCL
+#
+# Funcionalidades:
+# - Obtención de tiempo actual (segundos, milisegundos, microsegundos)
+# - Formateo de timestamps a strings legibles
+# - Parsing de strings a timestamps
+# - Aritmética de tiempo (sumar/restar días, horas, etc.)
+# - Medición de tiempo de ejecución
+# ============================================================================
+
+PUTS "============================================================================"
+PUTS " BCL CLOCK - Demostración de Funcionalidades de Tiempo"
+PUTS "============================================================================"
+PUTS ""
+
+# ============================================================================
+# 1. Tiempo Actual
+# ============================================================================
+PUTS "1. Obtener Tiempo Actual"
+PUTS "────────────────────────────────────────────────────────────────────────────"
+
+SET ahora_seg [CLOCK SECONDS]
+SET ahora_ms [CLOCK MILLISECONDS]
+SET ahora_us [CLOCK MICROSECONDS]
+
+PUTS "Segundos desde epoch:  $ahora_seg"
+PUTS "Milisegundos:          $ahora_ms"
+PUTS "Microsegundos:         $ahora_us"
+PUTS ""
+
+# ============================================================================
+# 2. Formateo de Fechas y Horas
+# ============================================================================
+PUTS "2. Formatear Timestamp a String"
+PUTS "────────────────────────────────────────────────────────────────────────────"
+
+SET ahora [CLOCK SECONDS]
+
+# Formato por defecto (estilo Tcl)
+SET fmt_default [CLOCK FORMAT $ahora]
+PUTS "Formato por defecto:   $fmt_default"
+
+# Formato ISO 8601
+SET fmt_iso [CLOCK FORMAT $ahora FORMAT "%Y-%m-%d %H:%M:%S"]
+PUTS "Formato ISO 8601:      $fmt_iso"
+
+# Formato español
+SET fmt_es [CLOCK FORMAT $ahora FORMAT "%d/%m/%Y a las %H:%M:%S"]
+PUTS "Formato español:       $fmt_es"
+
+# Solo fecha
+SET fmt_fecha [CLOCK FORMAT $ahora FORMAT "%d de %B de %Y"]
+PUTS "Solo fecha:            $fmt_fecha"
+
+# Solo hora
+SET fmt_hora [CLOCK FORMAT $ahora FORMAT "%H:%M:%S"]
+PUTS "Solo hora:             $fmt_hora"
+
+# Hora UTC
+SET fmt_utc [CLOCK FORMAT $ahora FORMAT "%Y-%m-%d %H:%M:%S UTC" GMT]
+PUTS "Hora UTC:              $fmt_utc"
+PUTS ""
+
+# ============================================================================
+# 3. Parsing de Strings a Timestamps
+# ============================================================================
+PUTS "3. Parsear String a Timestamp"
+PUTS "────────────────────────────────────────────────────────────────────────────"
+
+# Parsear "now"
+SET ts_now [CLOCK SCAN "now"]
+PUTS "SCAN 'now':            $ts_now"
+
+# Parsear fecha ISO
+SET ts_iso [CLOCK SCAN "2025-12-25 00:00:00"]
+PUTS "SCAN '2025-12-25':     $ts_iso"
+SET navidad [CLOCK FORMAT $ts_iso FORMAT "%A, %d de %B"]
+PUTS "  -> Formateado:       $navidad"
+
+# Parsear con formato específico
+SET ts_custom [CLOCK SCAN "25/12/2025" FORMAT "%d/%m/%Y"]
+PUTS "SCAN '25/12/2025':     $ts_custom"
+PUTS ""
+
+# ============================================================================
+# 4. Aritmética de Tiempo
+# ============================================================================
+PUTS "4. Calcular Fechas Futuras y Pasadas"
+PUTS "────────────────────────────────────────────────────────────────────────────"
+
+SET hoy [CLOCK SECONDS]
+PUTS "Hoy:                   [CLOCK FORMAT $hoy FORMAT "%Y-%m-%d"]"
+
+# Mañana
+SET manana [CLOCK ADD $hoy 1 day]
+PUTS "Mañana:                [CLOCK FORMAT $manana FORMAT "%Y-%m-%d"]"
+
+# Dentro de una semana
+SET semana [CLOCK ADD $hoy 7 days]
+PUTS "Dentro de 1 semana:    [CLOCK FORMAT $semana FORMAT "%Y-%m-%d"]"
+
+# Dentro de un mes
+SET mes [CLOCK ADD $hoy 1 month]
+PUTS "Dentro de 1 mes:       [CLOCK FORMAT $mes FORMAT "%Y-%m-%d"]"
+
+# Hace una semana
+SET hace_semana [CLOCK ADD $hoy -7 days]
+PUTS "Hace 1 semana:         [CLOCK FORMAT $hace_semana FORMAT "%Y-%m-%d"]"
+
+# Combinación: 1 mes, 2 semanas, 3 días en el futuro
+SET futuro [CLOCK ADD $hoy 1 month 2 weeks 3 days]
+PUTS "1 mes + 2 sem + 3 días: [CLOCK FORMAT $futuro FORMAT "%Y-%m-%d"]"
+PUTS ""
+
+# ============================================================================
+# 5. Medición de Tiempo de Ejecución
+# ============================================================================
+PUTS "5. Medir Tiempo de Ejecución"
+PUTS "────────────────────────────────────────────────────────────────────────────"
+
+SET inicio [CLOCK MICROSECONDS]
+
+# Simulación de trabajo - contar hasta 10000
+SET contador 0
+WHILE [EXPR $contador < 10000] DO
+    INCR contador
+END
+
+SET fin [CLOCK MICROSECONDS]
+SET duracion [EXPR $fin - $inicio]
+
+PUTS "Contador: 0 a 10000"
+PUTS "Tiempo:   $duracion microsegundos"
+SET duracion_ms [EXPR $duracion / 1000.0]
+PUTS "        = $duracion_ms milisegundos"
+PUTS ""
+
+# ============================================================================
+# 6. Calcular Edad o Tiempo Transcurrido
+# ============================================================================
+PUTS "6. Calcular Tiempo Transcurrido"
+PUTS "────────────────────────────────────────────────────────────────────────────"
+
+# Fecha de lanzamiento de BCL (ejemplo: 2025-10-20)
+SET lanzamiento [CLOCK SCAN "2025-10-20 00:00:00"]
+SET actual [CLOCK SECONDS]
+SET transcurrido [EXPR $actual - $lanzamiento]
+
+# Convertir a días
+SET dias [EXPR $transcurrido / 86400]
+PUTS "BCL fue lanzado hace $dias días"
+PUTS "Fecha de lanzamiento: [CLOCK FORMAT $lanzamiento FORMAT "%d de %B de %Y"]"
+PUTS ""
+
+# ============================================================================
+# 7. Crear un Cronómetro Simple
+# ============================================================================
+PUTS "7. Cronómetro Simple (3 iteraciones)"
+PUTS "────────────────────────────────────────────────────────────────────────────"
+
+SET vuelta 1
+WHILE [EXPR $vuelta <= 3] DO
+    SET inicio_vuelta [CLOCK MILLISECONDS]
+
+    # Simular trabajo
+    SET trabajo 0
+    WHILE [EXPR $trabajo < 1000] DO
+        INCR trabajo
+    END
+
+    SET fin_vuelta [CLOCK MILLISECONDS]
+    SET tiempo_vuelta [EXPR $fin_vuelta - $inicio_vuelta]
+
+    PUTS "Vuelta $vuelta: $tiempo_vuelta ms"
+    INCR vuelta
+END
+PUTS ""
+
+# ============================================================================
+# 8. Verificar si Estamos en Fin de Semana
+# ============================================================================
+PUTS "8. Información del Día Actual"
+PUTS "────────────────────────────────────────────────────────────────────────────"
+
+SET dia_semana [CLOCK FORMAT [CLOCK SECONDS] FORMAT "%A"]
+SET dia_num [CLOCK FORMAT [CLOCK SECONDS] FORMAT "%u"]
+SET mes [CLOCK FORMAT [CLOCK SECONDS] FORMAT "%B"]
+SET anio [CLOCK FORMAT [CLOCK SECONDS] FORMAT "%Y"]
+
+PUTS "Día de la semana:      $dia_semana"
+PUTS "Mes:                   $mes"
+PUTS "Año:                   $anio"
+
+IF [EXPR $dia_num == 6] THEN
+    PUTS "¡Es sábado! 🎉"
+ELSEIF [EXPR $dia_num == 7] THEN
+    PUTS "¡Es domingo! 🎉"
+ELSE
+    PUTS "Es día laborable 💼"
+END
+PUTS ""
+
+# ============================================================================
+PUTS "============================================================================"
+PUTS " Fin de la Demostración"
+PUTS "============================================================================"
+PUTS ""
+PUTS "Comandos CLOCK disponibles:"
+PUTS "  • CLOCK SECONDS       - Tiempo actual en segundos"
+PUTS "  • CLOCK MILLISECONDS  - Tiempo actual en milisegundos"
+PUTS "  • CLOCK MICROSECONDS  - Tiempo actual en microsegundos"
+PUTS "  • CLOCK FORMAT        - Formatear timestamp a string"
+PUTS "  • CLOCK SCAN          - Parsear string a timestamp"
+PUTS "  • CLOCK ADD           - Sumar/restar intervalos de tiempo"
+PUTS ""
+PUTS "Para más información, consulta: def/BCL_CLOCK_Referencia_v1.0.txt"
+PUTS "============================================================================"

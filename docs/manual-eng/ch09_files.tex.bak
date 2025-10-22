@@ -1,0 +1,91 @@
+\label{ch:files}
+
+BCL provides comprehensive file I/O capabilities.
+
+\section{Opening and Closing Files}
+
+\begin{table}[h]
+\centering
+\caption{File Open Modes}
+\label{tab:file_modes}
+\begin{tabular}{ll}
+\toprule
+\textbf{Mode} & \textbf{Description} \\
+\midrule
+\texttt{R} & Read (file must exist) \\
+\texttt{W} & Write (creates or truncates) \\
+\texttt{A} & Append (creates if needed) \\
+\texttt{RW} & Read and write \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{examplebox}[title=Basic File I/O]
+\begin{lstlisting}[language=BCL]
+# Write to file
+SET fh [OPEN "output.txt" W]
+PUTS $fh "Line 1"
+PUTS $fh "Line 2"
+CLOSE $fh
+
+# Read from file
+SET fh [OPEN "output.txt" R]
+SET content [READ $fh]
+CLOSE $fh
+
+PUTS "File content:"
+PUTS $content
+\end{lstlisting}
+\end{examplebox}
+
+\section{Reading Files Line by Line}
+
+\begin{examplebox}[title=Line-by-Line Reading]
+\begin{lstlisting}[language=BCL]
+SET fh [OPEN "data.txt" R]
+
+SET linenum 0
+WHILE [EOF $fh] = 0 DO
+  SET line [GETS $fh]
+  INCR linenum
+
+  IF [STRING LENGTH $line] > 0 THEN
+    PUTS "Line $linenum: $line"
+  END
+END
+
+CLOSE $fh
+\end{lstlisting}
+\end{examplebox}
+
+\section{File Commands}
+
+\begin{examplebox}[title=FILE Commands]
+\begin{lstlisting}[language=BCL]
+SET filename "test.txt"
+
+# Check existence
+IF [FILE EXISTS $filename] THEN
+  PUTS "File exists"
+
+  # Get size
+  SET size [FILE SIZE $filename]
+  PUTS "Size: $size bytes"
+
+  # Rename
+  FILE RENAME $filename "test_backup.txt"
+
+  # Delete
+  # FILE DELETE "test_backup.txt"
+END
+
+# Get current directory
+SET cwd [PWD]
+PUTS "Current directory: $cwd"
+
+# Find files matching pattern
+SET txtfiles [GLOB "*.txt"]
+PUTS "Text files: $txtfiles"
+\end{lstlisting}
+\end{examplebox}
+

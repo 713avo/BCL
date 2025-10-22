@@ -1,0 +1,848 @@
+% ============================================================================
+% CAPÍTULO 8: MANIPULACIÓN DE CADENAS
+% ============================================================================
+
+\chapter{Manipulación de Cadenas}
+\label{ch:strings}
+
+Las cadenas (texto) son la base de BCL. Dado que todo en BCL es una cadena, comprender cómo manipular texto es esencial. Este capítulo cubre todas las herramientas que BCL proporciona para trabajar con cadenas.
+
+\section{¿Qué son las Cadenas?}
+
+Una cadena es simplemente una secuencia de caracteres—letras, números, símbolos, espacios, etc. En BCL, las cadenas pueden ser:
+
+\begin{itemize}
+  \item Palabras simples: \texttt{hello}
+  \item Oraciones: \texttt{Hello, World!}
+  \item Números almacenados como texto: \texttt{42} o \texttt{3.14}
+  \item Vacías: \texttt{""} (una cadena sin caracteres)
+\end{itemize}
+
+\begin{examplebox}[title=Crear Cadenas]
+\begin{lstlisting}[language=BCL]
+# Simple strings
+SET greeting "Hello"
+SET message "Welcome to BCL programming!"
+
+# Strings with numbers
+SET year "2025"
+SET price "19.99"
+
+# Empty string
+SET empty ""
+
+# Strings with special characters
+SET symbols "!@#$%^&*()"
+\end{lstlisting}
+\end{examplebox}
+
+\begin{notebox}
+Recuerda: En BCL, todo es una cadena. Incluso el número \texttt{42} se almacena como la cadena de dos caracteres "4" y "2".
+\end{notebox}
+
+\section{El Comando STRING}
+
+El comando \cmd{STRING} es tu navaja suiza para manipulación de texto. Tiene muchos subcomandos, cada uno realizando una operación específica.
+
+\textbf{Sintaxis General:}
+\begin{lstlisting}[language=BCL]
+STRING subcommand arguments...
+\end{lstlisting}
+
+\subsection{STRING LENGTH - Medir Texto}
+
+\cmd{STRING LENGTH} te dice cuántos caracteres hay en una cadena.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+STRING LENGTH string
+\end{lstlisting}
+
+\begin{examplebox}[title=Longitud de Cadena]
+\begin{lstlisting}[language=BCL]
+SET word "hello"
+SET len [STRING LENGTH $word]
+PUTS "The word '$word' has $len characters"
+
+SET sentence "This is a test"
+PUTS "Length: [STRING LENGTH $sentence]"
+
+# Empty string has length 0
+SET empty ""
+PUTS "Empty string length: [STRING LENGTH $empty]"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+The word 'hello' has 5 characters
+Length: 14
+Empty string length: 0
+\end{verbatim}
+\end{examplebox}
+
+\begin{tipbox}
+La longitud incluye espacios y puntuación. "hi!" tiene longitud 3, no 2.
+\end{tipbox}
+
+\subsection{STRING INDEX - Obtener Caracteres Individuales}
+
+\cmd{STRING INDEX} extrae un carácter de una posición específica.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+STRING INDEX string position
+\end{lstlisting}
+
+\begin{notebox}
+¡Las posiciones empiezan en 0! El primer carácter está en la posición 0, el segundo en la posición 1, etc.
+\end{notebox}
+
+\begin{examplebox}[title=Extraer Caracteres]
+\begin{lstlisting}[language=BCL]
+SET text "HELLO"
+
+# Get first character (position 0)
+SET first [STRING INDEX $text 0]
+PUTS "First: $first"  # H
+
+# Get third character (position 2)
+SET third [STRING INDEX $text 2]
+PUTS "Third: $third"  # L
+
+# Get last character
+SET len [STRING LENGTH $text]
+SET last_pos [EXPR $len - 1]
+SET last [STRING INDEX $text $last_pos]
+PUTS "Last: $last"  # O
+
+# You can use 'end' for the last character
+SET last2 [STRING INDEX $text end]
+PUTS "Also last: $last2"  # O
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+First: H
+Third: L
+Last: O
+Also last: O
+\end{verbatim}
+\end{examplebox}
+
+\subsection{STRING RANGE - Extraer Subcadenas}
+
+\cmd{STRING RANGE} extrae una porción de una cadena de una posición a otra.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+STRING RANGE string start end
+\end{lstlisting}
+
+\begin{examplebox}[title=Extracción de Subcadenas]
+\begin{lstlisting}[language=BCL]
+SET text "Hello, World!"
+
+# Get first 5 characters (positions 0-4)
+SET hello [STRING RANGE $text 0 4]
+PUTS $hello  # Hello
+
+# Get "World" (positions 7-11)
+SET world [STRING RANGE $text 7 11]
+PUTS $world  # World
+
+# Get from position 7 to the end
+SET rest [STRING RANGE $text 7 end]
+PUTS $rest  # World!
+
+# Get last 6 characters
+SET last [STRING RANGE $text end-5 end]
+PUTS $last  # World!
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Hello
+World
+World!
+World!
+\end{verbatim}
+\end{examplebox}
+
+\begin{tipbox}
+Usa \texttt{end} para referirse a la última posición, y \texttt{end-N} para contar hacia atrás desde el final.
+\end{tipbox}
+
+\subsection{STRING TOUPPER y TOLOWER - Cambiar Mayúsculas/Minúsculas}
+
+Estos comandos convierten cadenas a mayúsculas o minúsculas.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+STRING TOUPPER string
+STRING TOLOWER string
+\end{lstlisting}
+
+\begin{examplebox}[title=Conversión de Mayúsculas/Minúsculas]
+\begin{lstlisting}[language=BCL]
+SET text "Hello World"
+
+SET upper [STRING TOUPPER $text]
+PUTS $upper  # HELLO WORLD
+
+SET lower [STRING TOLOWER $text]
+PUTS $lower  # hello world
+
+# Useful for case-insensitive comparisons
+SET input "YES"
+SET normalized [STRING TOLOWER $input]
+
+IF $normalized == "yes" THEN
+  PUTS "User said yes!"
+END
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+HELLO WORLD
+hello world
+User said yes!
+\end{verbatim}
+\end{examplebox}
+
+\subsection{STRING TRIM - Eliminar Espacios en Blanco}
+
+\cmd{STRING TRIM} elimina espacios, tabulaciones y saltos de línea del principio y/o final de una cadena.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+STRING TRIM string              # Remove from both ends
+STRING TRIMLEFT string          # Remove from left only
+STRING TRIMRIGHT string         # Remove from right only
+STRING TRIM string characters   # Remove specific characters
+\end{lstlisting}
+
+\begin{examplebox}[title=Recortar Espacios en Blanco]
+\begin{lstlisting}[language=BCL]
+# User input often has extra spaces
+SET input "   hello   "
+
+SET clean [STRING TRIM $input]
+PUTS "[$clean]"  # [hello]
+
+# Trim only from left
+SET left [STRING TRIMLEFT $input]
+PUTS "[$left]"  # [hello   ]
+
+# Trim only from right
+SET right [STRING TRIMRIGHT $input]
+PUTS "[$right]"  # [   hello]
+
+# Trim specific characters
+SET text "***Hello***"
+SET trimmed [STRING TRIM $text "*"]
+PUTS $trimmed  # Hello
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+[hello]
+[hello   ]
+[   hello]
+Hello
+\end{verbatim}
+\end{examplebox}
+
+\subsection{STRING COMPARE - Comparar Cadenas}
+
+\cmd{STRING COMPARE} compara dos cadenas y devuelve:
+\begin{itemize}
+  \item -1 si la primera cadena viene antes que la segunda (alfabéticamente)
+  \item 0 si las cadenas son idénticas
+  \item 1 si la primera cadena viene después de la segunda
+\end{itemize}
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+STRING COMPARE string1 string2
+STRING COMPARE -nocase string1 string2  # Ignore case
+\end{lstlisting}
+
+\begin{examplebox}[title=Comparación de Cadenas]
+\begin{lstlisting}[language=BCL]
+# Exact comparison
+SET result [STRING COMPARE "apple" "banana"]
+PUTS $result  # -1 (apple comes before banana)
+
+SET result [STRING COMPARE "zoo" "ant"]
+PUTS $result  # 1 (zoo comes after ant)
+
+SET result [STRING COMPARE "hello" "hello"]
+PUTS $result  # 0 (identical)
+
+# Case-insensitive comparison
+SET r1 [STRING COMPARE "Hello" "hello"]
+PUTS "Case-sensitive: $r1"  # 1 (different)
+
+SET r2 [STRING COMPARE -nocase "Hello" "hello"]
+PUTS "Case-insensitive: $r2"  # 0 (same)
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+-1
+1
+0
+Case-sensitive: 1
+Case-insensitive: 0
+\end{verbatim}
+\end{examplebox}
+
+\subsection{STRING FIRST y LAST - Encontrar Subcadenas}
+
+Estos comandos encuentran la posición de una subcadena dentro de una cadena.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+STRING FIRST substring string [startpos]
+STRING LAST substring string [startpos]
+\end{lstlisting}
+
+\begin{examplebox}[title=Encontrar Subcadenas]
+\begin{lstlisting}[language=BCL]
+SET text "hello world, hello BCL"
+
+# Find first occurrence of "hello"
+SET pos [STRING FIRST "hello" $text]
+PUTS "First 'hello' at position: $pos"  # 0
+
+# Find last occurrence of "hello"
+SET pos [STRING LAST "hello" $text]
+PUTS "Last 'hello' at position: $pos"  # 13
+
+# Search starting from position 5
+SET pos [STRING FIRST "hello" $text 5]
+PUTS "Next 'hello' after pos 5: $pos"  # 13
+
+# Not found returns -1
+SET pos [STRING FIRST "goodbye" $text]
+IF $pos == -1 THEN
+  PUTS "'goodbye' not found"
+END
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+First 'hello' at position: 0
+Last 'hello' at position: 13
+Next 'hello' after pos 5: 13
+'goodbye' not found
+\end{verbatim}
+\end{examplebox}
+
+\subsection{STRING REPLACE - Reemplazar Texto}
+
+\cmd{STRING REPLACE} reemplaza parte de una cadena con texto nuevo.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+STRING REPLACE string start end newtext
+\end{lstlisting}
+
+\begin{examplebox}[title=Reemplazar Partes de Cadenas]
+\begin{lstlisting}[language=BCL]
+SET text "Hello World"
+
+# Replace "World" (positions 6-10) with "BCL"
+SET new [STRING REPLACE $text 6 10 "BCL"]
+PUTS $new  # Hello BCL
+
+# Replace first word
+SET new [STRING REPLACE $text 0 4 "Goodbye"]
+PUTS $new  # Goodbye World
+
+# Delete part of string (replace with empty)
+SET text "Hello, World!"
+SET new [STRING REPLACE $text 5 6 ""]
+PUTS $new  # Hello World!
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Hello BCL
+Goodbye World
+Hello World!
+\end{verbatim}
+\end{examplebox}
+
+\subsection{STRING REVERSE - Invertir Texto}
+
+\cmd{STRING REVERSE} invierte el orden de los caracteres en una cadena.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+STRING REVERSE string
+\end{lstlisting}
+
+\begin{examplebox}[title=Invertir Cadenas]
+\begin{lstlisting}[language=BCL]
+SET text "hello"
+SET reversed [STRING REVERSE $text]
+PUTS $reversed  # olleh
+
+SET text "racecar"
+SET rev [STRING REVERSE $text]
+IF $text == $rev THEN
+  PUTS "'$text' is a palindrome!"
+END
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+olleh
+'racecar' is a palindrome!
+\end{verbatim}
+\end{examplebox}
+
+\subsection{STRING MATCH - Coincidencia de Patrones}
+
+\cmd{STRING MATCH} verifica si una cadena coincide con un patrón con comodines.
+
+\textbf{Patrones:}
+\begin{itemize}
+  \item \texttt{*} - coincide con cualquier secuencia de caracteres
+  \item \texttt{?} - coincide con cualquier carácter individual
+  \item \texttt{[abc]} - coincide con cualquier carácter entre corchetes
+\end{itemize}
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+STRING MATCH pattern string
+STRING MATCH -nocase pattern string  # Ignore case
+\end{lstlisting}
+
+\begin{examplebox}[title=Coincidencia de Patrones]
+\begin{lstlisting}[language=BCL]
+# Match with wildcards
+IF [STRING MATCH "*.txt" "document.txt"] THEN
+  PUTS "It's a text file"
+END
+
+# Match any 3-letter word
+IF [STRING MATCH "???" "cat"] THEN
+  PUTS "Three letter word"
+END
+
+# Match email pattern
+SET email "user@example.com"
+IF [STRING MATCH "*@*.*" $email] THEN
+  PUTS "Looks like an email"
+END
+
+# Character sets
+IF [STRING MATCH "\[0-9\]*" "123abc"] THEN
+  PUTS "Starts with a digit"
+END
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+It's a text file
+Three letter word
+Looks like an email
+Starts with a digit
+\end{verbatim}
+\end{examplebox}
+
+\section{FORMAT y SCAN - Texto Formateado}
+
+\subsection{FORMAT: Crear Salida Formateada}
+
+\cmd{FORMAT} crea cadenas formateadas, similar a printf en C.
+
+\textbf{Especificadores de Formato Comunes:}
+\begin{table}[h]
+\centering
+\caption{Especificadores de FORMAT}
+\label{tab:format_specs}
+\begin{tabular}{ll}
+\toprule
+\textbf{Especificador} & \textbf{Descripción} \\
+\midrule
+\texttt{\%s} & Cadena \\
+\texttt{\%d} & Entero (decimal) \\
+\texttt{\%f} & Número de punto flotante \\
+\texttt{\%x} & Hexadecimal \\
+\texttt{\%o} & Octal \\
+\texttt{\%c} & Carácter (desde código ASCII) \\
+\texttt{\%\%} & Signo \% literal \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Ancho y Precisión:}
+\begin{itemize}
+  \item \texttt{\%10s} - Cadena con ancho mínimo 10 (alineada a la derecha)
+  \item \texttt{\%-10s} - Cadena con ancho mínimo 10 (alineada a la izquierda)
+  \item \texttt{\%.2f} - Punto flotante con 2 decimales
+  \item \texttt{\%8.2f} - Ancho 8, 2 decimales
+\end{itemize}
+
+\begin{examplebox}[title=Ejemplos de FORMAT]
+\begin{lstlisting}[language=BCL]
+SET name "Alice"
+SET age 30
+SET height 1.68
+SET score 95.5
+
+# Basic formatting
+PUTS [FORMAT "Name: %s, Age: %d" $name $age]
+
+# Floating-point precision
+PUTS [FORMAT "Height: %.2f meters" $height]
+PUTS [FORMAT "Score: %.1f%%" $score]
+
+# Width and alignment
+PUTS [FORMAT "%10s | %5d | %6.2f" $name $age $height]
+PUTS [FORMAT "%-10s | %-5d | %-6.2f" $name $age $height]
+
+# Creating tables
+PUTS [FORMAT "%-10s %8s %8s" "Name" "Age" "Height"]
+PUTS [FORMAT "%-10s %8d %8.2f" "Alice" 30 1.68]
+PUTS [FORMAT "%-10s %8d %8.2f" "Bob" 25 1.75]
+
+# Numbers in different bases
+SET num 255
+PUTS [FORMAT "Decimal: %d" $num]
+PUTS [FORMAT "Hex: %x" $num]
+PUTS [FORMAT "Octal: %o" $num]
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Name: Alice, Age: 30
+Height: 1.68 meters
+Score: 95.5%
+     Alice |    30 |   1.68
+Alice      | 30    | 1.68
+Name             Age   Height
+Alice             30     1.68
+Bob               25     1.75
+Decimal: 255
+Hex: ff
+Octal: 377
+\end{verbatim}
+\end{examplebox}
+
+\subsection{SCAN: Analizar Entrada Formateada}
+
+\cmd{SCAN} es lo opuesto a \cmd{FORMAT}—extrae valores de una cadena formateada.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+SCAN string format var1 var2 ...
+\end{lstlisting}
+
+\begin{examplebox}[title=Ejemplos de SCAN]
+\begin{lstlisting}[language=BCL]
+# Parse structured data
+SET data "John 25 180.5"
+SCAN $data "%s %d %f" name age height
+
+PUTS "Name: $name"
+PUTS "Age: $age"
+PUTS "Height: $height"
+
+# Parse date
+SET date "2025-10-22"
+SCAN $date "%d-%d-%d" year month day
+PUTS "Year: $year, Month: $month, Day: $day"
+
+# Parse key=value pairs
+SET config "timeout=30"
+SCAN $config "%\[^=\]=%d" key value
+PUTS "Key: $key, Value: $value"
+
+# Count items parsed
+SET count [SCAN "42 3.14 hello" "%d %f %s" a b c]
+PUTS "Parsed $count items"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Name: John
+Age: 25
+Height: 180.5
+Year: 2025, Month: 10, Day: 22
+Key: timeout, Value: 30
+Parsed 3 items
+\end{verbatim}
+\end{examplebox}
+
+\section{Ejemplos Prácticos}
+
+\subsection{Validador de Email}
+
+\begin{examplebox}[title=Validación Simple de Email]
+\begin{lstlisting}[language=BCL]
+PROC is_valid_email WITH email DO
+  # Check for @ symbol
+  SET at_pos [STRING FIRST "@" $email]
+  IF $at_pos == -1 THEN
+    RETURN 0
+  END
+
+  # Check for dot after @
+  SET dot_pos [STRING FIRST "." $email $at_pos]
+  IF $dot_pos == -1 THEN
+    RETURN 0
+  END
+
+  # Basic pattern match
+  IF [STRING MATCH "*@*.*" $email] THEN
+    RETURN 1
+  END
+
+  RETURN 0
+END
+
+# Test the validator
+SET emails [LIST "user@example.com" "invalid.email" "test@domain.co.uk"]
+FOREACH email IN $emails DO
+  IF [is_valid_email $email] THEN
+    PUTS "$email - VALID"
+  ELSE
+    PUTS "$email - INVALID"
+  END
+END
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+user@example.com - VALID
+invalid.email - INVALID
+test@domain.co.uk - VALID
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Formateador de Texto}
+
+\begin{examplebox}[title=Centrar Texto]
+\begin{lstlisting}[language=BCL]
+PROC center_text WITH text width DO
+  SET len [STRING LENGTH $text]
+
+  # Text is already too long
+  IF $len >= $width THEN
+    RETURN $text
+  END
+
+  # Calculate padding
+  SET total_pad [EXPR $width - $len]
+  SET left_pad [EXPR $total_pad / 2]
+
+  # Create padding string
+  SET padding ""
+  FOR 1 TO $left_pad DO
+    APPEND padding " "
+  END
+
+  # Return centered text
+  RETURN $padding$text
+END
+
+# Create a title
+SET title "BCL Manual"
+SET line [center_text $title 40]
+PUTS $line
+
+SET border [STRING REPEAT "=" 40]
+PUTS $border
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+              BCL Manual
+========================================
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Contador de Palabras}
+
+\begin{examplebox}[title=Contar Palabras]
+\begin{lstlisting}[language=BCL]
+PROC count_words WITH text DO
+  # Trim whitespace
+  SET clean [STRING TRIM $text]
+
+  # Empty string has 0 words
+  IF [STRING LENGTH $clean] = 0 THEN
+    RETURN 0
+  END
+
+  # Count spaces and add 1
+  SET count 1
+  SET pos 0
+  WHILE 1 DO
+    SET pos [STRING FIRST " " $clean $pos]
+    IF $pos == -1 THEN
+      BREAK
+    END
+    INCR count
+    INCR pos
+  END
+
+  RETURN $count
+END
+
+SET sentence "The quick brown fox jumps"
+SET wc [count_words $sentence]
+PUTS "Words: $wc"
+
+SET text "  Multiple   spaces   between  "
+PUTS "Words in '$text': [count_words $text]"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Words: 5
+Words in '  Multiple   spaces   between  ': 4
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Verificador de Fortaleza de Contraseña}
+
+\begin{examplebox}[title=Verificar Fortaleza de Contraseña]
+\begin{lstlisting}[language=BCL]
+PROC check_password WITH pass DO
+  SET len [STRING LENGTH $pass]
+
+  # Too short
+  IF $len < 8 THEN
+    PUTS "Weak: Too short (minimum 8 characters)"
+    RETURN
+  END
+
+  # Check for digits
+  SET has_digit 0
+  FOR 0 TO $len-1 DO
+    SET char [STRING INDEX $pass $__FOR]
+    IF [STRING MATCH "\[0-9\]" $char] THEN
+      SET has_digit 1
+      BREAK
+    END
+  END
+
+  # Check for uppercase
+  SET upper [STRING TOUPPER $pass]
+  SET has_upper [EXPR $pass != $upper]
+
+  # Check for lowercase
+  SET lower [STRING TOLOWER $pass]
+  SET has_lower [EXPR $pass != $lower]
+
+  # Calculate strength
+  SET strength 0
+  IF $len >= 8 THEN
+    INCR strength
+  END
+  IF $len >= 12 THEN
+    INCR strength
+  END
+  IF $has_digit THEN
+    INCR strength
+  END
+  IF $has_upper THEN
+    INCR strength
+  END
+  IF $has_lower THEN
+    INCR strength
+  END
+
+  # Report
+  IF $strength <= 2 THEN
+    PUTS "Weak password"
+  ELSEIF $strength <= 3 THEN
+    PUTS "Medium password"
+  ELSE
+    PUTS "Strong password"
+  END
+END
+
+check_password "hello"
+check_password "hello123"
+check_password "Hello123"
+check_password "MyP@ssw0rd2025"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Weak: Too short (minimum 8 characters)
+Medium password
+Strong password
+Strong password
+\end{verbatim}
+\end{examplebox}
+
+\section{Patrones Comunes de Cadenas}
+
+\subsection{Construir Cadenas Eficientemente}
+
+\begin{examplebox}[title=Técnicas de Construcción de Cadenas]
+\begin{lstlisting}[language=BCL]
+# Method 1: Using APPEND (efficient for loops)
+SET result ""
+FOR 1 TO 5 DO
+  APPEND result "Line " $__FOR "\n"
+END
+PUTS $result
+
+# Method 2: Using STRING CAT
+SET str1 "Hello"
+SET str2 "World"
+SET combined [STRING CAT $str1 " " $str2]
+PUTS $combined
+
+# Method 3: Building with FORMAT
+SET name "Alice"
+SET age 30
+SET message [FORMAT "%s is %d years old" $name $age]
+PUTS $message
+\end{lstlisting}
+\end{examplebox}
+
+\subsection{Limpieza de Cadenas}
+
+\begin{examplebox}[title=Limpiar Entrada de Usuario]
+\begin{lstlisting}[language=BCL]
+PROC clean_input WITH text DO
+  # Remove leading/trailing whitespace
+  SET clean [STRING TRIM $text]
+
+  # Convert to lowercase for consistency
+  SET clean [STRING TOLOWER $clean]
+
+  # Remove extra internal spaces
+  WHILE [STRING FIRST "  " $clean] != -1 DO
+    SET pos [STRING FIRST "  " $clean]
+    SET clean [STRING REPLACE $clean $pos $pos+1 " "]
+  END
+
+  RETURN $clean
+END
+
+SET input "  HELLO    WORLD  "
+SET clean [clean_input $input]
+PUTS "Original: '$input'"
+PUTS "Cleaned:  '$clean'"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Original: '  HELLO    WORLD  '
+Cleaned:  'hello world'
+\end{verbatim}
+\end{examplebox}
+
+\begin{tipbox}
+Para procesamiento complejo de cadenas, considera usar expresiones regulares (Capítulo~\ref{ch:regexp}) para coincidencia y reemplazo de patrones más potentes.
+\end{tipbox}

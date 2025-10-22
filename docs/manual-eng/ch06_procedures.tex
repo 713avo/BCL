@@ -1,0 +1,318 @@
+% ============================================================================
+% CHAPTER 6: PROCEDURES (FUNCTIONS)
+% ============================================================================
+
+\chapter{Procedures (Functions)}
+\label{ch:procedures}
+
+Procedures (also called functions in other languages) let you package code into reusable blocks.
+
+\section{Defining Procedures}
+
+\textbf{Syntax with parameters:}
+\begin{lstlisting}[language=BCL]
+PROC name WITH param1 param2 ... DO
+  commands
+  RETURN value
+END
+\end{lstlisting}
+
+\textbf{Syntax without parameters:}
+\begin{lstlisting}[language=BCL]
+PROC name DO
+  commands
+  RETURN value
+END
+\end{lstlisting}
+
+\begin{notebox}
+When a procedure has no parameters, the \cmd{WITH} keyword can be omitted.
+\end{notebox}
+
+\begin{examplebox}[title=Procedure with Parameter]
+\begin{lstlisting}[language=BCL]
+PROC greet WITH name DO
+  PUTS "Hello, $name!"
+END
+
+greet "Alice"
+greet "Bob"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Hello, Alice!
+Hello, Bob!
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Procedure without Parameters]
+\begin{lstlisting}[language=BCL]
+PROC show_version DO
+  PUTS "BCL Interpreter v1.5.0"
+END
+
+show_version
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+BCL Interpreter v1.5.0
+\end{verbatim}
+\end{examplebox}
+
+\begin{notebox}
+Procedures are invoked by their name alone—no \cmd{CALL} keyword is needed.
+\end{notebox}
+
+\section{Parameters}
+
+\subsection{Fixed Parameters}
+
+Parameters are declared in the \cmd{WITH} clause and are accessible as variables inside the procedure.
+
+\begin{examplebox}[title=Multiple Parameters]
+\begin{lstlisting}[language=BCL]
+PROC add WITH a b DO
+  SET result [EXPR $a + $b]
+  RETURN $result
+END
+
+SET sum [add 5 3]
+PUTS "5 + 3 = $sum"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+5 + 3 = 8
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Optional Parameters}
+
+Optional parameters are prefixed with \texttt{@}. They may or may not be provided when calling the procedure.
+
+\begin{examplebox}[title=Optional Parameters]
+\begin{lstlisting}[language=BCL]
+PROC greet WITH name @title DO
+  IF [INFO EXISTS title] THEN
+    PUTS "Hello, $title $name"
+  ELSE
+    PUTS "Hello, $name"
+  END
+END
+
+greet "Smith"
+greet "Smith" "Dr."
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Hello, Smith
+Hello, Dr. Smith
+\end{verbatim}
+\end{examplebox}
+
+\begin{tipbox}
+Use \cmd{INFO EXISTS} to check if an optional parameter was provided.
+\end{tipbox}
+
+\section{Return Values}
+
+The \cmd{RETURN} command exits a procedure and optionally returns a value.
+
+\begin{examplebox}[title=Returning Values]
+\begin{lstlisting}[language=BCL]
+PROC square WITH n DO
+  SET result [EXPR $n * $n]
+  RETURN $result
+END
+
+PROC is_even WITH n DO
+  SET remainder [EXPR $n % 2]
+  IF $remainder == 0 THEN
+    RETURN 1  # true
+  ELSE
+    RETURN 0  # false
+  END
+END
+
+SET s [square 7]
+PUTS "7 squared = $s"
+
+IF [is_even 10] THEN
+  PUTS "10 is even"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+7 squared = 49
+10 is even
+\end{verbatim}
+\end{examplebox}
+
+\begin{notebox}
+If \cmd{RETURN} is called without a value, or if a procedure reaches its \cmd{END} without returning, it returns an empty string.
+\end{notebox}
+
+\section{Variable Scope in Procedures}
+
+\subsection{Local Variables}
+
+Variables created with \cmd{SET} inside a procedure are local—they exist only within that procedure.
+
+\begin{examplebox}[title=Local Variables]
+\begin{lstlisting}[language=BCL]
+PROC calculate WITH x DO
+  SET double [EXPR $x * 2]  # local variable
+  SET triple [EXPR $x * 3]  # local variable
+  PUTS "Inside: double=$double, triple=$triple"
+END
+
+calculate 5
+# PUTS $double  # ERROR: double doesn't exist here
+\end{lstlisting}
+\end{examplebox}
+
+\subsection{Accessing Global Variables}
+
+Use \cmd{GLOBAL} to access or modify global variables from within a procedure.
+
+\begin{examplebox}[title=Global Variables in Procedures]
+\begin{lstlisting}[language=BCL]
+SET counter 0
+
+PROC increment WITH amount DO
+  GLOBAL counter
+  INCR counter $amount
+  PUTS "Counter is now: $counter"
+END
+
+increment 5
+increment 3
+PUTS "Final counter: $counter"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Counter is now: 5
+Counter is now: 8
+Final counter: 8
+\end{verbatim}
+\end{examplebox}
+
+\section{Recursive Procedures}
+
+Procedures can call themselves—this is called recursion.
+
+\begin{examplebox}[title=Factorial (Recursive)]
+\begin{lstlisting}[language=BCL]
+PROC factorial WITH n DO
+  IF $n <= 1 THEN
+    RETURN 1
+  ELSE
+    SET prev [factorial [EXPR $n - 1]]
+    RETURN [EXPR $n * $prev]
+  END
+END
+
+PUTS "5! = [factorial 5]"
+PUTS "10! = [factorial 10]"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+5! = 120
+10! = 3628800
+\end{verbatim}
+\end{examplebox}
+
+\begin{warningbox}
+Recursive procedures must have a base case (termination condition) to avoid infinite recursion!
+\end{warningbox}
+
+\begin{examplebox}[title=Fibonacci (Recursive)]
+\begin{lstlisting}[language=BCL]
+PROC fib WITH n DO
+  IF $n <= 1 THEN
+    RETURN $n
+  ELSE
+    SET n1 [EXPR $n - 1]
+    SET n2 [EXPR $n - 2]
+    SET f1 [fib $n1]
+    SET f2 [fib $n2]
+    RETURN [EXPR $f1 + $f2]
+  END
+END
+
+# Print first 10 Fibonacci numbers
+FOR 0 TO 9 DO
+  SET f [fib $__FOR]
+  PUTS "fib($__FOR) = $f"
+END
+\end{lstlisting}
+\end{examplebox}
+
+\section{Practical Examples}
+
+\subsection{Temperature Converter}
+
+\begin{examplebox}[title=Celsius to Fahrenheit]
+\begin{lstlisting}[language=BCL]
+PROC celsius_to_fahrenheit WITH celsius DO
+  SET fahrenheit [EXPR ($celsius * 9.0 / 5.0) + 32]
+  RETURN $fahrenheit
+END
+
+PROC fahrenheit_to_celsius WITH fahrenheit DO
+  SET celsius [EXPR ($fahrenheit - 32) * 5.0 / 9.0]
+  RETURN $celsius
+END
+
+SET c 25
+SET f [celsius_to_fahrenheit $c]
+PUTS [FORMAT "%d\textdegreeC = %.1f\textdegreeF" $c $f]
+
+SET f2 100
+SET c2 [fahrenheit_to_celsius $f2]
+PUTS [FORMAT "%d\textdegreeF = %.1f\textdegreeC" $f2 $c2]
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+25\textdegreeC = 77.0\textdegreeF
+100\textdegreeF = 37.8\textdegreeC
+\end{verbatim}
+\end{examplebox}
+
+\subsection{String Utilities}
+
+\begin{examplebox}[title=String Helper Procedures]
+\begin{lstlisting}[language=BCL]
+PROC reverse_string WITH str DO
+  RETURN [STRING REVERSE $str]
+END
+
+PROC capitalize WITH str DO
+  SET first [STRING INDEX $str 0]
+  SET rest [STRING RANGE $str 1 end]
+  SET first_upper [STRING TOUPPER $first]
+  SET rest_lower [STRING TOLOWER $rest]
+  RETURN [STRING CAT $first_upper $rest_lower]
+END
+
+SET text "hello world"
+PUTS "Original: $text"
+PUTS "Reversed: [reverse_string $text]"
+PUTS "Capitalized: [capitalize $text]"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Original: hello world
+Reversed: dlrow olleh
+Capitalized: Hello world
+\end{verbatim}
+\end{examplebox}
+

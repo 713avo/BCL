@@ -1,0 +1,171 @@
+BCL — Manual de Referencia Específico: CONDICIONES (v1.0)
+----------------------------------------------------
+Autor: Rafa
+Fecha: Octubre 2025
+
+Basado en BCL v1.5 (Edición PC). Inspirado en Tcl 8.x, sintaxis tipo BASIC.
+Case-insensitive — Todo valor es STRING. Las condiciones pueden escribirse
+directamente (sin EXPR) o con EXPR para casos matemáticos complejos.
+
+----------------------------------------------------
+0) VISIÓN GENERAL
+----------------------------------------------------
+Las condiciones en BCL se usan en `IF`, `ELSEIF`, `WHILE`, `FOR` (ambos modos)
+y `SWITCH` (como selector). BCL acepta **operadores simbólicos** y, de forma
+equivalente, **palabras clave**:
+
+Simbolos       Palabras (equivalentes)
+--------------------------------------
+&&             AND
+||             OR
+!              NOT
+
+El lenguaje es *case-insensitive*, por lo que `and`, `And` o `AND` son idénticos.
+
+Se permiten **paréntesis ( )** para agrupar y forzar precedencia.
+
+----------------------------------------------------
+1) FORMAS DE ESCRIBIR UNA CONDICIÓN
+----------------------------------------------------
+1.1) Directa (recomendada en control de flujo):
+  IF $A > 10 AND ($B = 0 OR $C != "x") THEN ... END
+  WHILE $i <= 10 DO ... END
+
+1.2) Usando EXPR (equivalente, útil si combinas funciones matemáticas):
+  IF [EXPR $A > 10 && ($B = 0 || $C != "x")] THEN ... END
+  WHILE [EXPR hypo($x,$y) < 10] DO ... END
+
+Ambas formas son válidas. Los operadores disponibles son los mismos.
+
+----------------------------------------------------
+2) OPERADORES DISPONIBLES
+----------------------------------------------------
+Comparación:
+  =      igualdad
+  !=     desigualdad
+  <      menor que
+  <=     menor o igual
+  >      mayor que
+  >=     mayor o igual
+
+Lógicos (cortocircuito):
+  &&  (AND)   — verdadero si ambos operandos son verdaderos
+  ||  (OR)    — verdadero si al menos uno es verdadero
+  !   (NOT)   — niega el valor lógico
+
+Otros (con EXPR):
+  ^           — potencia (p. ej., 2 ^ 3) — equivalente a pow(2,3)
+  Funciones   — sin, cos, tan, asin, acos, atan, sqrt, pow, abs, int, double,
+                 ln, log, hypo, rand(), etc.
+
+----------------------------------------------------
+3) NÚMEROS VS. CADENAS — REGLAS DE COMPARACIÓN
+----------------------------------------------------
+- BCL intenta **comparación numérica** cuando **ambos operandos** tienen forma numérica
+  (enteros o punto flotante). Ej.: `IF $A < $B THEN ...`
+- Si **alguno no es numérico**, la comparación se hace **lexicográficamente ASCII**
+  (sensible a mayúsculas). Ej.: `IF $S1 < $S2 THEN ...`
+- La **igualdad (= / !=)** compara numéricamente si ambos son numéricos; en caso contrario,
+  compara textualmente (ASCII, case-sensitive).
+- Para forzar texto, encierra en comillas: `"010" = "10"` es **falso** (cadenas distintas).
+- Para forzar número, usa EXPR/FORMAT apropiados: `[EXPR 010] = 10` es **verdadero**.
+
+Ejemplos:
+  SET A 10
+  SET B "20"
+  IF $A < $B THEN PUTS "numérico" END         ;# 10 < 20 (numérico)
+  IF "2" < "10" THEN PUTS "texto" END         ;# FALSO (ASCII: "1" < "2")
+
+----------------------------------------------------
+4) VERDAD Y FALSedad (truthiness)
+----------------------------------------------------
+En contexto booleano:
+- **Falso**: 0, "0", cadena vacía "".
+- **Verdadero**: cualquier otro valor (incluido "false", "no", "abc", etc.).
+
+Ejemplos:
+  IF $flag THEN PUTS "ok" END    ;# muestra si $flag no es 0 ni ""
+  IF !$flag THEN PUTS "off" END
+
+----------------------------------------------------
+5) PRECEDENCIA DE OPERADORES
+----------------------------------------------------
+(De mayor a menor; paréntesis siempre ganan)
+
+1)  Funciones y paréntesis:  ( ), sin(), sqrt(), ...
+2)  NOT / !
+3)  ^     (potencia, asociatividad derecha)
+4)  *  /  %
+5)  +  -
+6)  <  <=  >  >=
+7)  =  !=
+8)  AND / &&      (cortocircuito)
+9)  OR  / ||      (cortocircuito)
+
+Recomendación: usa paréntesis para aclarar la intención y evitar ambigüedades.
+
+----------------------------------------------------
+6) EJEMPLOS EN IF / WHILE / FOR
+----------------------------------------------------
+IF:
+  IF $A = "OK" THEN PUTS "ok" END
+  IF $X > 0 && ($Y = 0 || $Z != "stop") THEN PUTS "sigue" END
+  IF NOT ($n >= 1 AND $n <= 10) THEN PUTS "fuera de rango" END
+
+WHILE:
+  SET i 0
+  WHILE $i < 5 DO
+    PUTS $i
+    INCR i
+  END
+
+FOR (modo contador interno):
+  FOR 1 TO 10 DO
+    IF ($__FOR % 2) = 0 THEN PUTS "par" END
+  END
+
+FOR (modo variable explícita):
+  FOR [SET A 0] TO $A < 100 DO
+    IF ($A % 10) = 0 THEN PUTS "marca $A" END
+    INCR A 5
+  END
+
+FOREACH con condición interna:
+  SET L [LIST rojo verde azul]
+  FOREACH c IN $L DO
+    IF $c != "verde" THEN PUTS $c END
+  END
+
+----------------------------------------------------
+7) PATRONES Y CADENAS (apoyos útiles)
+----------------------------------------------------
+Para coincidencias con comodines/globs usa `STRING MATCH` dentro de IF/WHILE:
+  IF [STRING MATCH "file*.txt" $nombre] THEN PUTS "sí" END
+
+Para comparaciones complejas de texto, apóyate en `STRING` (len, sub, find, compare...).
+
+----------------------------------------------------
+8) ERRORES COMUNES Y CONSEJOS
+----------------------------------------------------
+- Mezclar numérico y texto sin intención: aclara con comillas o EXPR.
+- Olvidar paréntesis en condiciones largas: pon paréntesis para legibilidad.
+- Confundir '=' (igualdad) con asignación: en condiciones, '=' es **comparación**;
+  la asignación se hace con `SET`.
+- Recordatorio: BCL **no** usa `${var}`; sólo `$var` para expandir variables.
+
+----------------------------------------------------
+9) MINI BANCO DE PRUEBAS
+----------------------------------------------------
+SET A 10
+SET B 3
+IF ($A / $B) > 3 && ($A % $B) = 1 THEN PUTS "ok" END
+
+SET S1 "apple"
+SET S2 "banana"
+IF $S1 < $S2 THEN PUTS "lexicográfico" END
+
+IF [EXPR sqrt($A) > 3] THEN PUTS "raíz > 3" END
+
+----------------------------------------------------
+FIN DEL DOCUMENTO
+----------------------------------------------------

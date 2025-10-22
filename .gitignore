@@ -1,0 +1,41 @@
+# Archivos compilados
+*.o
+*.d
+bin/bcl
+*.so
+*.a
+
+# Archivos temporales
+*.swp
+*.swo
+*~
+.*.swp
+
+# Archivos de LaTeX
+docs/**/*.aux
+docs/**/*.log
+docs/**/*.out
+docs/**/*.toc
+docs/**/*.synctex.gz
+docs/**/*.fdb_latexmk
+docs/**/*.fls
+
+# Pero mantener los PDFs finales
+!docs/**/main.pdf
+
+# Directorios temporales
+obj/
+tmp/
+.cache/
+
+# IDEs
+.vscode/
+.idea/
+*.code-workspace
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Tests temporales
+examples/_test.bcl

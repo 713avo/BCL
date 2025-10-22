@@ -1,0 +1,179 @@
+BCL — Manual de Referencia Específico: REGEXP y REGSUB (v1.0)
+----------------------------------------------------
+Autor: Rafa
+Fecha: Octubre 2025
+
+Basado en BCL v1.5 (Edición PC).
+Inspirado en Tcl 'regexp' y 'regsub', adaptado a sintaxis BCL (sin switches con '-').
+Case-insensitive a nivel de comandos; el patrón es sensible a mayúsculas salvo que se indique NOCASE.
+Todo valor es STRING. Soporte Unicode.
+
+----------------------------------------------------
+0) VISIÓN GENERAL
+----------------------------------------------------
+BCL implementa expresiones regulares compatibles con Tcl (flavor ARE). Los comandos:
+  - REGEXP  → Busca coincidencias y, opcionalmente, captura subgrupos.
+  - REGSUB  → Sustituye coincidencias por un reemplazo.
+
+Convenciones de BCL (sin '-switches'):
+  NOCASE        (equivale a -nocase)
+  LINE          (equivale a -line)
+  LINESTOP      (equivale a -linestop)
+  LINEANCHOR    (equivale a -lineanchor)
+  EXPANDED      (equivale a -expanded / modo legible con # y espacios)
+  INDICES       (equivale a -indices; devuelve posiciones inicio-fin)
+  ALL           (equivale a -all)
+  START n       (equivale a -start n)
+  MATCH var     (captura del match completo)
+  SUBMATCHES v1 v2 ...  (captura de grupos 1..N)
+  COUNT var     (REGSUB: número de sustituciones realizadas)
+
+----------------------------------------------------
+1) REGEXP — Búsqueda con (sub)capturas
+----------------------------------------------------
+Propósito
+  Comprobar si un texto coincide con un patrón y, opcionalmente, extraer subgrupos.
+
+Sintaxis (BCL)
+  REGEXP patrón texto
+  REGEXP patrón texto [NOCASE] [LINE] [LINESTOP] [LINEANCHOR] [EXPANDED] [ALL]
+                      [INDICES] [START n]
+                      [MATCH varMatch] [SUBMATCHES v1 v2 ...]
+
+Retorno
+  - Por defecto: "1" si hay coincidencia, "0" si no.
+  - Con ALL: devuelve el número de coincidencias encontradas.
+  - Las capturas opcionales se asignan a variables indicadas con MATCH y SUBMATCHES.
+  - Con INDICES, las variables reciben "ini fin" (pares de índices 0-based); si no, reciben texto.
+
+Notas
+  - SUBMATCHES asigna en orden a v1=grupo1, v2=grupo2, ...; los grupos no presentes reciben cadena vacía.
+  - Si se usa ALL con MATCH/SUBMATCHES: 
+      * MATCH recibe una lista con todos los matches completos (o pares "ini fin" con INDICES).
+      * SUBMATCHES no se usa con ALL (se recomienda hacer REGEXP por iteración si se requieren grupos).
+  - START n comienza la búsqueda a partir del índice n del texto.
+
+Ejemplos básicos
+  ; Coincidencia simple
+  PUTS [REGEXP "foo" "seafood"]          ;# 1
+
+  ; Coincidencia NOCASE
+  PUTS [REGEXP "hola" "HOLA mundo" NOCASE]   ;# 1
+
+  ; Captura de match y subgrupos
+  REGEXP "(\\w+)-(\\d+)" "item-123" MATCH m SUBMATCHES name num
+  PUTS "m=$m name=$name num=$num"       ;# m=item-123 name=item num=123
+
+  ; Índices de captura
+  REGEXP "(ab)c" "xxabcxx" INDICES MATCH im SUBMATCHES g1
+  PUTS "im=$im g1=$g1"                  ;# im=2 4  g1=2 3  (según plataforma)
+
+  ; ALL: contar apariciones
+  PUTS [REGEXP "a" "abracadabra" ALL]   ;# 5
+
+  ; Búsqueda con START
+  PUTS [REGEXP "abra" "abracadabra" START 1] ;# 1
+
+  ; Línea a línea
+  SET txt "uno\n\tdos\n\ttres"
+  PUTS [REGEXP "^\\s*do.*" $txt LINE]        ;# 1  (match en línea con "dos")
+
+----------------------------------------------------
+2) REGSUB — Sustituciones por expresión regular
+----------------------------------------------------
+Propósito
+  Sustituir coincidencias del patrón en 'texto' por 'reemplazo'.
+
+Sintaxis (BCL)
+  REGSUB patrón texto reemplazo
+  REGSUB patrón texto reemplazo [NOCASE] [LINE] [LINESTOP] [LINEANCHOR] [EXPANDED] [ALL] [START n]
+                                [COUNT varCount]
+
+Retorno
+  - Devuelve el texto resultante de aplicar la sustitución.
+  - Si se especifica COUNT varCount, además asigna el número de sustituciones realizadas a esa variable.
+  - Sin ALL: sustituye solo la primera coincidencia. Con ALL: sustituye todas.
+
+Reemplazo — Secuencias admitidas
+  \\\\      → backslash literal
+  \\\\n, \\\\t, \\\\r, \\\\a, etc. → escapes habituales
+  \\\\0     → texto del match completo (equivalente a & en Tcl)
+  \\\\1..\\\\9→ subgrupos capturados 1..9
+  &         → texto del match completo (estilo Tcl; equivalente a \\\\0)
+
+Ejemplos básicos
+  ; Primera sustitución
+  SET out [REGSUB "foo" "seafood foo" "bar"]
+  PUTS $out                               ;# "seabarod foo"
+
+  ; Global (ALL)
+  SET out [REGSUB "foo" "foo food fool" "bar" ALL COUNT n]
+  PUTS "$out  n=$n"                       ;# "bar bard barl  n=3"  (según entrada)
+
+  ; Backrefs
+  SET out [REGSUB "(\\w+)-(\\d+)" "item-123" "\\\\1#\\\\2"]
+  PUTS $out                               ;# "item#123"
+
+  ; Con & (match completo)
+  SET out [REGSUB "(\\d+)" "abc123def" "(&)"]
+  PUTS $out                               ;# "abc(123)def"
+
+  ; Case-insensitive
+  PUTS [REGSUB "hola" "HOLA mundo hola" "hi" NOCASE ALL]
+
+  ; Con START
+  PUTS [REGSUB "a" "abracadabra" "A" START 5 ALL]  ;# "abracAdAbrA"
+
+  ; Multilínea con LINE
+  SET txt "uno\ndos\ntres"
+  PUTS [REGSUB "^d.*" $txt "[&]-X" LINE]           ;# agrega "-X" a "dos"
+
+----------------------------------------------------
+3) PATRONES — Recordatorio rápido (ARE/Tcl)
+----------------------------------------------------
+- Literales:   a b c
+- Clases:      [abc] [a-z] [^0-9]
+- Cuantific.:  *  +  ?  {m} {m,} {m,n}
+- Agrupación:  ( ... )      ; subgrupos capturados
+- Alternancia: a|b|c
+- Anclas:      ^  $         ; inicio/fin (o inicio/fin de línea con LINE)
+- Fronteras:   \\\\b \\\\B
+- Escapes:     \\\\. \\\\d \\\\s \\\\w (según compatibilidad)
+- Modos:       EXPANDED permite comentarios con # y espacios ignorados dentro del patrón.
+
+----------------------------------------------------
+4) DIFERENCIAS NOTABLES VS TCL
+----------------------------------------------------
+- Sin switches con '-': se reemplazan por palabras clave (NOCASE, LINE, ALL, ...).
+- ALL con REGEXP devuelve el **recuento** de coincidencias; para extraer cada match con subgrupos,
+  se recomienda iterar (p. ej., con un bucle y START incremental).
+- SUBMATCHES con ALL no está soportado para múltiples grupos en lote (por simplicidad en BCL).
+
+----------------------------------------------------
+5) PATRONES DE USO Y BUENAS PRÁCTICAS
+----------------------------------------------------
+- Para rendimiento, especificar patrones concretos y evitar '.*' codicioso cuando no es necesario.
+- Usar NOCASE sólo si se necesita, para evitar coste adicional.
+- Cuando el formato de entrada es conocido, preferir REGSUB/REGEXP con FORMAT/SCAN de apoyo si conviene.
+- Emplear EXPANDED en patrones largos para documentarlos con # y espacios.
+
+----------------------------------------------------
+6) EJEMPLO INTEGRADO
+----------------------------------------------------
+# Extraer usuario y dominio de correos y normalizar a minúsculas
+
+SET data "User-1 <UNO@EJEMPLO.COM>\nUser-2 <dos@ejemplo.com>"
+
+; Captura user y dominio (NOCASE); índices del match
+REGEXP "<([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+)>" $data NOCASE ALL    ;# cuenta cuántos correos
+
+REGEXP "<([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+)>" $data NOCASE MATCH m SUBMATCHES user dom
+PUTS "Primera coincidencia: $m  user=$user dom=$dom"
+
+; Sustituir a minúsculas con REGSUB (ejemplo simple, suponiendo tolower externo con STRING)
+SET norm [REGSUB "@([A-Za-z0-9.-]+)" $data "@\\\\1" NOCASE ALL COUNT c]
+PUTS "normalizado:\n$norm\nreemplazos=$c"
+
+----------------------------------------------------
+FIN DEL DOCUMENTO
+----------------------------------------------------

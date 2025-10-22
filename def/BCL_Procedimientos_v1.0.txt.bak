@@ -1,0 +1,268 @@
+BCL — Manual de Referencia Específico: PROCEDIMIENTOS (v1.0)
+----------------------------------------------------
+Autor: Rafa
+Fecha: Octubre 2025
+
+Basado en BCL v1.5 (Edición PC). Inspirado en Tcl 8.x con sintaxis simplificada tipo BASIC.
+BCL es case-insensitive y todo valor es STRING.
+
+----------------------------------------------------
+0) VISIÓN GENERAL
+----------------------------------------------------
+Los procedimientos encapsulan código reutilizable con parámetros posicionales.
+En BCL se definen con PROC, se invocan por su NOMBRE (sin CALL) y devuelven un
+string con RETURN. Las variables creadas con SET dentro de PROC son LOCALES; para
+usar/modificar variables globales, se emplea GLOBAL.
+
+----------------------------------------------------
+1) SINTAXIS DE DEFINICIÓN
+----------------------------------------------------
+  PROC nombre WITH param1 param2 ... paramN DO
+    ...cuerpo...
+    RETURN valor_opcional
+  END
+
+Notas:
+- Los nombres y parámetros no distinguen mayúsculas/minúsculas.
+- Cada parámetro recibe un string; no hay tipado numérico nativo.
+- RETURN puede omitir valor; en tal caso devuelve cadena vacía "".
+- Las variables definidas con SET dentro del procedimiento son locales.
+- Para acceder/alterar una variable global, usar GLOBAL <nombres>.
+
+Ejemplo mínimo:
+PROC SALUDA WITH nombre DO
+  RETURN "Hola "$nombre
+END
+
+; Invocación y captura del retorno:
+SET msg [SALUDA "Rafa"]
+PUTS $msg
+;# salida: Hola Rafa
+
+----------------------------------------------------
+2) INVOCACIÓN (SIN CALL)
+----------------------------------------------------
+Los procedimientos se llaman por su nombre, pasando los argumentos posicionales.
+Para capturar el valor de retorno en una variable, usar SET con evaluación []:
+
+Ejemplo:
+PROC SUMA WITH a b DO
+  RETURN [EXPR $a + $b]
+END
+
+SET r [SUMA 3 4]
+PUTS $r
+;# 7
+
+----------------------------------------------------
+3) RETURN
+----------------------------------------------------
+Propósito:
+Finaliza la ejecución del procedimiento y devuelve un string.
+
+Sintaxis:
+  RETURN
+  RETURN valor
+
+Notas:
+- Si se omite 'valor', se devuelve cadena vacía "".
+- RETURN termina inmediatamente el procedimiento (no ejecuta líneas posteriores).
+- El valor puede provenir de literales, variables, expresiones o cualquier comando [].
+
+Ejemplos:
+RETURN "ok"
+RETURN $resultado
+RETURN [FORMAT "%d" $n]
+
+----------------------------------------------------
+4) ÁMBITO DE VARIABLES (LOCAL vs GLOBAL)
+----------------------------------------------------
+Reglas:
+- Variables creadas con SET dentro de un PROC son LOCALES a ese PROC.
+- Para leer/modificar variables definidas fuera (ámbito global), usar GLOBAL.
+
+Ejemplo:
+SET contador 0
+
+PROC INCREMENTA WITH paso DO
+  GLOBAL contador
+  INCR contador $paso
+  RETURN $contador
+END
+
+SET x [INCREMENTA 5]
+PUTS [FORMAT "contador=%d" $contador]  ;# 5
+
+----------------------------------------------------
+5) RECURSIVIDAD
+----------------------------------------------------
+Los procedimientos pueden llamarse a sí mismos. Cuidar condición de parada.
+
+Ejemplo (factorial):
+PROC FACT WITH n DO
+  IF $n <= 1 THEN
+    RETURN 1
+  END
+  RETURN [EXPR $n * [FACT [EXPR $n - 1]]]
+END
+
+PUTS [FACT 5]
+;# 120
+
+Ejemplo (Fibonacci con memo básico global):
+SET memo ""       ; lista de pares "n valor" (sólo a modo ilustrativo)
+PROC FIB WITH n DO
+  GLOBAL memo
+  ; buscar en la 'cache' simple
+  SET i 0
+  SET len [LLENGTH $memo]
+  WHILE $i < $len DO
+    SCAN [LINDEX $memo $i] "%d %d" k v
+    IF $k = $n THEN
+      RETURN $v
+    END
+    INCR i
+  END
+  ; caso base
+  IF $n < 2 THEN
+    RETURN $n
+  END
+  ; recursivo
+  SET r [EXPR [FIB [EXPR $n - 1]] + [FIB [EXPR $n - 2]]]
+  SET memo [LAPPEND $memo "$n $r"]
+  RETURN $r
+END
+
+PUTS [FIB 10]
+;# 55
+
+----------------------------------------------------
+6) PARÁMETROS OPCIONALES (NOTACIÓN @)
+----------------------------------------------------
+BCL admite parámetros opcionales marcados con '@' delante del nombre.
+Los opcionales se asignan por posición si se pasan; si faltan, NO se crean.
+
+Definición con fijos y opcionales:
+  PROC PRUEBA WITH param1 @param2 @param3 DO
+    ...
+  END
+
+Llamadas válidas:
+  PRUEBA 3 4 5   ;# param1=3, param2=4, param3=5
+  PRUEBA 3 4     ;# param1=3, param2=4, param3 (no existe)
+  PRUEBA 3       ;# param1=3, param2 (no existe), param3 (no existe)
+
+IMPORTANTE:
+- Si un parámetro opcional no se pasa, su variable NO existe en el cuerpo.
+- Para comprobar si existe, usar INFO EXISTS varname (planificado en BCL).
+
+Ejemplo de uso con INFO EXISTS:
+PROC ALFA WITH test @par1 @par2 DO
+  PUTS "test=$test"
+  IF [INFO EXISTS par1] THEN
+    PUTS "par1=$par1"
+  END
+  IF [INFO EXISTS par2] THEN
+    PUTS "par2=$par2"
+  END
+END
+
+ALFA "X"
+ALFA "X" "Y"
+ALFA "X" "Y" "Z"
+
+Notas de comportamiento:
+- Si se pasan más argumentos que los definidos (fijos + opcionales), es error.
+- Actualmente no hay 'varargs' de captura libre; se sugiere usar varios @opcionales.
+- Para simular valores por defecto, combinar INFO EXISTS con SET:
+  IF [INFO EXISTS par2] THEN
+    ; usar $par2
+  ELSE
+    SET par2 "defecto"
+  END
+
+----------------------------------------------------
+7) BUENAS PRÁCTICAS
+----------------------------------------------------
+- Usar nombres de parámetros descriptivos.
+- Validar rangos/formatos dentro del PROC si es público (con IF/ASSERT futuro).
+- Limitar la recursión o implementar caches si procede (rendimiento).
+- Para estado compartido, documentar las GLOBAL usadas.
+- Retornar cadenas claras y, si es numérico, normalizar con FORMAT.
+
+----------------------------------------------------
+8) EJEMPLOS PRÁCTICOS
+----------------------------------------------------
+
+8.1) Procedimiento utilitario con retorno formateado
+PROC AREA_RECT WITH ancho alto DO
+  RETURN [FORMAT "%.2f" [EXPR $ancho * $alto]]
+END
+PUTS [AREA_RECT 3.5 2]
+
+8.2) Uso de GLOBAL y contadores
+SET hits 0
+PROC HIT WITH DO
+  GLOBAL hits
+  INCR hits
+  RETURN $hits
+END
+PUTS [HIT]
+PUTS [HIT]
+
+8.3) Opcionales y valores por defecto con INFO EXISTS
+PROC GREET WITH nombre @titulo DO
+  IF [INFO EXISTS titulo] THEN
+    RETURN "Hola "$titulo" "$nombre
+  END
+  RETURN "Hola "$nombre
+END
+
+PUTS [GREET "Rafa"]
+PUTS [GREET "Rafa" "Ing."]
+
+8.4) Composición de procs
+PROC SUMA WITH a b DO
+  RETURN [EXPR $a + $b]
+END
+
+PROC PROMEDIO WITH a b DO
+  RETURN [EXPR [SUMA $a $b] / 2.0]
+END
+
+PUTS [PROMEDIO 10 20]
+
+----------------------------------------------------
+9) ERRORES COMUNES
+----------------------------------------------------
+- Escribir CALL al invocar: en BCL no existe CALL; invoca por nombre.
+- Usar variables globales sin GLOBAL dentro de PROC: no verás/modificarás el valor global.
+- Olvidar RETURN: el proc termina con cadena vacía "".
+- Pasar más argumentos que los declarados (incluidos opcionales): error.
+
+----------------------------------------------------
+10) RESUMEN RÁPIDO
+----------------------------------------------------
+Definición:
+  PROC NOMBRE WITH p1 p2 @p3 @p4 DO ... RETURN valor END
+
+Invocación:
+  SET r [NOMBRE arg1 arg2]
+  NOMBRE 3 4 5     ;# sin capturar retorno
+
+Ámbito:
+  SET local dentro de PROC → local
+  GLOBAL var → usa/modifica global
+
+Opcionales:
+  @param → opcional; comprobar con [INFO EXISTS nombre]
+
+Recursión:
+  Permitida; controlar condiciones de parada.
+
+RETURN:
+  RETURN [valor] → finaliza y devuelve string.
+
+----------------------------------------------------
+FIN DEL DOCUMENTO
+----------------------------------------------------

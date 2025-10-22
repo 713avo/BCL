@@ -1,0 +1,68 @@
+\appendix
+
+\chapter{Instalación}
+\label{app:installation}
+
+\section{Requisitos del Sistema}
+
+BCL puede ejecutarse en:
+\begin{itemize}
+  \item Plataformas PC (Windows, Linux, macOS)
+  \item Sistemas embebidos con recursos suficientes
+  \item Microcontroladores (versión con recursos limitados)
+\end{itemize}
+
+\section{Pasos de Instalación}
+
+\subsection{Desde Binario}
+
+\begin{enumerate}
+  \item Descarga la distribución de BCL para tu plataforma
+  \item Extrae el archivo
+  \item Agrega el directorio \file{bin} a tu PATH
+  \item Verifica la instalación: \texttt{bcl --version}
+\end{enumerate}
+
+\subsection{Desde Código Fuente}
+
+Consulta el archivo BUILD.md en la distribución de código fuente.
+
+\chapter{Solución de Problemas}
+\label{app:troubleshooting}
+
+\section{Errores Comunes}
+
+\begin{description}
+  \item[Variable no encontrada] Verifica la ortografía y asegúrate de que la variable se haya establecido con \cmd{SET}
+  \item[Archivo no encontrado] Verifica la ruta del archivo y los permisos
+  \item[Error de sintaxis] Verifica que no falten palabras clave \cmd{END} y la sintaxis correcta del comando
+  \item[Incompatibilidad de tipo] Asegúrate de que las operaciones numéricas usen números válidos
+\end{description}
+
+\chapter{Diferencias con Tcl}
+\label{app:tcl_differences}
+
+BCL está inspirado en Tcl pero tiene varias diferencias clave:
+
+\begin{itemize}
+  \item \textbf{Sintaxis}: Usa palabras clave al estilo BASIC (\cmd{IF...THEN...END} en lugar de llaves)
+  \item \textbf{Insensibilidad a mayúsculas/minúsculas}: Los comandos no distinguen entre mayúsculas y minúsculas
+  \item \textbf{Expansión de variables}: Solo forma \texttt{\$var} (no \texttt{\$\{var\}})
+  \item \textbf{Invocación de procedimientos}: Invocación directa por nombre (no \cmd{CALL})
+  \item \textbf{Fin de bloque}: Todos los bloques terminan con \cmd{END}
+  \item \textbf{Parámetros opcionales}: Usa prefijo \texttt{@param}
+\end{itemize}
+
+\chapter{Mejoras Futuras}
+\label{app:future}
+
+Características planificadas para futuras versiones de BCL:
+
+\begin{itemize}
+  \item Tipo de dato diccionario/matriz asociativa
+  \item Soporte de espacios de nombres
+  \item Características de programación orientada a objetos
+  \item Biblioteca estándar más completa
+  \item Herramientas de depuración y perfilado
+  \item Sistema de gestión de paquetes
+\end{itemize}

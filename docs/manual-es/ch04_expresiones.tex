@@ -1,0 +1,294 @@
+% CAPÍTULO 4: EXPRESIONES Y MATEMÁTICAS
+% ============================================================================
+
+\chapter{Expresiones y Matemáticas}
+\label{ch:expressions}
+
+BCL proporciona evaluación de expresiones matemáticas y lógicas potente a través del comando \cmd{EXPR}.
+
+\section{El Comando EXPR}
+
+\cmd{EXPR} evalúa expresiones matemáticas y lógicas.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+EXPR expression
+\end{lstlisting}
+
+\begin{examplebox}[title=Aritmética Básica]
+\begin{lstlisting}[language=BCL]
+SET result [EXPR 2 + 3]
+PUTS $result  # Prints: 5
+
+SET x 10
+SET y 3
+SET sum [EXPR $x + $y]
+SET product [EXPR $x * $y]
+SET quotient [EXPR $x / $y]
+
+PUTS "Sum: $sum"          # Prints: Sum: 13
+PUTS "Product: $product"  # Prints: Product: 30
+PUTS "Quotient: $quotient"  # Prints: Quotient: 3.333...
+\end{lstlisting}
+\end{examplebox}
+
+\section{Operadores Aritméticos}
+
+\begin{table}[h]
+\centering
+\caption{Operadores Aritméticos en BCL}
+\label{tab:arithmetic_ops}
+\begin{tabular}{lll}
+\toprule
+\textbf{Operador} & \textbf{Operación} & \textbf{Ejemplo} \\
+\midrule
+\texttt{+} & Suma & \texttt{EXPR 5 + 3} $\rightarrow$ 8 \\
+\texttt{-} & Resta & \texttt{EXPR 5 - 3} $\rightarrow$ 2 \\
+\texttt{*} & Multiplicación & \texttt{EXPR 5 * 3} $\rightarrow$ 15 \\
+\texttt{/} & División & \texttt{EXPR 5 / 2} $\rightarrow$ 2.5 \\
+\texttt{\%} & Módulo (resto) & \texttt{EXPR 5 \% 3} $\rightarrow$ 2 \\
+\texttt{\^{}} & Potencia & \texttt{EXPR 2 \^{} 8} $\rightarrow$ 256 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{examplebox}[title=Usando Operadores]
+\begin{lstlisting}[language=BCL]
+# Complex expression with parentheses
+SET result [EXPR (10 + 5) * 2 - 3]
+PUTS $result  # Prints: 27
+
+# Power operator
+SET squared [EXPR 5 ^ 2]
+PUTS "5 squared is $squared"  # Prints: 5 squared is 25
+
+# Modulo for even/odd check
+SET num 17
+SET remainder [EXPR $num % 2]
+IF $remainder == 0 THEN
+  PUTS "$num is even"
+ELSE
+  PUTS "$num is odd"
+END
+\end{lstlisting}
+\end{examplebox}
+
+\section{Operadores de Comparación}
+
+\begin{table}[h]
+\centering
+\caption{Operadores de Comparación}
+\label{tab:comparison_ops}
+\begin{tabular}{lll}
+\toprule
+\textbf{Operador} & \textbf{Significado} & \textbf{Ejemplo} \\
+\midrule
+\texttt{=} & Igual a & \texttt{\$a == 5} \\
+\texttt{!=} & No igual a & \texttt{\$a != 5} \\
+\texttt{<} & Menor que & \texttt{\$a < 10} \\
+\texttt{<=} & Menor o igual que & \texttt{\$a <= 10} \\
+\texttt{>} & Mayor que & \texttt{\$a > 5} \\
+\texttt{>=} & Mayor o igual que & \texttt{\$a >= 5} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{examplebox}[title=Comparaciones]
+\begin{lstlisting}[language=BCL]
+SET age 25
+
+IF $age >= 18 THEN
+  PUTS "Adult"
+ELSE
+  PUTS "Minor"
+END
+
+SET score 85
+IF $score >= 90 THEN
+  PUTS "Grade: A"
+ELSEIF $score >= 80 THEN
+  PUTS "Grade: B"
+ELSEIF $score >= 70 THEN
+  PUTS "Grade: C"
+ELSE
+  PUTS "Grade: F"
+END
+\end{lstlisting}
+\end{examplebox}
+
+\section{Operadores Lógicos}
+
+\begin{table}[h]
+\centering
+\caption{Operadores Lógicos}
+\label{tab:logical_ops}
+\begin{tabular}{lll}
+\toprule
+\textbf{Operador} & \textbf{Símbolo} & \textbf{Ejemplo} \\
+\midrule
+AND & \texttt{\&\&} & \texttt{\$a > 0 AND \$a < 10} \\
+OR & \texttt{||} & \texttt{\$a == 5 OR \$a == 10} \\
+NOT & \texttt{!} & \texttt{NOT \$flag} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{examplebox}[title=Operaciones Lógicas]
+\begin{lstlisting}[language=BCL]
+SET age 25
+SET has_license 1
+
+# AND operation
+IF $age >= 18 AND $has_license THEN
+  PUTS "Can drive"
+END
+
+# OR operation
+SET day "Saturday"
+IF $day == "Saturday" OR $day == "Sunday" THEN
+  PUTS "It's the weekend!"
+END
+
+# NOT operation
+SET raining 0
+IF NOT $raining THEN
+  PUTS "No umbrella needed"
+END
+\end{lstlisting}
+\end{examplebox}
+
+\section{Funciones Matemáticas}
+
+BCL incluye muchas funciones matemáticas:
+
+\begin{table}[h]
+\centering
+\caption{Funciones Matemáticas}
+\label{tab:math_functions}
+\begin{tabular}{ll}
+\toprule
+\textbf{Función} & \textbf{Descripción} \\
+\midrule
+\texttt{abs(x)} & Valor absoluto \\
+\texttt{sqrt(x)} & Raíz cuadrada \\
+\texttt{pow(x,y)} & x elevado a la potencia y \\
+\texttt{exp(x)} & e elevado a la potencia x \\
+\texttt{log(x)} & Logaritmo base 10 \\
+\texttt{ln(x)} & Logaritmo natural (base e) \\
+\texttt{sin(x)} & Seno (radianes) \\
+\texttt{cos(x)} & Coseno (radianes) \\
+\texttt{tan(x)} & Tangente (radianes) \\
+\texttt{asin(x)} & Arcoseno \\
+\texttt{acos(x)} & Arcocoseno \\
+\texttt{atan(x)} & Arcotangente \\
+\texttt{hypo(x,y)} & Hipotenusa: sqrt(x$^2$ + y$^2$) \\
+\texttt{ceil(x)} & Redondear hacia arriba \\
+\texttt{floor(x)} & Redondear hacia abajo \\
+\texttt{round(x)} & Redondear al entero más cercano \\
+\texttt{int(x)} & Convertir a entero \\
+\texttt{double(x)} & Convertir a punto flotante \\
+\texttt{rand()} & Número aleatorio 0.0 a 1.0 \\
+\texttt{srand(seed)} & Establecer semilla aleatoria \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{examplebox}[title=Trigonometría]
+\begin{lstlisting}[language=BCL]
+SET pi 3.14159265359
+
+# Sine of 90 degrees (pi/2 radians)
+SET angle [EXPR $pi / 2]
+SET sine [EXPR sin($angle)]
+PUTS [FORMAT "sin(90\textdegree) = %.4f" $sine]
+
+# Calculate hypotenuse
+SET a 3
+SET b 4
+SET c [EXPR hypo($a, $b)]
+PUTS [FORMAT "Hypotenuse of %d and %d = %.2f" $a $b $c]
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+sin(90\textdegree) = 1.0000
+Hypotenuse of 3 and 4 = 5.00
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Números Aleatorios]
+\begin{lstlisting}[language=BCL]
+# Generate random integer from 1 to 10
+SET random [EXPR int(rand() * 10) + 1]
+PUTS "Random number: $random"
+
+# Dice roll simulator
+PROC roll_dice DO
+  SET roll [EXPR int(rand() * 6) + 1]
+  RETURN $roll
+END
+
+SET roll1 [roll_dice]
+SET roll2 [roll_dice]
+PUTS "You rolled: $roll1 and $roll2"
+\end{lstlisting}
+\end{examplebox}
+
+\section{Ejemplos Prácticos}
+
+\subsection{Calculadora de Círculos}
+
+\begin{examplebox}[title=Área y Circunferencia de un Círculo]
+\begin{lstlisting}[language=BCL]
+PROC circle_stats WITH radius DO
+  SET pi 3.14159265359
+  SET area [EXPR $pi * $radius * $radius]
+  SET circumference [EXPR 2 * $pi * $radius]
+
+  PUTS [FORMAT "Radius: %.2f" $radius]
+  PUTS [FORMAT "Area: %.2f" $area]
+  PUTS [FORMAT "Circumference: %.2f" $circumference]
+END
+
+circle_stats 5.0
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Radius: 5.00
+Area: 78.54
+Circumference: 31.42
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Resolución de Ecuaciones Cuadráticas}
+
+\begin{examplebox}[title=Resolviendo ax$^2$ + bx + c = 0]
+\begin{lstlisting}[language=BCL]
+PROC solve_quadratic WITH a b c DO
+  # Calculate discriminant
+  SET disc [EXPR $b*$b - 4*$a*$c]
+
+  IF $disc < 0 THEN
+    PUTS "No real solutions"
+    RETURN
+  END
+
+  # Calculate solutions
+  SET x1 [EXPR (-$b + sqrt($disc)) / (2*$a)]
+  SET x2 [EXPR (-$b - sqrt($disc)) / (2*$a)]
+
+  PUTS [FORMAT "x1 = %.4f" $x1]
+  PUTS [FORMAT "x2 = %.4f" $x2]
+END
+
+# Solve x$^2$ - 5x + 6 = 0
+solve_quadratic 1 -5 6
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+x1 = 3.0000
+x2 = 2.0000
+\end{verbatim}
+\end{examplebox}

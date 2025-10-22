@@ -1,0 +1,257 @@
+% ============================================================================
+% CHAPTER 3: VARIABLES AND DATA
+% ============================================================================
+
+\chapter{Variables and Data}
+\label{ch:variables}
+
+This chapter explores BCL's variable system in depth, including creation, modification, scope, and advanced techniques.
+
+\section{Creating and Modifying Variables}
+
+\subsection{SET: The Foundation}
+
+The \cmd{SET} command is used for both creating and modifying variables.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+SET variablename value        # Assign value
+SET variablename              # Return current value
+\end{lstlisting}
+
+\begin{examplebox}[title=SET Examples]
+\begin{lstlisting}[language=BCL]
+# Creating variables
+SET counter 0
+SET message "Hello"
+SET pi 3.14159
+
+# Modifying variables
+SET counter 10
+SET message "Goodbye"
+
+# Reading values
+PUTS [SET counter]  # Prints: 10
+\end{lstlisting}
+\end{examplebox}
+
+\subsection{UNSET: Removing Variables}
+
+The \cmd{UNSET} command deletes a variable from memory.
+
+\begin{examplebox}[title=UNSET Example]
+\begin{lstlisting}[language=BCL]
+SET temp "temporary data"
+PUTS $temp          # Prints: temporary data
+
+UNSET temp
+# PUTS $temp        # ERROR: variable doesn't exist
+\end{lstlisting}
+\end{examplebox}
+
+\begin{warningbox}
+Accessing an unset variable causes an error. Use \cmd{INFO EXISTS} to check if a variable exists before using it.
+\end{warningbox}
+
+\section{Variable Expansion}
+
+Variable expansion means replacing \var{varname} with the variable's value.
+
+\subsection{Basic Expansion}
+
+\begin{examplebox}[title=Variable Expansion]
+\begin{lstlisting}[language=BCL]
+SET fruit "apple"
+SET count 5
+
+PUTS "I have $count ${fruit}s"  # Note: BCL uses only $var
+PUTS "I have $count apples"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+I have 5 apples
+I have 5 apples
+\end{verbatim}
+\end{examplebox}
+
+\begin{notebox}
+BCL uses only the \texttt{\$var} form for variable expansion. Unlike Tcl, \texttt{\$\{var\}} is not supported.
+\end{notebox}
+
+\subsection{String Concatenation}
+
+You can concatenate strings by placing variable expansions next to each other:
+
+\begin{examplebox}[title=Concatenation]
+\begin{lstlisting}[language=BCL]
+SET first "John"
+SET last "Doe"
+SET fullname $first" "$last
+PUTS $fullname  # Prints: John Doe
+
+# Alternative with variables only
+SET a "Hello"
+SET b "World"
+SET c $a$b
+PUTS $c  # Prints: HelloWorld
+\end{lstlisting}
+\end{examplebox}
+
+\section{INCR: Incrementing Numbers}
+
+\cmd{INCR} is a specialized command for incrementing (or decrementing) numeric variables.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+INCR varname          # Increment by 1
+INCR varname amount   # Increment by amount
+\end{lstlisting}
+
+\begin{examplebox}[title=INCR Examples]
+\begin{lstlisting}[language=BCL]
+SET counter 10
+
+INCR counter       # counter is now 11
+INCR counter 5     # counter is now 16
+INCR counter -3    # counter is now 13 (decrement)
+
+PUTS "Counter: $counter"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Counter: 13
+\end{verbatim}
+\end{examplebox}
+
+\section{APPEND: Building Strings}
+
+\cmd{APPEND} adds text to the end of a variable, modifying it in place.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+APPEND varname value1 value2 ...
+\end{lstlisting}
+
+\begin{examplebox}[title=APPEND Examples]
+\begin{lstlisting}[language=BCL]
+SET message "Hello"
+APPEND message " " "World" "!"
+PUTS $message  # Prints: Hello World!
+
+# Building strings in a loop
+SET result ""
+SET i 1
+WHILE $i <= 5 DO
+  APPEND result $i " "
+  INCR i
+END
+PUTS $result  # Prints: 1 2 3 4 5
+\end{lstlisting}
+\end{examplebox}
+
+\begin{tipbox}
+\cmd{APPEND} is more efficient than repeated \cmd{SET} operations when building large strings in loops.
+\end{tipbox}
+
+\section{Variable Scope}
+
+\subsection{Global Variables}
+
+Variables created outside procedures are global—they can be accessed anywhere in your program.
+
+\begin{lstlisting}[language=BCL]
+SET global_var "I am global"
+
+PROC test DO
+  # Cannot access global_var here without GLOBAL declaration
+END
+\end{lstlisting}
+
+\subsection{Local Variables}
+
+Variables created with \cmd{SET} inside a procedure are local—they only exist within that procedure.
+
+\begin{examplebox}[title=Local vs Global]
+\begin{lstlisting}[language=BCL]
+SET outside "global"
+
+PROC demo DO
+  SET inside "local"
+  PUTS "Inside proc: $inside"
+END
+
+demo
+PUTS "Outside proc: $outside"
+# PUTS $inside  # ERROR: inside doesn't exist here
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Inside proc: local
+Outside proc: global
+\end{verbatim}
+\end{examplebox}
+
+\subsection{The GLOBAL Command}
+
+To access or modify global variables from within a procedure, use \cmd{GLOBAL}.
+
+\begin{examplebox}[title=Using GLOBAL]
+\begin{lstlisting}[language=BCL]
+SET score 0
+
+PROC add_points WITH points DO
+  GLOBAL score
+  INCR score $points
+END
+
+add_points 10
+add_points 5
+PUTS "Total score: $score"  # Prints: Total score: 15
+\end{lstlisting}
+\end{examplebox}
+
+\section{Practical Examples}
+
+\subsection{Counter Example}
+
+\begin{examplebox}[title=Hit Counter]
+\begin{lstlisting}[language=BCL]
+SET hits 0
+
+PROC record_hit DO
+  GLOBAL hits
+  INCR hits
+  PUTS "Hit number $hits recorded"
+END
+
+record_hit
+record_hit
+record_hit
+PUTS "Total hits: $hits"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Hit number 1 recorded
+Hit number 2 recorded
+Hit number 3 recorded
+Total hits: 3
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Text Builder Example}
+
+\begin{examplebox}[title=Building a Report]
+\begin{lstlisting}[language=BCL]
+SET report ""
+APPEND report "=== SYSTEM REPORT ===\n"
+APPEND report "Date: " [CLOCK FORMAT [CLOCK SECONDS]] "\n"
+APPEND report "Status: OK\n"
+APPEND report "===================="
+
+PUTS $report
+\end{lstlisting}
+\end{examplebox}

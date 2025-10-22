@@ -1,0 +1,373 @@
+================================================================================
+ESPECIFICACIÓN DEL COMANDO BINARY EN BCL
+================================================================================
+
+Documento: BCL_BINARY_v1.0.txt
+Versión: 1.0
+Fecha: 2025-01-22
+Autor: BCL Development Team
+
+================================================================================
+1. DESCRIPCIÓN GENERAL
+================================================================================
+
+El comando BINARY proporciona facilidades para manipular datos binarios en BCL,
+inspirado en el comando binary de Tcl. Permite convertir entre representaciones
+binarias y valores BCL.
+
+Sintaxis general:
+    BINARY subcomando argumentos
+
+Subcomandos:
+    FORMAT - Construir cadenas binarias desde valores BCL
+    SCAN   - Extraer valores BCL desde cadenas binarias
+
+================================================================================
+2. BINARY FORMAT
+================================================================================
+
+Construye una cadena binaria según un formato especificado.
+
+Sintaxis:
+    BINARY FORMAT formatString ?arg arg ...?
+
+El formatString contiene uno o más especificadores de campo. Cada especificador
+consiste en:
+    - Un carácter de tipo
+    - Un conteo opcional (número o * para "todos")
+
+2.1. Códigos de Formato
+------------------------
+
+a count     ASCII string con padding de nulos
+            Si count se omite, usa 1. Si count es *, usa longitud del string.
+
+A count     ASCII string con padding de espacios
+            Similar a 'a' pero usa espacios en lugar de nulos.
+
+c count     Enteros de 8 bits sin signo (0-255)
+            El argumento debe ser una lista de enteros separados por espacios.
+            Si count es *, usa todos los valores de la lista.
+
+s count     Enteros de 16 bits, little-endian
+            El argumento es una lista de enteros.
+
+S count     Enteros de 16 bits, big-endian
+            El argumento es una lista de enteros.
+
+i count     Enteros de 32 bits, little-endian
+            El argumento es una lista de enteros.
+
+I count     Enteros de 32 bits, big-endian
+            El argumento es una lista de enteros.
+
+H count     Dígitos hexadecimales, nibble alto primero
+            El argumento es un string de dígitos hexadecimales (0-9, a-f).
+            Cada par de dígitos forma un byte.
+
+h count     Dígitos hexadecimales, nibble bajo primero
+            Similar a H pero con orden invertido de nibbles.
+
+x count     Insertar count bytes nulos
+            No consume argumento.
+
+X count     Retroceder count bytes
+            No consume argumento. Permite sobrescribir datos previos.
+
+@ count     Posicionar en byte absoluto count
+            No consume argumento.
+
+2.2. Ejemplos de FORMAT
+------------------------
+
+Ejemplo 1: String con padding
+    SET data [BINARY FORMAT a10 "hello"]
+    # Crea: "hello\0\0\0\0\0" (10 bytes)
+
+Ejemplo 2: Múltiples enteros 8-bit
+    SET data [BINARY FORMAT c4 "65 66 67 68"]
+    # Crea: "ABCD" (bytes 65='A', 66='B', etc.)
+
+Ejemplo 3: Hexadecimal
+    SET data [BINARY FORMAT H8 "deadbeef"]
+    # Crea: 4 bytes con valores 0xDE, 0xAD, 0xBE, 0xEF
+
+Ejemplo 4: Estructura compleja
+    SET data [BINARY FORMAT a5c3H4 "hello" "10 20 30" "aabb"]
+    # Combina string, enteros y hex
+
+Ejemplo 5: Con * para todos los elementos
+    SET data [BINARY FORMAT c* "1 2 3 4 5 6 7 8 9 10"]
+    # Empaqueta todos los números
+
+================================================================================
+3. BINARY SCAN
+================================================================================
+
+Extrae campos desde una cadena binaria y los almacena en variables.
+
+Sintaxis:
+    BINARY SCAN string formatString ?varName varName ...?
+
+Retorna:
+    El número de conversiones realizadas exitosamente.
+
+3.1. Códigos de Formato
+------------------------
+
+Los códigos son los mismos que FORMAT, pero la operación es inversa:
+
+a count     Extrae count bytes como string
+            No elimina caracteres nulos ni espacios.
+
+A count     Extrae count bytes como string
+            Elimina espacios y nulos al final.
+
+c count     Extrae count enteros de 8 bits
+            Retorna una lista de enteros separados por espacios.
+
+s/S count   Extrae count enteros de 16 bits
+            s = little-endian, S = big-endian
+            Retorna lista de enteros.
+
+i/I count   Extrae count enteros de 32 bits
+            i = little-endian, I = big-endian
+            Retorna lista de enteros.
+
+H count     Extrae count nibbles como dígitos hexadecimales
+            Si count es *, extrae hasta el final.
+            Retorna string de dígitos hex (0-9a-f).
+
+h count     Similar a H pero con orden de nibbles invertido.
+
+x count     Salta count bytes
+            No asigna a variable.
+
+X count     Retrocede count bytes
+            No asigna a variable.
+
+@ count     Posiciona en byte absoluto count
+            No asigna a variable.
+
+3.2. Ejemplos de SCAN
+----------------------
+
+Ejemplo 1: Extraer string
+    SET data [BINARY FORMAT a10 "hello"]
+    SET count [BINARY SCAN $data a5 var]
+    # var = "hello", count = 1
+
+Ejemplo 2: Extraer enteros
+    SET data [BINARY FORMAT c5 "10 20 30 40 50"]
+    SET count [BINARY SCAN $data c5 numbers]
+    # numbers = "10 20 30 40 50", count = 1
+
+Ejemplo 3: Extraer hexadecimal
+    SET data [BINARY FORMAT H6 "aabbcc"]
+    SET count [BINARY SCAN $data H* hex]
+    # hex = "aabbcc", count = 1
+
+Ejemplo 4: Múltiples campos
+    SET data [BINARY FORMAT c3H4 "65 66 67" "dead"]
+    SET count [BINARY SCAN $data c3H4 bytes hex]
+    # bytes = "65 66 67", hex = "dead", count = 2
+
+Ejemplo 5: Saltar bytes
+    SET data [BINARY FORMAT c6 "10 20 30 40 50 60"]
+    SET count [BINARY SCAN $data c2x2c2 first last]
+    # first = "10 20", last = "50 60", count = 2
+
+================================================================================
+4. CASOS DE USO
+================================================================================
+
+4.1. Serialización de Estructuras
+-----------------------------------
+
+# Crear estructura: nombre (10 bytes), edad (8-bit), activo (8-bit)
+SET record [BINARY FORMAT a10c2 "Juan" "30 1"]
+
+# Leer estructura
+BINARY SCAN $record a10c2 name data
+SET age [LINDEX $data 0]
+SET active [LINDEX $data 1]
+PUTS "Nombre: $name, Edad: $age, Activo: $active"
+
+4.2. Conversión Hexadecimal
+-----------------------------
+
+# String a hex
+SET data "ABC"
+SET hex ""
+SET i 0
+WHILE $i < [STRING LENGTH $data] DO
+    SET char [STRING INDEX $data $i]
+    # ... conversión manual o usar FORMAT c + SCAN H
+    INCR i
+END
+
+# Hex a string
+SET hex_data "414243"  # ASCII "ABC"
+SET binary [BINARY FORMAT H6 "414243"]
+BINARY SCAN $binary a3 text
+PUTS $text  # Imprime: ABC
+
+4.3. Protocolo de Red Simple
+------------------------------
+
+# Enviar mensaje: tipo (8-bit), longitud (8-bit), datos (variable)
+SET msg_type "1"
+SET msg_data "Hello World"
+SET msg_len [STRING LENGTH $msg_data]
+
+SET packet [BINARY FORMAT c2a* "$msg_type $msg_len" $msg_data]
+
+# Recibir mensaje
+BINARY SCAN $packet c2a* header payload
+SET type [LINDEX $header 0]
+SET len [LINDEX $header 1]
+PUTS "Tipo: $type, Long: $len, Datos: $payload"
+
+4.4. Checksum Simple
+---------------------
+
+# Calcular suma de bytes
+PROC checksum WITH data DO
+    SET sum 0
+    SET i 0
+    WHILE $i < [STRING LENGTH $data] DO
+        BINARY SCAN [STRING INDEX $data $i] c byte
+        SET sum [EXPR $sum + $byte]
+        INCR i
+    END
+    RETURN [EXPR $sum % 256]
+END
+
+SET data "Hello"
+SET cs [checksum $data]
+PUTS "Checksum: $cs"
+
+================================================================================
+5. CONSIDERACIONES DE BYTE ORDER (ENDIANNESS)
+================================================================================
+
+BCL implementa tanto little-endian como big-endian para enteros de 16 y 32 bits:
+
+Little-Endian (s, i):
+    - Byte menos significativo primero
+    - Común en x86/x64
+    - Ejemplo: 0x1234 se almacena como [0x34, 0x12]
+
+Big-Endian (S, I):
+    - Byte más significativo primero
+    - Común en protocolos de red
+    - Ejemplo: 0x1234 se almacena como [0x12, 0x34]
+
+Para intercambio de datos entre sistemas, usar big-endian (S, I) es más portable.
+
+================================================================================
+6. LIMITACIONES Y NOTAS
+================================================================================
+
+6.1. Limitación de Bytes Nulos
+--------------------------------
+IMPORTANTE: BCL usa strings C terminadas en nulo internamente. Esto significa
+que:
+
+- Los datos binarios con bytes nulos (0x00) en el medio pueden truncarse
+- Esta limitación afecta principalmente a enteros 16/32 bits con valores
+  pequeños que producen bytes nulos
+- Workaround: Usar enteros 8-bit (c) o hexadecimal (H) cuando sea posible
+
+6.2. Tamaño Máximo
+-------------------
+No hay límite específico más allá de la memoria disponible, pero se recomienda
+trabajar con bloques razonables (< 1MB) para mejor rendimiento.
+
+6.3. Tipos Float/Double
+-------------------------
+La versión actual NO implementa los tipos 'f' (float) y 'd' (double) de Tcl.
+Esto puede añadirse en versiones futuras si hay demanda.
+
+6.4. Tipos Binarios 'b' y 'B'
+-------------------------------
+La versión actual NO implementa representación de bits individuales (b/B).
+Use hexadecimal (H/h) como alternativa.
+
+================================================================================
+7. DIFERENCIAS CON TCL
+================================================================================
+
+Similitudes:
+- Sintaxis general idéntica
+- Códigos a, A, c, s, S, i, I, H, h, x, X, @ implementados
+- Comportamiento de little/big endian correcto
+
+Diferencias:
+- NO implementado: tipos 'f' y 'd' (float/double)
+- NO implementado: tipos 'b' y 'B' (bits)
+- Limitación con bytes nulos debido a strings C
+
+================================================================================
+8. MENSAJES DE ERROR
+================================================================================
+
+"BINARY: wrong # args: should be \"BINARY option ...\""
+    - Falta especificar subcomando
+
+"BINARY: bad option \"XXX\": must be FORMAT or SCAN"
+    - Subcomando desconocido
+
+"BINARY FORMAT: wrong # args: should be \"BINARY FORMAT formatString ?arg ...?\""
+    - Argumentos incorrectos para FORMAT
+
+"BINARY FORMAT: not enough arguments"
+    - El formatString requiere más argumentos de los proporcionados
+
+"BINARY FORMAT: bad field specifier 'X'"
+    - Carácter de tipo desconocido en formatString
+
+"BINARY SCAN: wrong # args: should be \"BINARY SCAN string formatString ?varName ...?\""
+    - Argumentos incorrectos para SCAN
+
+"BINARY SCAN: not enough variables"
+    - El formatString produce más valores que variables especificadas
+
+"Out of memory"
+    - Error de asignación de memoria
+
+================================================================================
+9. REFERENCIA RÁPIDA
+================================================================================
+
+Formato de Strings:
+    a/A - ASCII con padding nulo/espacio
+
+Enteros:
+    c   - 8-bit unsigned
+    s/S - 16-bit little/big-endian
+    i/I - 32-bit little/big-endian
+
+Hexadecimal:
+    H/h - Hex nibble alto/bajo primero
+
+Control:
+    x   - Null bytes
+    X   - Retroceder
+    @   - Posición absoluta
+
+Conteo:
+    número - Cantidad específica
+    *      - Todo disponible
+    omitir - Usar 1
+
+================================================================================
+10. COMPATIBILIDAD
+================================================================================
+
+Versión BCL: 1.5.1+
+Compatible con: Tcl 8.0+ (sintaxis BINARY, subconjunto de funcionalidad)
+
+================================================================================
+FIN DE LA ESPECIFICACIÓN
+================================================================================

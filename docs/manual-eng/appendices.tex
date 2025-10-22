@@ -1,0 +1,69 @@
+\appendix
+
+\chapter{Installation}
+\label{app:installation}
+
+\section{System Requirements}
+
+BCL can run on:
+\begin{itemize}
+  \item PC platforms (Windows, Linux, macOS)
+  \item Embedded systems with sufficient resources
+  \item Microcontrollers (resource-constrained version)
+\end{itemize}
+
+\section{Installation Steps}
+
+\subsection{From Binary}
+
+\begin{enumerate}
+  \item Download the BCL distribution for your platform
+  \item Extract the archive
+  \item Add the \file{bin} directory to your PATH
+  \item Verify installation: \texttt{bcl --version}
+\end{enumerate}
+
+\subsection{From Source}
+
+Consult the BUILD.md file in the source distribution.
+
+\chapter{Troubleshooting}
+\label{app:troubleshooting}
+
+\section{Common Errors}
+
+\begin{description}
+  \item[Variable not found] Check spelling and ensure the variable has been set with \cmd{SET}
+  \item[File not found] Verify the file path and permissions
+  \item[Syntax error] Check for missing \cmd{END} keywords and proper command syntax
+  \item[Type mismatch] Ensure numeric operations use valid numbers
+\end{description}
+
+\chapter{Differences from Tcl}
+\label{app:tcl_differences}
+
+BCL is inspired by Tcl but has several key differences:
+
+\begin{itemize}
+  \item \textbf{Syntax}: Uses BASIC-style keywords (\cmd{IF...THEN...END} instead of braces)
+  \item \textbf{Case-insensitivity}: Commands are not case-sensitive
+  \item \textbf{Variable expansion}: Only \texttt{\$var} form (not \texttt{\$\{var\}})
+  \item \textbf{Procedure invocation}: Direct name invocation (no \cmd{CALL})
+  \item \textbf{Block ending}: All blocks end with \cmd{END}
+  \item \textbf{Optional parameters}: Use \texttt{@param} prefix
+\end{itemize}
+
+\chapter{Future Enhancements}
+\label{app:future}
+
+Planned features for future BCL versions:
+
+\begin{itemize}
+  \item Dictionary/associative array data type
+  \item Namespace support
+  \item Object-oriented programming features
+  \item More comprehensive standard library
+  \item Debugging and profiling tools
+  \item Package management system
+\end{itemize}
+

@@ -1,0 +1,668 @@
+% ============================================================================
+% CHAPTER 13: INTROSPECTION
+% ============================================================================
+
+\chapter{Introspection}
+\label{ch:introspection}
+
+Introspection is the ability of a program to examine its own structure and state while running. BCL provides the \cmd{INFO} command, which lets you inspect variables, procedures, and the BCL environment itself.
+
+\section{What is Introspection?}
+
+Think of introspection as your program's ability to "look in the mirror" and see what it contains. It can ask questions like:
+
+\begin{itemize}
+  \item "Does a variable named 'x' exist?"
+  \item "What procedures have I defined?"
+  \item "What are the parameters of this procedure?"
+  \item "What version of BCL am I running?"
+\end{itemize}
+
+This is incredibly useful for:
+\begin{itemize}
+  \item \textbf{Debugging} - Check if variables exist before using them
+  \item \textbf{Dynamic code} - Make decisions based on what's available
+  \item \textbf{Error handling} - Verify preconditions before operations
+  \item \textbf{Development tools} - Build debuggers, profilers, or IDEs
+\end{itemize}
+
+\section{The INFO Command}
+
+The \cmd{INFO} command is your gateway to introspection. It has many subcommands, each providing different information about your program's state.
+
+\textbf{General Syntax:}
+\begin{lstlisting}[language=BCL]
+INFO subcommand [arguments...]
+\end{lstlisting}
+
+\section{Checking Variables}
+
+\subsection{INFO EXISTS - Does a Variable Exist?}
+
+\cmd{INFO EXISTS} checks if a variable has been created and assigned a value.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+INFO EXISTS varname
+\end{lstlisting}
+
+Returns 1 if the variable exists, 0 if it doesn't.
+
+\begin{examplebox}[title=Checking Variable Existence]
+\begin{lstlisting}[language=BCL]
+SET username "Alice"
+
+# Check if variable exists
+IF [INFO EXISTS username] THEN
+  PUTS "username exists: $username"
+ELSE
+  PUTS "username doesn't exist"
+END
+
+# Check non-existent variable
+IF [INFO EXISTS password] THEN
+  PUTS "password exists"
+ELSE
+  PUTS "password doesn't exist - need to set it"
+  SET password "secret123"
+END
+
+# Now it exists
+IF [INFO EXISTS password] THEN
+  PUTS "password now exists"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+username exists: Alice
+password doesn't exist - need to set it
+password now exists
+\end{verbatim}
+\end{examplebox}
+
+\begin{tipbox}
+Use \cmd{INFO EXISTS} to avoid errors when accessing optional variables or user input that might not have been provided.
+\end{tipbox}
+
+\subsection{INFO VARS - List All Variables}
+
+\cmd{INFO VARS} returns a list of all variables in the current scope.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+INFO VARS              # All variables
+INFO VARS pattern      # Variables matching pattern
+\end{lstlisting}
+
+\begin{examplebox}[title=Listing Variables]
+\begin{lstlisting}[language=BCL]
+SET name "Alice"
+SET age 30
+SET city "New York"
+SET temp_value 123
+
+# List all variables
+SET all_vars [INFO VARS]
+PUTS "All variables: $all_vars"
+
+# List variables matching pattern
+SET temp_vars [INFO VARS "temp_*"]
+PUTS "Temp variables: $temp_vars"
+
+# List variables starting with specific letter
+SET a_vars [INFO VARS "a*"]
+PUTS "Variables starting with 'a': $a_vars"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+All variables: name age city temp_value
+Temp variables: temp_value
+Variables starting with 'a': age
+\end{verbatim}
+\end{examplebox}
+
+\subsection{INFO GLOBALS - List Global Variables}
+
+\cmd{INFO GLOBALS} returns a list of all global variables.
+
+\begin{examplebox}[title=Global Variables]
+\begin{lstlisting}[language=BCL]
+SET global_config "production"
+SET global_debug 1
+
+PROC test DO
+  SET local_var "I'm local"
+
+  # From inside proc, check globals
+  SET globals [INFO GLOBALS]
+  PUTS "Global variables: $globals"
+
+  # Check locals
+  SET locals [INFO LOCALS]
+  PUTS "Local variables: $locals"
+END
+
+test
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Global variables: global_config global_debug
+Local variables: local_var
+\end{verbatim}
+\end{examplebox}
+
+\subsection{INFO LOCALS - List Local Variables}
+
+\cmd{INFO LOCALS} returns variables local to the current procedure.
+
+\begin{examplebox}[title=Local Variable Inspection]
+\begin{lstlisting}[language=BCL]
+PROC calculate WITH x y DO
+  SET sum [EXPR $x + $y]
+  SET product [EXPR $x * $y]
+  SET temp "working..."
+
+  # Show all local variables (including parameters)
+  SET locals [INFO LOCALS]
+  PUTS "Local variables in procedure: $locals"
+
+  # Show just local temp variables
+  SET temps [INFO LOCALS "temp*"]
+  PUTS "Temp variables: $temps"
+END
+
+calculate 5 3
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Local variables in procedure: x y sum product temp
+Temp variables: temp
+\end{verbatim}
+\end{examplebox}
+
+\section{Inspecting Procedures}
+
+\subsection{INFO PROCS - List All Procedures}
+
+\cmd{INFO PROCS} returns a list of all defined procedures.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+INFO PROCS              # All procedures
+INFO PROCS pattern      # Procedures matching pattern
+\end{lstlisting}
+
+\begin{examplebox}[title=Listing Procedures]
+\begin{lstlisting}[language=BCL]
+PROC calculate WITH x y DO
+  RETURN [EXPR $x + $y]
+END
+
+PROC format_output WITH text DO
+  PUTS "=== $text ==="
+END
+
+PROC helper_function DO
+  # Helper code
+END
+
+# List all procedures
+SET procs [INFO PROCS]
+PUTS "All procedures:"
+FOREACH proc IN $procs DO
+  PUTS "  - $proc"
+END
+
+# List only helper procedures
+SET helpers [INFO PROCS "helper_*"]
+PUTS "\nHelper procedures: $helpers"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+All procedures:
+  - calculate
+  - format_output
+  - helper_function
+
+Helper procedures: helper_function
+\end{verbatim}
+\end{examplebox}
+
+\subsection{INFO ARGS - Get Procedure Parameters}
+
+\cmd{INFO ARGS} returns the parameter names for a procedure.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+INFO ARGS procname
+\end{lstlisting}
+
+\begin{examplebox}[title=Inspecting Procedure Parameters]
+\begin{lstlisting}[language=BCL]
+PROC greet WITH name @title DO
+  IF [INFO EXISTS title] THEN
+    PUTS "Hello, $title $name"
+  ELSE
+    PUTS "Hello, $name"
+  END
+END
+
+# Get parameter list
+SET params [INFO ARGS greet]
+PUTS "Parameters of 'greet': $params"
+
+# Check how many parameters
+SET count [LLENGTH $params]
+PUTS "Number of parameters: $count"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Parameters of 'greet': name title
+Number of parameters: 2
+\end{verbatim}
+\end{examplebox}
+
+\subsection{INFO BODY - Get Procedure Body}
+
+\cmd{INFO BODY} returns the actual code (body) of a procedure.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+INFO BODY procname
+\end{lstlisting}
+
+\begin{examplebox}[title=Examining Procedure Code]
+\begin{lstlisting}[language=BCL]
+PROC add WITH a b DO
+  SET result [EXPR $a + $b]
+  RETURN $result
+END
+
+# Get the procedure body
+SET body [INFO BODY add]
+PUTS "Procedure 'add' contains:"
+PUTS $body
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Procedure 'add' contains:
+  SET result [EXPR $a + $b]
+  RETURN $result
+\end{verbatim}
+\end{examplebox}
+
+\begin{tipbox}
+\cmd{INFO BODY} is useful for debugging, creating documentation, or implementing code analysis tools.
+\end{tipbox}
+
+\section{System Information}
+
+\subsection{INFO BCLVERSION - Get BCL Version}
+
+\cmd{INFO BCLVERSION} returns the version of BCL you're running.
+
+\begin{examplebox}[title=Version Check]
+\begin{lstlisting}[language=BCL]
+SET version [INFO BCLVERSION]
+PUTS "Running BCL version: $version"
+
+# Version-specific features
+IF [STRING MATCH "1.5*" $version] THEN
+  PUTS "You have BCL 1.5.x - all features available"
+ELSE
+  PUTS "Consider upgrading to BCL 1.5 or newer"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Running BCL version: 1.5.1
+You have BCL 1.5.x - all features available
+\end{verbatim}
+\end{examplebox}
+
+\subsection{INFO COMMANDS - List All Available Commands}
+
+\cmd{INFO COMMANDS} returns a list of all BCL commands available in the current interpreter.
+
+\begin{examplebox}[title=Available Commands]
+\begin{lstlisting}[language=BCL]
+# Get all commands
+SET commands [INFO COMMANDS]
+PUTS "Total commands available: [LLENGTH $commands]"
+
+# Check if a specific command exists
+IF [LSEARCH $commands "REGEXP"] != -1 THEN
+  PUTS "REGEXP command is available"
+END
+
+# List string-related commands
+SET string_cmds [LIST]
+FOREACH cmd IN $commands DO
+  IF [STRING MATCH "STRING*" $cmd] THEN
+    SET string_cmds [LAPPEND $string_cmds $cmd]
+  END
+END
+PUTS "String commands: $string_cmds"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Total commands available: 87
+REGEXP command is available
+String commands: STRING
+\end{verbatim}
+\end{examplebox}
+
+\section{Practical Applications}
+
+\subsection{Safe Variable Access}
+
+\begin{examplebox}[title=Avoid Errors with INFO EXISTS]
+\begin{lstlisting}[language=BCL]
+PROC safe_print WITH varname DO
+  # Check if variable exists before accessing
+  IF [INFO EXISTS $varname] THEN
+    # Get the value using SET without argument
+    SET value [SET $varname]
+    PUTS "$varname == $value"
+  ELSE
+    PUTS "Variable '$varname' not found"
+  END
+END
+
+SET username "Alice"
+
+safe_print username
+safe_print password
+safe_print email
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+username = Alice
+Variable 'password' not found
+Variable 'email' not found
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Dynamic Configuration}
+
+\begin{examplebox}[title=Optional Configuration Variables]
+\begin{lstlisting}[language=BCL]
+PROC load_config DO
+  # Set defaults
+  SET config_host "localhost"
+  SET config_port 8080
+  SET config_debug 0
+
+  # Check if user provided custom values
+  IF [INFO EXISTS USER_HOST] THEN
+    SET config_host $USER_HOST
+    PUTS "Using custom host: $config_host"
+  END
+
+  IF [INFO EXISTS USER_PORT] THEN
+    SET config_port $USER_PORT
+    PUTS "Using custom port: $config_port"
+  END
+
+  IF [INFO EXISTS USER_DEBUG] THEN
+    SET config_debug $USER_DEBUG
+    PUTS "Debug mode: $config_debug"
+  END
+
+  RETURN [LIST $config_host $config_port $config_debug]
+END
+
+# Load with defaults
+SET config [load_config]
+PUTS "Config: $config"
+
+# Now set custom values
+SET USER_HOST "192.168.1.100"
+SET USER_PORT 3000
+SET config [load_config]
+PUTS "Custom config: $config"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Config: localhost 8080 0
+Using custom host: 192.168.1.100
+Using custom port: 3000
+Custom config: 192.168.1.100 3000 0
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Help System}
+
+\begin{examplebox}[title=Interactive Help]
+\begin{lstlisting}[language=BCL]
+PROC show_help WITH @command DO
+  IF [INFO EXISTS command] THEN
+    # Show help for specific command
+    IF [LSEARCH [INFO PROCS] $command] != -1 THEN
+      PUTS "Procedure: $command"
+      SET params [INFO ARGS $command]
+      PUTS "Parameters: $params"
+      PUTS ""
+      PUTS "Body:"
+      PUTS [INFO BODY $command]
+    ELSE
+      PUTS "Command '$command' not found"
+    END
+  ELSE
+    # Show all available procedures
+    PUTS "Available procedures:"
+    SET procs [INFO PROCS]
+    FOREACH proc IN $procs DO
+      SET params [INFO ARGS $proc]
+      PUTS "  $proc ($params)"
+    END
+  END
+END
+
+PROC calculate_area WITH width height DO
+  RETURN [EXPR $width * $height]
+END
+
+# Show all procedures
+show_help
+
+# Show help for specific procedure
+PUTS ""
+show_help calculate_area
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Available procedures:
+  show_help (command)
+  calculate_area (width height)
+
+Procedure: calculate_area
+Parameters: width height
+
+Body:
+  RETURN [EXPR $width * $height]
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Debugging Tool}
+
+\begin{examplebox}[title=Variable Dumper]
+\begin{lstlisting}[language=BCL]
+PROC dump_variables WITH @pattern DO
+  # Default pattern: all variables
+  IF [INFO EXISTS pattern] = 0 THEN
+    SET pattern "*"
+  END
+
+  SET vars [INFO VARS $pattern]
+
+  IF [LLENGTH $vars] = 0 THEN
+    PUTS "No variables match pattern '$pattern'"
+    RETURN
+  END
+
+  PUTS "=== Variables matching '$pattern' ==="
+  FOREACH var IN $vars DO
+    SET value [SET $var]
+    SET type "string"
+
+    # Try to determine type
+    IF [REGEXP "^-?\[0-9\]+$" $value] THEN
+      SET type "integer"
+    ELSEIF [REGEXP "^-?\[0-9\]+\\.\[0-9\]+$" $value] THEN
+      SET type "float"
+    END
+
+    PUTS [FORMAT "  %-15s = %-20s (%s)" $var $value $type]
+  END
+END
+
+# Create some test variables
+SET name "Alice"
+SET age 30
+SET height 1.68
+SET count 42
+SET debug_flag 1
+
+# Dump all variables
+dump_variables
+
+# Dump only specific pattern
+PUTS ""
+dump_variables "debug_*"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+=== Variables matching '*' ===
+  name            = Alice                (string)
+  age             = 30                   (integer)
+  height          = 1.68                 (float)
+  count           = 42                   (integer)
+  debug_flag      = 1                    (integer)
+
+=== Variables matching 'debug_*' ===
+  debug_flag      = 1                    (integer)
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Procedure Documentation Generator}
+
+\begin{examplebox}[title=Auto-Generate Documentation]
+\begin{lstlisting}[language=BCL]
+PROC document_procedures DO
+  SET procs [INFO PROCS]
+
+  PUTS "==================================="
+  PUTS "  BCL Procedure Documentation"
+  PUTS "==================================="
+  PUTS ""
+
+  FOREACH proc IN $procs DO
+    # Skip internal procedures
+    IF [STRING MATCH "_*" $proc] THEN
+      CONTINUE
+    END
+
+    SET params [INFO ARGS $proc]
+    SET param_count [LLENGTH $params]
+
+    PUTS "PROCEDURE: $proc"
+    PUTS "Parameters: $param_count"
+
+    IF $param_count > 0 THEN
+      SET i 1
+      FOREACH param IN $params DO
+        PUTS "  $i. $param"
+        INCR i
+      END
+    END
+
+    PUTS ""
+  END
+END
+
+# Define some example procedures
+PROC add WITH a b DO
+  RETURN [EXPR $a + $b]
+END
+
+PROC greet WITH name @title DO
+  PUTS "Hello, $name"
+END
+
+PROC _internal_helper DO
+  # This won't be documented
+END
+
+# Generate documentation
+document_procedures
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+===================================
+  BCL Procedure Documentation
+===================================
+
+PROCEDURE: document_procedures
+Parameters: 0
+
+PROCEDURE: add
+Parameters: 2
+  1. a
+  2. b
+
+PROCEDURE: greet
+Parameters: 2
+  1. name
+  2. title
+\end{verbatim}
+\end{examplebox}
+
+\section{INFO Command Reference}
+
+\begin{longtable}{lp{8cm}}
+\caption{INFO Subcommands Reference} \\
+\toprule
+\textbf{Subcommand} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{c}{{\tablename\ \thetable{} -- continued}} \\
+\toprule
+\textbf{Subcommand} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+
+\texttt{EXISTS varname} & Check if variable exists \\
+\texttt{VARS [pattern]} & List all variables (or matching pattern) \\
+\texttt{GLOBALS [pattern]} & List global variables \\
+\texttt{LOCALS [pattern]} & List local variables \\
+\texttt{PROCS [pattern]} & List all procedures \\
+\texttt{COMMANDS [pattern]} & List all BCL commands \\
+\texttt{ARGS procname} & Get procedure parameters \\
+\texttt{BODY procname} & Get procedure body (code) \\
+\texttt{BCLVERSION} & Get BCL version string \\
+\end{longtable}
+
+\begin{tipbox}
+Introspection is powerful for building development tools, debuggers, and self-documenting code. Use it to make your programs smarter and more robust!
+\end{tipbox}
+
+\begin{warningbox}
+Be careful when using \cmd{INFO BODY} with user-provided procedure names, as it exposes your code. In production systems, consider restricting access to introspection commands.
+\end{warningbox}

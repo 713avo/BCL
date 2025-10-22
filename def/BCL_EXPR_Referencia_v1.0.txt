@@ -1,0 +1,222 @@
+BCL — Manual de Referencia Específico: EXPR
+----------------------------------------------------
+Autor: Rafa
+Fecha: Octubre 2025
+
+Basado en la implementación de BCL v1.5 (Edición PC).
+Inspirado en Tcl 8.6.13, con sintaxis simplificada tipo BASIC.
+
+----------------------------------------------------
+SECCIÓN: EXPR — EVALUACIÓN DE EXPRESIONES
+----------------------------------------------------
+
+El comando EXPR evalúa expresiones numéricas, lógicas o de cadena y devuelve el resultado.
+BCL, como Tcl, trata todo valor como cadena, pero EXPR interpreta automáticamente los
+valores numéricos cuando detecta operaciones aritméticas o comparaciones.
+
+----------------------------------------------------
+1. SINTAXIS GENERAL
+----------------------------------------------------
+  EXPR expresión
+
+Ejemplo:
+SET a 10
+SET b 5
+SET c [EXPR $a + $b * 2]
+PUTS "Resultado: $c"
+
+Notas:
+- Los paréntesis ( ) se pueden usar para agrupar operaciones.
+- Los operadores siguen la precedencia matemática estándar.
+- EXPR devuelve siempre una cadena representando el resultado numérico o lógico.
+- Si se usa dentro de IF, WHILE o FOR, se puede omitir EXPR y escribir la condición directamente.
+
+----------------------------------------------------
+2. OPERADORES DISPONIBLES
+----------------------------------------------------
+Aritméticos:
+  +   Suma
+  -   Resta
+  *   Multiplicación
+  /   División (devuelve float si es necesario)
+  %   Módulo (resto de división entera)
+  ^   Potencia (equivalente a pow())
+
+Comparativos:
+  ==  Igual
+  !=  Distinto
+  <   Menor
+  <=  Menor o igual
+  >   Mayor
+  >=  Mayor o igual
+
+Lógicos:
+  AND  Lógico Y
+  OR   Lógico O
+  NOT  Negación lógica
+
+Bit a bit:
+  &   AND binario
+  |   OR binario
+  ^   XOR binario
+  ~   Negación binaria
+  <<  Desplazamiento a la izquierda
+  >>  Desplazamiento a la derecha
+
+Ejemplo:
+SET a 5
+SET b 2
+SET x [EXPR ($a * 3 + $b) / 2]
+PUTS "x=$x"
+
+----------------------------------------------------
+3. TIPOS DE DATOS
+----------------------------------------------------
+EXPR maneja automáticamente:
+- Enteros decimales (10, -3)
+- Hexadecimales (0x1A)
+- Notación científica (1.5e3)
+- Reales (3.1415)
+- Booleanos (1, 0, true, false)
+
+Ejemplo:
+SET v [EXPR 0x10 + 2.5]
+PUTS "v=$v"
+
+----------------------------------------------------
+4. FUNCIONES MATEMÁTICAS DISPONIBLES
+----------------------------------------------------
+abs(x)        -> Valor absoluto
+sqrt(x)       -> Raíz cuadrada
+pow(x, y)     -> Potencia (x elevado a y)
+exp(x)        -> e^x
+log(x)        -> Logaritmo base 10
+ln(x)         -> Logaritmo natural (base e)
+sin(x)        -> Seno (radianes)
+cos(x)        -> Coseno (radianes)
+tan(x)        -> Tangente (radianes)
+asin(x)       -> Arcoseno
+acos(x)       -> Arcocoseno
+atan(x)       -> Arcotangente
+hypo(x, y)    -> Hipotenusa (sqrt(x² + y²))
+ceil(x)       -> Redondeo hacia arriba
+floor(x)      -> Redondeo hacia abajo
+round(x)      -> Redondeo al entero más cercano
+int(x)        -> Conversión explícita a entero
+double(x)     -> Conversión explícita a flotante
+rand()        -> Genera número aleatorio entre 0.0 y 1.0
+srand(seed)   -> Inicializa la semilla de rand()
+
+----------------------------------------------------
+5. USO EN CONDICIONES Y BUCLES
+----------------------------------------------------
+Las condiciones pueden escribirse sin EXPR explícito dentro de estructuras de control.
+
+Ejemplo 1:
+SET a 10
+IF $a > 5 THEN
+  PUTS "Mayor que cinco"
+END
+
+Ejemplo 2:
+SET i 0
+WHILE $i < 5 DO
+  PUTS "i=$i"
+  INCR i
+END
+
+Ejemplo 3 (con EXPR explícito):
+SET n [EXPR ($a + 5) * 2]
+IF [EXPR $n >= 30] THEN
+  PUTS "Resultado grande"
+END
+
+----------------------------------------------------
+6. FUNCIONES AVANZADAS
+----------------------------------------------------
+Ejemplo de trigonometría:
+SET pi 3.1415926
+SET seno [EXPR sin($pi / 2)]
+PUTS "Seno de pi/2 = $seno"
+
+Ejemplo de logaritmos y potencias:
+SET val [EXPR pow(2, 8)]
+PUTS "2^8 = $val"
+SET l10 [EXPR log(1000)]
+SET ln2 [EXPR ln(2)]
+PUTS "log(1000)=$l10 ln(2)=$ln2"
+
+Ejemplo de generación aleatoria:
+SET r [EXPR rand()]
+PUTS "Aleatorio: $r"
+SET r2 [EXPR int(rand() * 100)]
+PUTS "Aleatorio (0–99): $r2"
+
+Ejemplo de redondeo y truncado:
+SET f 3.67
+SET arriba [EXPR ceil($f)]
+SET abajo [EXPR floor($f)]
+SET normal [EXPR round($f)]
+PUTS "ceil=$arriba floor=$abajo round=$normal"
+
+Ejemplo de hipotenusa y conversiones:
+SET h [EXPR hypo(3,4)]
+PUTS "Hipotenusa de (3,4) = $h"
+SET z [EXPR double(5)/2]
+PUTS "Conversión a float: $z"
+
+----------------------------------------------------
+7. EJEMPLOS COMPLETOS
+----------------------------------------------------
+
+Ejemplo 1: Cálculo de energía cinética
+SET m 2.5
+SET v 4.0
+SET E [EXPR 0.5 * $m * pow($v, 2)]
+PUTS [FORMAT "Energía = %.2f J" $E]
+
+Ejemplo 2: Evaluación de una función matemática
+SET x 1.5
+SET y [EXPR sin($x) + cos($x/2) + ln($x+1)]
+PUTS [FORMAT "Resultado = %.4f" $y]
+
+Ejemplo 3: Uso de rand() en bucles
+SET i 0
+WHILE $i < 5 DO
+  SET n [EXPR int(rand()*10)]
+  PUTS [FORMAT "Número aleatorio: %d" $n]
+  INCR i
+END
+
+Ejemplo 4: Condición combinada con operadores lógicos
+SET a 8
+SET b 3
+IF ($a > 5 AND $b < 5) OR ($a == 10) THEN
+  PUTS "Condición cumplida"
+END
+
+Ejemplo 5: Simulación simple
+SET sum 0
+SET i 0
+WHILE $i < 100 DO
+  SET sum [EXPR $sum + rand()]
+  INCR i
+END
+SET media [EXPR $sum / 100.0]
+PUTS [FORMAT "Media aleatoria = %.4f" $media]
+
+----------------------------------------------------
+8. RESUMEN GENERAL
+----------------------------------------------------
+EXPR permite cálculos aritméticos, lógicos y de conversión en un entorno de script simple.
+Su uso es fundamental en asignaciones, bucles y condiciones.
+
+Combinaciones comunes:
+SET x [EXPR 3 + 5 * 2]
+SET s [EXPR sin(1.57)]
+SET ale [EXPR int(rand() * 100)]
+IF $x > 10 THEN PUTS "Grande" END
+
+----------------------------------------------------
+FIN DEL DOCUMENTO
+----------------------------------------------------

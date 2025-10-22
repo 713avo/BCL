@@ -1,0 +1,68 @@
+#!/usr/bin/env bcl
+# Demo básico de BCL
+# Ejecutar con: ./bin/bcl examples/demo.bcl
+
+PUTS "==================================="
+PUTS "  BCL Interpreter v1.5.0 - Demo"
+PUTS "==================================="
+PUTS ""
+
+# Variables
+PUTS "1. Variables:"
+SET nombre "BCL"
+SET version 1.5
+PUTS "  Nombre: $nombre"
+PUTS "  Versión: $version"
+PUTS ""
+
+# Expresiones
+PUTS "2. Expresiones matemáticas:"
+SET resultado [EXPR 2 ** 8]
+PUTS "  2 ** 8 = $resultado"
+SET pi 3.14159
+SET seno [EXPR sin($pi)]
+PUTS "  sin(π) = $seno"
+PUTS ""
+
+# Listas
+PUTS "3. Listas:"
+SET numeros [LIST 1 2 3 4 5]
+PUTS "  Lista: $numeros"
+SET len [LLENGTH $numeros]
+PUTS "  Longitud: $len"
+PUTS ""
+
+# Control de flujo
+PUTS "4. Control de flujo:"
+SET x 10
+IF $x > 5 THEN
+    PUTS "  $x es mayor que 5"
+END
+
+SET i 1
+WHILE $i <= 3 DO
+    PUTS "  Iteración $i"
+    INCR i
+END
+PUTS ""
+
+# Procedimientos
+PUTS "5. Procedimientos:"
+PROC saludar WITH nombre DO
+    PUTS "  ¡Hola, $nombre!"
+END
+
+saludar "Mundo"
+PUTS ""
+
+# Strings
+PUTS "6. Strings:"
+SET texto "BCL es genial"
+SET mayus [STRING toupper $texto]
+PUTS "  Original: $texto"
+PUTS "  Mayúsculas: $mayus"
+PUTS ""
+
+PUTS "==================================="
+PUTS "  Demo completado con éxito"
+PUTS "==================================="

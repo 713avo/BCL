@@ -1,0 +1,29 @@
+% ============================================================================
+% CAPÍTULO 11: TIEMPO Y FECHA
+% ============================================================================
+
+\chapter{Tiempo y Fecha}
+\label{ch:time}
+
+El comando \cmd{CLOCK} proporciona funcionalidad de tiempo y fecha.
+
+\begin{examplebox}[title=Operaciones de Tiempo]
+\begin{lstlisting}[language=BCL]
+# Get current time
+SET now [CLOCK SECONDS]
+PUTS "Timestamp: $now"
+
+# Format timestamp
+SET formatted [CLOCK FORMAT $now FORMAT "%Y-%m-%d %H:%M:%S"]
+PUTS "Date: $formatted"
+
+# Parse date string
+SET timestamp [CLOCK SCAN "2025-12-25 00:00:00"]
+PUTS "Christmas: $timestamp"
+
+# Add time
+SET tomorrow [CLOCK ADD $now 1 day]
+SET next_week [CLOCK ADD $now 7 days]
+PUTS "Tomorrow: [CLOCK FORMAT $tomorrow]"
+\end{lstlisting}
+\end{examplebox}

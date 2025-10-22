@@ -1,0 +1,120 @@
+% ============================================================================
+% CHAPTER 1: INTRODUCTION
+% ============================================================================
+
+\chapter{Introduction}
+\label{ch:introduction}
+
+\section{What is BCL?}
+
+BCL (Basic Command Language) is a lightweight, interpreted scripting language designed to combine the power of Tcl with the readability of BASIC. It was created with the following goals in mind:
+
+\begin{itemize}
+  \item \textbf{Simplicity}: Easy to learn for beginners
+  \item \textbf{Portability}: Runs on both PC and embedded systems
+  \item \textbf{Flexibility}: Everything is a string, making data manipulation straightforward
+  \item \textbf{Expressiveness}: Tcl-inspired command structure with BASIC-style keywords
+  \item \textbf{Case-insensitivity}: Commands and keywords are not case-sensitive
+\end{itemize}
+
+\begin{notebox}
+BCL treats \textbf{everything as a string}. Numbers, lists, and even code are all represented as text. This simplifies the language model and makes it easy to work with data from various sources.
+\end{notebox}
+
+\section{Why BCL?}
+
+BCL fills a unique niche in the scripting language ecosystem:
+
+\begin{itemize}
+  \item \textbf{For beginners}: The BASIC-style syntax (\cmd{IF...THEN...END}, \cmd{WHILE...DO...END}) is more intuitive than curly braces
+  \item \textbf{For Tcl users}: Familiar command structure and evaluation model
+  \item \textbf{For embedded systems}: Compact interpreter suitable for resource-constrained environments
+  \item \textbf{For automation}: Simple file I/O, string processing, and system interaction
+\end{itemize}
+
+\section{Installation and First Steps}
+
+\subsection{Installation}
+
+BCL can be installed on various platforms. The standard distribution includes:
+
+\begin{itemize}
+  \item The BCL interpreter executable (\file{bcl})
+  \item Standard library scripts
+  \item Example programs
+  \item Documentation
+\end{itemize}
+
+Refer to Appendix~\ref{app:installation} for detailed installation instructions for your platform.
+
+\subsection{Running BCL Programs}
+
+BCL programs can be executed in two ways:
+
+\begin{enumerate}
+  \item \textbf{Script mode}: Run a BCL script file
+  \begin{lstlisting}[language=bash]
+bcl myscript.bcl
+  \end{lstlisting}
+
+  \item \textbf{Interactive mode (REPL)}: Start the BCL interpreter without arguments
+  \begin{lstlisting}[language=bash]
+bcl
+  \end{lstlisting}
+\end{enumerate}
+
+\subsection{Your First BCL Program}
+
+Let's start with the traditional "Hello, World!" program:
+
+\begin{examplebox}[title=Hello World]
+\begin{lstlisting}[language=BCL]
+# This is a comment - my first BCL program
+PUTS "Hello, World!"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Hello, World!
+\end{verbatim}
+
+\textbf{Explanation:} The \cmd{PUTS} command prints text to the console followed by a newline. Text enclosed in double quotes is treated as a string literal.
+\end{examplebox}
+
+\subsection{Using the REPL}
+
+The REPL (Read-Eval-Print Loop) is BCL's interactive mode. It's perfect for experimenting with commands and testing small code snippets.
+
+\begin{examplebox}[title=REPL Session]
+\begin{verbatim}
+$ bcl
+BCL> PUTS "Hello from REPL"
+Hello from REPL
+BCL> SET x 42
+BCL> PUTS "The answer is $x"
+The answer is 42
+BCL> EXIT
+\end{verbatim}
+
+\textbf{Explanation:} In REPL mode, you type commands and see immediate results. The \cmd{EXIT} command closes the interpreter.
+\end{examplebox}
+
+\begin{tipbox}
+Use the REPL to test BCL commands while reading this manual. It's an excellent way to learn interactively!
+\end{tipbox}
+
+\section{BCL Philosophy}
+
+Understanding BCL's core philosophy will help you write better code:
+
+\begin{enumerate}
+  \item \textbf{Everything is a string}: All values are text. Operations determine how strings are interpreted (as numbers, lists, etc.)
+
+  \item \textbf{Commands return values}: Almost every BCL command returns a value that can be used by other commands
+
+  \item \textbf{Substitution before evaluation}: Variable values (using \$) and command results (using []) are substituted before the command executes
+
+  \item \textbf{Blocks end with END}: Control structures use explicit \cmd{END} keywords instead of braces or indentation
+
+  \item \textbf{Case-insensitive}: \cmd{PUTS}, \cmd{puts}, and \cmd{Puts} are all the same command
+\end{enumerate}

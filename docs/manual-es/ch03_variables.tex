@@ -1,0 +1,257 @@
+% ============================================================================
+% CAPÍTULO 3: VARIABLES Y DATOS
+% ============================================================================
+
+\chapter{Variables y Datos}
+\label{ch:variables}
+
+Este capítulo explora en profundidad el sistema de variables de BCL, incluyendo creación, modificación, alcance y técnicas avanzadas.
+
+\section{Crear y Modificar Variables}
+
+\subsection{SET: La Base}
+
+El comando \cmd{SET} se usa tanto para crear como para modificar variables.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+SET variablename value        # Assign value
+SET variablename              # Return current value
+\end{lstlisting}
+
+\begin{examplebox}[title=Ejemplos de SET]
+\begin{lstlisting}[language=BCL]
+# Creating variables
+SET counter 0
+SET message "Hello"
+SET pi 3.14159
+
+# Modifying variables
+SET counter 10
+SET message "Goodbye"
+
+# Reading values
+PUTS [SET counter]  # Prints: 10
+\end{lstlisting}
+\end{examplebox}
+
+\subsection{UNSET: Eliminar Variables}
+
+El comando \cmd{UNSET} elimina una variable de la memoria.
+
+\begin{examplebox}[title=Ejemplo de UNSET]
+\begin{lstlisting}[language=BCL]
+SET temp "temporary data"
+PUTS $temp          # Prints: temporary data
+
+UNSET temp
+# PUTS $temp        # ERROR: variable doesn't exist
+\end{lstlisting}
+\end{examplebox}
+
+\begin{warningbox}
+Acceder a una variable eliminada causa un error. Usa \cmd{INFO EXISTS} para verificar si una variable existe antes de usarla.
+\end{warningbox}
+
+\section{Expansión de Variables}
+
+La expansión de variables significa reemplazar \var{varname} con el valor de la variable.
+
+\subsection{Expansión Básica}
+
+\begin{examplebox}[title=Expansión de Variables]
+\begin{lstlisting}[language=BCL]
+SET fruit "apple"
+SET count 5
+
+PUTS "I have $count ${fruit}s"  # Note: BCL uses only $var
+PUTS "I have $count apples"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+I have 5 apples
+I have 5 apples
+\end{verbatim}
+\end{examplebox}
+
+\begin{notebox}
+BCL usa solo la forma \texttt{\$var} para la expansión de variables. A diferencia de Tcl, \texttt{\$\{var\}} no está soportado.
+\end{notebox}
+
+\subsection{Concatenación de Cadenas}
+
+Puedes concatenar cadenas colocando expansiones de variables una al lado de la otra:
+
+\begin{examplebox}[title=Concatenación]
+\begin{lstlisting}[language=BCL]
+SET first "John"
+SET last "Doe"
+SET fullname $first" "$last
+PUTS $fullname  # Prints: John Doe
+
+# Alternative with variables only
+SET a "Hello"
+SET b "World"
+SET c $a$b
+PUTS $c  # Prints: HelloWorld
+\end{lstlisting}
+\end{examplebox}
+
+\section{INCR: Incrementar Números}
+
+\cmd{INCR} es un comando especializado para incrementar (o decrementar) variables numéricas.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+INCR varname          # Increment by 1
+INCR varname amount   # Increment by amount
+\end{lstlisting}
+
+\begin{examplebox}[title=Ejemplos de INCR]
+\begin{lstlisting}[language=BCL]
+SET counter 10
+
+INCR counter       # counter is now 11
+INCR counter 5     # counter is now 16
+INCR counter -3    # counter is now 13 (decrement)
+
+PUTS "Counter: $counter"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Counter: 13
+\end{verbatim}
+\end{examplebox}
+
+\section{APPEND: Construir Cadenas}
+
+\cmd{APPEND} agrega texto al final de una variable, modificándola en su lugar.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+APPEND varname value1 value2 ...
+\end{lstlisting}
+
+\begin{examplebox}[title=Ejemplos de APPEND]
+\begin{lstlisting}[language=BCL]
+SET message "Hello"
+APPEND message " " "World" "!"
+PUTS $message  # Prints: Hello World!
+
+# Building strings in a loop
+SET result ""
+SET i 1
+WHILE $i <= 5 DO
+  APPEND result $i " "
+  INCR i
+END
+PUTS $result  # Prints: 1 2 3 4 5
+\end{lstlisting}
+\end{examplebox}
+
+\begin{tipbox}
+\cmd{APPEND} es más eficiente que operaciones \cmd{SET} repetidas cuando se construyen cadenas grandes en bucles.
+\end{tipbox}
+
+\section{Alcance de Variables}
+
+\subsection{Variables Globales}
+
+Las variables creadas fuera de procedimientos son globales—pueden accederse desde cualquier parte de tu programa.
+
+\begin{lstlisting}[language=BCL]
+SET global_var "I am global"
+
+PROC test DO
+  # Cannot access global_var here without GLOBAL declaration
+END
+\end{lstlisting}
+
+\subsection{Variables Locales}
+
+Las variables creadas con \cmd{SET} dentro de un procedimiento son locales—solo existen dentro de ese procedimiento.
+
+\begin{examplebox}[title=Local vs Global]
+\begin{lstlisting}[language=BCL]
+SET outside "global"
+
+PROC demo DO
+  SET inside "local"
+  PUTS "Inside proc: $inside"
+END
+
+demo
+PUTS "Outside proc: $outside"
+# PUTS $inside  # ERROR: inside doesn't exist here
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Inside proc: local
+Outside proc: global
+\end{verbatim}
+\end{examplebox}
+
+\subsection{El Comando GLOBAL}
+
+Para acceder o modificar variables globales desde dentro de un procedimiento, usa \cmd{GLOBAL}.
+
+\begin{examplebox}[title=Usando GLOBAL]
+\begin{lstlisting}[language=BCL]
+SET score 0
+
+PROC add_points WITH points DO
+  GLOBAL score
+  INCR score $points
+END
+
+add_points 10
+add_points 5
+PUTS "Total score: $score"  # Prints: Total score: 15
+\end{lstlisting}
+\end{examplebox}
+
+\section{Ejemplos Prácticos}
+
+\subsection{Ejemplo de Contador}
+
+\begin{examplebox}[title=Contador de Visitas]
+\begin{lstlisting}[language=BCL]
+SET hits 0
+
+PROC record_hit DO
+  GLOBAL hits
+  INCR hits
+  PUTS "Hit number $hits recorded"
+END
+
+record_hit
+record_hit
+record_hit
+PUTS "Total hits: $hits"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Hit number 1 recorded
+Hit number 2 recorded
+Hit number 3 recorded
+Total hits: 3
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Ejemplo de Constructor de Texto}
+
+\begin{examplebox}[title=Construir un Reporte]
+\begin{lstlisting}[language=BCL]
+SET report ""
+APPEND report "=== SYSTEM REPORT ===\n"
+APPEND report "Date: " [CLOCK FORMAT [CLOCK SECONDS]] "\n"
+APPEND report "Status: OK\n"
+APPEND report "===================="
+
+PUTS $report
+\end{lstlisting}
+\end{examplebox}

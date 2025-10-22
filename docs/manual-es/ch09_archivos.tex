@@ -1,0 +1,95 @@
+% ============================================================================
+% CAPÍTULO 9: ARCHIVOS
+% ============================================================================
+
+\chapter{Archivos}
+\label{ch:files}
+
+BCL proporciona capacidades completas de E/S de archivos.
+
+\section{Abrir y Cerrar Archivos}
+
+\begin{table}[h]
+\centering
+\caption{Modos de Apertura de Archivos}
+\label{tab:file_modes}
+\begin{tabular}{ll}
+\toprule
+\textbf{Modo} & \textbf{Descripción} \\
+\midrule
+\texttt{R} & Lectura (el archivo debe existir) \\
+\texttt{W} & Escritura (crea o trunca) \\
+\texttt{A} & Agregar (crea si es necesario) \\
+\texttt{RW} & Lectura y escritura \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{examplebox}[title=E/S Básica de Archivos]
+\begin{lstlisting}[language=BCL]
+# Write to file
+SET fh [OPEN "output.txt" W]
+PUTS $fh "Line 1"
+PUTS $fh "Line 2"
+CLOSE $fh
+
+# Read from file
+SET fh [OPEN "output.txt" R]
+SET content [READ $fh]
+CLOSE $fh
+
+PUTS "File content:"
+PUTS $content
+\end{lstlisting}
+\end{examplebox}
+
+\section{Leer Archivos Línea por Línea}
+
+\begin{examplebox}[title=Lectura Línea por Línea]
+\begin{lstlisting}[language=BCL]
+SET fh [OPEN "data.txt" R]
+
+SET linenum 0
+WHILE [EOF $fh] = 0 DO
+  SET line [GETS $fh]
+  INCR linenum
+
+  IF [STRING LENGTH $line] > 0 THEN
+    PUTS "Line $linenum: $line"
+  END
+END
+
+CLOSE $fh
+\end{lstlisting}
+\end{examplebox}
+
+\section{Comandos de Archivo}
+
+\begin{examplebox}[title=Comandos FILE]
+\begin{lstlisting}[language=BCL]
+SET filename "test.txt"
+
+# Check existence
+IF [FILE EXISTS $filename] THEN
+  PUTS "File exists"
+
+  # Get size
+  SET size [FILE SIZE $filename]
+  PUTS "Size: $size bytes"
+
+  # Rename
+  FILE RENAME $filename "test_backup.txt"
+
+  # Delete
+  # FILE DELETE "test_backup.txt"
+END
+
+# Get current directory
+SET cwd [PWD]
+PUTS "Current directory: $cwd"
+
+# Find files matching pattern
+SET txtfiles [GLOB "*.txt"]
+PUTS "Text files: $txtfiles"
+\end{lstlisting}
+\end{examplebox}

@@ -1,0 +1,171 @@
+% ============================================================================
+% CAPÍTULO 2: FUNDAMENTOS DE PROGRAMACIÓN
+% ============================================================================
+
+\chapter{Fundamentos de Programación}
+\label{ch:fundamentals}
+
+Este capítulo introduce conceptos básicos de programación para principiantes absolutos usando BCL.
+
+\section{¿Qué es un Programa?}
+
+Un programa es una secuencia de instrucciones que le dice a la computadora qué hacer. En BCL, los programas consisten en comandos, cada uno en su propia línea o separados por punto y coma.
+
+\begin{examplebox}[title=Estructura de Programa Simple]
+\begin{lstlisting}[language=BCL]
+# A program with three commands
+PUTS "Starting program..."
+SET name "Alice"
+PUTS "Hello, $name!"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Starting program...
+Hello, Alice!
+\end{verbatim}
+\end{examplebox}
+
+\section{Variables: Almacenar Información}
+
+Las variables son contenedores con nombre que almacenan valores. Piensa en ellas como cajas etiquetadas donde puedes poner información y recuperarla más tarde.
+
+\subsection{Crear Variables}
+
+Usa el comando \cmd{SET} para crear y asignar valores a variables:
+
+\begin{lstlisting}[language=BCL]
+SET age 25
+SET name "Bob"
+SET price 19.99
+\end{lstlisting}
+
+\subsection{Usar Variables}
+
+Para usar el valor de una variable, antepone su nombre con un signo de dólar (\$):
+
+\begin{examplebox}[title=Usar Variables]
+\begin{lstlisting}[language=BCL]
+SET username "Alice"
+SET score 100
+
+PUTS "User: $username"
+PUTS "Score: $score"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+User: Alice
+Score: 100
+\end{verbatim}
+\end{examplebox}
+
+\section{Tipos de Datos: Todo es una Cadena}
+
+A diferencia de muchos lenguajes de programación, BCL no tiene tipos separados para números, texto, etc. Todo se almacena como una cadena (texto). BCL automáticamente interpreta las cadenas como números cuando es necesario para cálculos.
+
+\begin{examplebox}[title=Cadenas como Números]
+\begin{lstlisting}[language=BCL]
+SET a "10"
+SET b "20"
+SET sum [EXPR $a + $b]
+PUTS "Sum: $sum"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Sum: 30
+\end{verbatim}
+
+\textbf{Explicación:} Aunque \var{a} y \var{b} son texto, \cmd{EXPR} los interpreta como números para aritmética.
+\end{examplebox}
+
+\section{Comentarios: Documentar tu Código}
+
+Los comentarios son notas para humanos que la computadora ignora. Ayudan a explicar qué hace tu código.
+
+\begin{lstlisting}[language=BCL]
+# This is a single-line comment
+
+SET x 10  # Comments can also appear at line end
+SET y 20  ;# Using semicolon before hash is also valid
+\end{lstlisting}
+
+\begin{tipbox}
+Escribe comentarios para explicar \textit{por qué} tu código hace algo, no solo \textit{qué} hace. ¡Tu yo futuro te lo agradecerá!
+\end{tipbox}
+
+\section{Entrada y Salida Básica}
+
+\subsection{Salida: PUTS y PUTSN}
+
+El comando \cmd{PUTS} muestra texto en la pantalla:
+
+\begin{lstlisting}[language=BCL]
+PUTS "This appears on the screen"
+PUTS "Each PUTS starts a new line"
+\end{lstlisting}
+
+Usa \cmd{PUTSN} para imprimir sin agregar una nueva línea:
+
+\begin{examplebox}[title=PUTS vs PUTSN]
+\begin{lstlisting}[language=BCL]
+PUTS "Line 1"
+PUTS "Line 2"
+PUTSN "Same "
+PUTSN "line"
+PUTS ""  # Empty line
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Line 1
+Line 2
+Same line
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Entrada: GETS}
+
+El comando \cmd{GETS} lee la entrada del usuario desde el teclado:
+
+\begin{examplebox}[title=Leer Entrada del Usuario]
+\begin{lstlisting}[language=BCL]
+PUTS "What is your name?"
+SET name [GETS stdin]
+PUTS "Hello, $name!"
+\end{lstlisting}
+
+\textbf{Interacción:}
+\begin{verbatim}
+What is your name?
+> Charlie
+Hello, Charlie!
+\end{verbatim}
+\end{examplebox}
+
+\section{Tu Primer Programa Interactivo}
+
+Combinemos lo que hemos aprendido:
+
+\begin{examplebox}[title=Programa de Saludo Interactivo]
+\begin{lstlisting}[language=BCL]
+# Interactive greeting program
+PUTS "=== Welcome to BCL ==="
+PUTS ""
+
+# Get user's name
+PUTS "Please enter your name:"
+SET username [GETS stdin]
+
+# Get user's age
+PUTS "Please enter your age:"
+SET age [GETS stdin]
+
+# Display personalized greeting
+PUTS ""
+PUTS "Hello, $username!"
+PUTS "You are $age years old."
+PUTS "Welcome to the world of BCL programming!"
+\end{lstlisting}
+\end{examplebox}

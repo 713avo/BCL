@@ -1,0 +1,728 @@
+% ============================================================================
+% CHAPTER 10: REGULAR EXPRESSIONS
+% ============================================================================
+
+\chapter{Regular Expressions}
+\label{ch:regexp}
+
+Regular expressions (often called "regex" or "regexp") are powerful patterns used to search, match, and manipulate text. Think of them as a sophisticated "find and replace" tool that can match complex patterns instead of just exact text.
+
+\section{What Are Regular Expressions?}
+
+Imagine you want to find all phone numbers in a document, or validate that an email address is correctly formatted, or replace all dates from one format to another. Regular expressions make these tasks easy.
+
+\begin{examplebox}[title=Real-World Analogy]
+Regular expressions are like describing something without knowing its exact form:
+\begin{itemize}
+  \item "Any word starting with 'cat'" - matches "cat", "cats", "category"
+  \item "A sequence of digits" - matches "123", "4567", "999"
+  \item "Text between quotes" - matches "hello", "goodbye"
+\end{itemize}
+\end{examplebox}
+
+\begin{notebox}
+If you're new to programming, regular expressions might seem cryptic at first. Don't worry! We'll start with simple patterns and build up to more complex ones.
+\end{notebox}
+
+\section{Basic Pattern Building Blocks}
+
+Regular expressions are built from simple pieces. Let's learn them one at a time.
+
+\subsection{Literal Characters}
+
+The simplest pattern is just normal text—it matches exactly what you write.
+
+\begin{examplebox}[title=Literal Matching]
+\begin{lstlisting}[language=BCL]
+SET text "The cat sat on the mat"
+
+# Match the word "cat"
+IF [REGEXP "cat" $text] THEN
+  PUTS "Found 'cat' in the text"
+END
+
+# Match "mat"
+IF [REGEXP "mat" $text] THEN
+  PUTS "Found 'mat' in the text"
+END
+
+# This won't match because case matters
+IF [REGEXP "Cat" $text] THEN
+  PUTS "Found 'Cat'"
+ELSE
+  PUTS "'Cat' not found (wrong case)"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Found 'cat' in the text
+Found 'mat' in the text
+'Cat' not found (wrong case)
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Special Characters - The Wildcards}
+
+Some characters have special meanings in regular expressions:
+
+\begin{table}[h]
+\centering
+\caption{Basic Regular Expression Characters}
+\label{tab:regex_basics}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\texttt{.} & Matches any single character \\
+\texttt{*} & Matches 0 or more of the previous character \\
+\texttt{+} & Matches 1 or more of the previous character \\
+\texttt{?} & Matches 0 or 1 of the previous character \\
+\texttt{\^{}} & Matches the start of the string \\
+\texttt{\$} & Matches the end of the string \\
+\texttt{|} & OR operator (matches left or right) \\
+\texttt{(...)} & Groups patterns together \\
+\texttt{[...]} & Matches any character in the brackets \\
+\texttt{\textbackslash} & Escapes special characters \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The Dot (.) - Any Character}
+
+The dot matches any single character except newline.
+
+\begin{examplebox}[title=Using the Dot]
+\begin{lstlisting}[language=BCL]
+# Match "c.t" - c, any character, then t
+SET words [LIST "cat" "cot" "cut" "cart" "ct"]
+
+FOREACH word IN $words DO
+  IF [REGEXP "c.t" $word] THEN
+    PUTS "$word matches c.t"
+  ELSE
+    PUTS "$word does NOT match c.t"
+  END
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+cat matches c.t
+cot matches c.t
+cut matches c.t
+cart matches c.t
+ct does NOT match c.t
+\end{verbatim}
+
+\textbf{Explanation:} The pattern \texttt{c.t} requires exactly one character between 'c' and 't'. "cart" matches because it contains "car" + "t" = "cart" which has the pattern.
+\end{examplebox}
+
+\subsection{Character Classes [...]}
+
+Square brackets match any one character from a set.
+
+\begin{examplebox}[title=Character Classes]
+\begin{lstlisting}[language=BCL]
+# Match c[aou]t - cat, cot, or cut
+SET words [LIST "cat" "cot" "cut" "cit" "cet"]
+
+FOREACH word IN $words DO
+  IF [REGEXP "c\[aou\]t" $word] THEN
+    PUTS "$word matches"
+  END
+END
+
+# Match any digit [0-9]
+SET text "I have 5 apples"
+IF [REGEXP "\[0-9\]" $text] THEN
+  PUTS "Contains a digit"
+END
+
+# Match any letter [a-z] or [A-Z]
+IF [REGEXP "\[a-z\]" $text] THEN
+  PUTS "Contains lowercase letters"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+cat matches
+cot matches
+cut matches
+Contains a digit
+Contains lowercase letters
+\end{verbatim}
+\end{examplebox}
+
+\begin{tipbox}
+Common character classes:
+\begin{itemize}
+  \item \texttt{[0-9]} - any digit
+  \item \texttt{[a-z]} - any lowercase letter
+  \item \texttt{[A-Z]} - any uppercase letter
+  \item \texttt{[a-zA-Z]} - any letter
+  \item \texttt{[\^{}0-9]} - anything that's NOT a digit
+\end{itemize}
+\end{tipbox}
+
+\subsection{Repetition: *, +, ?}
+
+These tell how many times a pattern should repeat.
+
+\begin{table}[h]
+\centering
+\caption{Repetition Operators}
+\label{tab:regex_repetition}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Operator} & \textbf{Meaning} \\
+\midrule
+\texttt{*} & 0 or more times (optional, can repeat) \\
+\texttt{+} & 1 or more times (must appear at least once) \\
+\texttt{?} & 0 or 1 time (optional, appears once or not at all) \\
+\texttt{\{n\}} & Exactly n times \\
+\texttt{\{n,\}} & n or more times \\
+\texttt{\{n,m\}} & Between n and m times \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{examplebox}[title=Repetition Examples]
+\begin{lstlisting}[language=BCL]
+# Match one or more digits
+SET texts [LIST "abc" "123" "abc123" "a1b2c3"]
+
+FOREACH text IN $texts DO
+  IF [REGEXP "\[0-9\]+" $text] THEN
+    PUTS "$text contains numbers"
+  END
+END
+
+# Match optional minus sign followed by digits: -?[0-9]+
+SET numbers [LIST "123" "-456" "78" "-9"]
+FOREACH num IN $numbers DO
+  IF [REGEXP "^-?\[0-9\]+$" $num] THEN
+    PUTS "$num is a valid number"
+  END
+END
+
+# Match "color" or "colour"
+IF [REGEXP "colou?r" "color"] THEN
+  PUTS "Matches 'color'"
+END
+IF [REGEXP "colou?r" "colour"] THEN
+  PUTS "Matches 'colour'"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+123 contains numbers
+abc123 contains numbers
+a1b2c3 contains numbers
+123 is a valid number
+-456 is a valid number
+78 is a valid number
+-9 is a valid number
+Matches 'color'
+Matches 'colour'
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Anchors: \^{} and \$}
+
+Anchors match positions, not characters.
+
+\begin{itemize}
+  \item \texttt{\^{}} matches the start of the string
+  \item \texttt{\$} matches the end of the string
+\end{itemize}
+
+\begin{examplebox}[title=Using Anchors]
+\begin{lstlisting}[language=BCL]
+SET text "hello world"
+
+# Must start with "hello"
+IF [REGEXP "^hello" $text] THEN
+  PUTS "Starts with 'hello'"
+END
+
+# Must end with "world"
+IF [REGEXP "world$" $text] THEN
+  PUTS "Ends with 'world'"
+END
+
+# Must be EXACTLY "hello world" (nothing before or after)
+IF [REGEXP "^hello world$" $text] THEN
+  PUTS "Exact match"
+END
+
+# Won't match - has extra text
+SET text2 "say hello world now"
+IF [REGEXP "^hello world$" $text2] THEN
+  PUTS "Exact match"
+ELSE
+  PUTS "Not an exact match - has extra text"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Starts with 'hello'
+Ends with 'world'
+Exact match
+Not an exact match - has extra text
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Shorthand Character Classes}
+
+BCL provides shortcuts for common patterns:
+
+\begin{table}[h]
+\centering
+\caption{Shorthand Character Classes}
+\label{tab:regex_shorthand}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Shorthand} & \textbf{Equivalent To} \\
+\midrule
+\texttt{\textbackslash d} & \texttt{[0-9]} - any digit \\
+\texttt{\textbackslash D} & \texttt{[\^{}0-9]} - any non-digit \\
+\texttt{\textbackslash w} & \texttt{[a-zA-Z0-9\_]} - word character \\
+\texttt{\textbackslash W} & Non-word character \\
+\texttt{\textbackslash s} & Whitespace (space, tab, newline) \\
+\texttt{\textbackslash S} & Non-whitespace \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{examplebox}[title=Shorthand Examples]
+\begin{lstlisting}[language=BCL]
+# Find digits with \d
+SET text "Room 101 is on floor 5"
+IF [REGEXP "\\d+" $text] THEN
+  PUTS "Found numbers"
+END
+
+# Find words with \w
+IF [REGEXP "\\w+" $text] THEN
+  PUTS "Found word characters"
+END
+
+# Validate format: word space word
+SET input "hello world"
+IF [REGEXP "^\\w+\\s+\\w+$" $input] THEN
+  PUTS "Valid format: two words separated by space"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Found numbers
+Found word characters
+Valid format: two words separated by space
+\end{verbatim}
+\end{examplebox}
+
+\begin{warningbox}
+In BCL, you need to escape backslashes in strings. Write \texttt{\textbackslash\textbackslash d} to represent \texttt{\textbackslash d} in the pattern.
+\end{warningbox}
+
+\section{The REGEXP Command}
+
+\cmd{REGEXP} checks if a pattern matches and can extract matched portions.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+REGEXP pattern string                    # Returns 1 if match, 0 if not
+REGEXP pattern string matchvar           # Store entire match
+REGEXP pattern string matchvar subvar... # Store submatches
+\end{lstlisting}
+
+\subsection{Basic Matching}
+
+\begin{examplebox}[title=Simple Pattern Matching]
+\begin{lstlisting}[language=BCL]
+SET email "user@example.com"
+
+# Check if it looks like an email
+IF [REGEXP "@" $email] THEN
+  PUTS "Contains @ symbol"
+END
+
+# Check for email pattern: word @ word . word
+IF [REGEXP "\\w+@\\w+\\.\\w+" $email] THEN
+  PUTS "Looks like a valid email"
+END
+
+# Validate phone number: exactly 10 digits
+SET phone "5551234567"
+IF [REGEXP "^\\d\{10\}$" $phone] THEN
+  PUTS "Valid 10-digit phone number"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Contains @ symbol
+Looks like a valid email
+Valid 10-digit phone number
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Capturing Matches}
+
+Use parentheses \texttt{(...)} to capture parts of the match.
+
+\begin{examplebox}[title=Extracting Information]
+\begin{lstlisting}[language=BCL]
+# Extract year from date
+SET date "Today is 2025-10-22"
+REGEXP "(\\d\{4\})-(\\d\{2\})-(\\d\{2\})" $date MATCH year month day
+PUTS "Year: $year"
+PUTS "Month: $month"
+PUTS "Day: $day"
+
+# Extract name and extension from filename
+SET filename "document.pdf"
+REGEXP "(.+)\\.(\\w+)$" $filename MATCH name ext
+PUTS "Name: $name"
+PUTS "Extension: $ext"
+
+# Extract email parts
+SET email "john.doe@example.com"
+REGEXP "(.+)@(.+)" $email MATCH username domain
+PUTS "Username: $username"
+PUTS "Domain: $domain"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Year: 2025
+Month: 10
+Day: 22
+Name: document
+Extension: pdf
+Username: john.doe
+Domain: example.com
+\end{verbatim}
+\end{examplebox}
+
+\subsection{REGEXP Options}
+
+\begin{table}[h]
+\centering
+\caption{REGEXP Options}
+\label{tab:regexp_options}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Option} & \textbf{Description} \\
+\midrule
+\texttt{-nocase} & Case-insensitive matching \\
+\texttt{-line} & Treat string as multiple lines (\^{} and \$ match line starts/ends) \\
+\texttt{-lineanchor} & Similar to -line \\
+\texttt{-expanded} & Ignore whitespace in pattern (for readability) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{examplebox}[title=Case-Insensitive Matching]
+\begin{lstlisting}[language=BCL]
+SET text "Hello World"
+
+# Case-sensitive (won't match)
+IF [REGEXP "hello" $text] THEN
+  PUTS "Found (sensitive)"
+ELSE
+  PUTS "Not found (sensitive)"
+END
+
+# Case-insensitive (will match)
+IF [REGEXP -nocase "hello" $text] THEN
+  PUTS "Found (insensitive)"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Not found (sensitive)
+Found (insensitive)
+\end{verbatim}
+\end{examplebox}
+
+\section{The REGSUB Command}
+
+\cmd{REGSUB} replaces text that matches a pattern.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+REGSUB pattern string replacement         # Replace first match
+REGSUB pattern string replacement ALL     # Replace all matches
+\end{lstlisting}
+
+\subsection{Basic Replacement}
+
+\begin{examplebox}[title=Simple Replacements]
+\begin{lstlisting}[language=BCL]
+SET text "Hello, World!"
+
+# Replace first occurrence
+SET result [REGSUB "World" $text "BCL"]
+PUTS $result  # Hello, BCL!
+
+# Replace all occurrences
+SET text2 "foo bar foo baz foo"
+SET result2 [REGSUB "foo" $text2 "XXX" ALL]
+PUTS $result2  # XXX bar XXX baz XXX
+
+# Remove all digits
+SET text3 "Room 101 is on floor 5"
+SET clean [REGSUB "\\d+" $text3 "" ALL]
+PUTS $clean  # Room  is on floor
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Hello, BCL!
+XXX bar XXX baz XXX
+Room  is on floor
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Using Captured Groups in Replacement}
+
+You can reference captured groups in the replacement using \texttt{\&} or \texttt{\textbackslash 1}, \texttt{\textbackslash 2}, etc.
+
+\begin{examplebox}[title=Advanced Replacements]
+\begin{lstlisting}[language=BCL]
+# Swap first and last name
+SET name "John Doe"
+SET swapped [REGSUB "(\\w+) (\\w+)" $name "\\2, \\1"]
+PUTS $swapped  # Doe, John
+
+# Format phone number: 5551234567 -> (555) 123-4567
+SET phone "5551234567"
+SET formatted [REGSUB "(\\d\{3\})(\\d\{3\})(\\d\{4\})" $phone "(\\1) \\2-\\3"]
+PUTS $formatted  # (555) 123-4567
+
+# Add "http://" to URLs that don't have it
+SET url "example.com"
+IF [REGEXP "^http" $url] = 0 THEN
+  SET url [REGSUB "^" $url "http://"]
+END
+PUTS $url  # http://example.com
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Doe, John
+(555) 123-4567
+http://example.com
+\end{verbatim}
+\end{examplebox}
+
+\section{Practical Examples}
+
+\subsection{Email Validator (Advanced)}
+
+\begin{examplebox}[title=Complete Email Validation]
+\begin{lstlisting}[language=BCL]
+PROC validate_email WITH email DO
+  # Basic pattern: user@domain.tld
+  SET pattern "^\\w+(\\.\\w+)*@\\w+(\\.\\w+)+$"
+
+  IF [REGEXP $pattern $email] THEN
+    PUTS "$email is VALID"
+    RETURN 1
+  ELSE
+    PUTS "$email is INVALID"
+    RETURN 0
+  END
+END
+
+# Test cases
+validate_email "user@example.com"
+validate_email "john.doe@company.co.uk"
+validate_email "invalid@"
+validate_email "@invalid.com"
+validate_email "no-at-sign.com"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+user@example.com is VALID
+john.doe@company.co.uk is VALID
+invalid@ is INVALID
+@invalid.com is INVALID
+no-at-sign.com is INVALID
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Extract URLs from Text}
+
+\begin{examplebox}[title=Finding URLs]
+\begin{lstlisting}[language=BCL]
+PROC extract_urls WITH text DO
+  SET urls [LIST]
+
+  # Pattern for http(s) URLs
+  SET pattern "https?://\[\\w\\.-\]+\[/\\w\\.-\]*"
+
+  SET pos 0
+  WHILE 1 DO
+    # Find next URL
+    IF [REGEXP -start $pos $pattern $text url] THEN
+      SET urls [LAPPEND $urls $url]
+      # Move past this match
+      SET pos [STRING FIRST $url $text $pos]
+      INCR pos [STRING LENGTH $url]
+    ELSE
+      BREAK
+    END
+  END
+
+  RETURN $urls
+END
+
+SET text "Visit http://example.com or https://bcl.org for info"
+SET urls [extract_urls $text]
+PUTS "Found URLs:"
+FOREACH url IN $urls DO
+  PUTS "  - $url"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Found URLs:
+  - http://example.com
+  - https://bcl.org
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Password Strength Validator}
+
+\begin{examplebox}[title=Regex-based Password Checking]
+\begin{lstlisting}[language=BCL]
+PROC check_password_strength WITH password DO
+  SET score 0
+
+  # Check length
+  IF [STRING LENGTH $password] >= 8 THEN
+    INCR score
+  END
+
+  # Check for lowercase
+  IF [REGEXP "\[a-z\]" $password] THEN
+    INCR score
+  END
+
+  # Check for uppercase
+  IF [REGEXP "\[A-Z\]" $password] THEN
+    INCR score
+  END
+
+  # Check for digits
+  IF [REGEXP "\\d" $password] THEN
+    INCR score
+  END
+
+  # Check for special characters
+  IF [REGEXP "\[!@#$%^&*\]" $password] THEN
+    INCR score
+  END
+
+  # Report strength
+  IF $score < 3 THEN
+    RETURN "Weak"
+  ELSEIF $score < 5 THEN
+    RETURN "Medium"
+  ELSE
+    RETURN "Strong"
+  END
+END
+
+SET passwords [LIST "hello" "Hello123" "MyP@ss123" "Complex$Pass9"]
+FOREACH pass IN $passwords DO
+  SET strength [check_password_strength $pass]
+  PUTS "$pass: $strength"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+hello: Weak
+Hello123: Medium
+MyP@ss123: Strong
+Complex$Pass9: Strong
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Format Phone Numbers}
+
+\begin{examplebox}[title=Normalize Phone Numbers]
+\begin{lstlisting}[language=BCL]
+PROC format_phone WITH phone DO
+  # Remove all non-digits
+  SET clean [REGSUB "\\D" $phone "" ALL]
+
+  # Check if we have 10 digits
+  IF [STRING LENGTH $clean] != 10 THEN
+    RETURN "Invalid phone number"
+  END
+
+  # Format as (XXX) XXX-XXXX
+  SET formatted [REGSUB "(\\d\{3\})(\\d\{3\})(\\d\{4\})" $clean "(\\1) \\2-\\3"]
+  RETURN $formatted
+END
+
+# Test with various formats
+SET phones [LIST "5551234567" "555-123-4567" "(555) 123-4567" "555.123.4567"]
+FOREACH phone IN $phones DO
+  SET formatted [format_phone $phone]
+  PUTS "$phone -> $formatted"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+5551234567 -> (555) 123-4567
+555-123-4567 -> (555) 123-4567
+(555) 123-4567 -> (555) 123-4567
+555.123.4567 -> (555) 123-4567
+\end{verbatim}
+\end{examplebox}
+
+\section{Common Regular Expression Patterns}
+
+Here's a reference of useful patterns for common tasks:
+
+\begin{table}[h]
+\centering
+\caption{Common Regex Patterns}
+\label{tab:common_patterns}
+\begin{tabular}{lp{7cm}}
+\toprule
+\textbf{Pattern} & \textbf{Description} \\
+\midrule
+\texttt{\^{}\textbackslash d\{4\}-\textbackslash d\{2\}-\textbackslash d\{2\}\$} & Date (YYYY-MM-DD) \\
+\texttt{\textbackslash w+@\textbackslash w+\textbackslash .\textbackslash w+} & Simple email \\
+\texttt{\^{}\textbackslash d\{3\}-\textbackslash d\{3\}-\textbackslash d\{4\}\$} & Phone (XXX-XXX-XXXX) \\
+\texttt{\^{}[01]?\textbackslash d\textbackslash d?\$} & Number 0-199 \\
+\texttt{\textbackslash b\textbackslash w\{3\}\textbackslash b} & Exactly 3-letter word \\
+\texttt{https?://.*} & HTTP or HTTPS URL \\
+\texttt{\^{}\textbackslash s*\$} & Empty or whitespace only \\
+\texttt{\textbackslash d+\textbackslash .\textbackslash d\{2\}} & Decimal with 2 places \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{tipbox}
+Regular expressions can get complex. Start simple and build up gradually. Test your patterns with various inputs to ensure they work as expected.
+\end{tipbox}
+
+\begin{warningbox}
+Be careful with patterns like \texttt{.*} (match anything) as they can match more than you expect. Use specific patterns when possible.
+\end{warningbox}

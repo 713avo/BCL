@@ -1,0 +1,365 @@
+================================================================================
+ESPECIFICACIÓN DEL COMANDO ARRAY EN BCL
+================================================================================
+
+Documento: BCL_ARRAY_v1.0.txt
+Versión: 1.0
+Fecha: 2025-01-22
+Autor: BCL Development Team
+
+================================================================================
+1. DESCRIPCIÓN GENERAL
+================================================================================
+
+El comando ARRAY proporciona operaciones para manipular arrays asociativos en
+BCL, inspirado en el comando array de Tcl. Un array asociativo es una
+estructura de datos que mapea claves (índices) a valores.
+
+Los arrays en BCL se implementan internamente como variables individuales con
+nombres en el formato: arrayname(index)
+
+Sintaxis general:
+    ARRAY subcomando arrayName ?arg ...?
+
+================================================================================
+2. SUBCOMANDOS
+================================================================================
+
+2.1. ARRAY EXISTS
+-----------------
+Verifica si existe al menos un elemento del array especificado.
+
+Sintaxis:
+    ARRAY EXISTS arrayName
+
+Retorna:
+    "1" si el array existe (tiene al menos un elemento)
+    "0" si el array no existe
+
+Ejemplos:
+    SET resultado [ARRAY EXISTS config]         # "0"
+    SET config(debug) "true"
+    SET resultado [ARRAY EXISTS config]         # "1"
+
+2.2. ARRAY SIZE
+---------------
+Devuelve el número de elementos en el array.
+
+Sintaxis:
+    ARRAY SIZE arrayName
+
+Retorna:
+    Número de elementos en el array (como string)
+    "0" si el array no existe
+
+Ejemplos:
+    SET colores(rojo) "#FF0000"
+    SET colores(verde) "#00FF00"
+    SET colores(azul) "#0000FF"
+    SET tam [ARRAY SIZE colores]               # "3"
+    SET tam [ARRAY SIZE inexistente]           # "0"
+
+2.3. ARRAY NAMES
+----------------
+Devuelve una lista (separada por espacios) de los índices del array.
+
+Sintaxis:
+    ARRAY NAMES arrayName ?pattern?
+
+Parámetros:
+    arrayName  - Nombre del array
+    pattern    - (Opcional) Patrón glob para filtrar índices
+
+Retorna:
+    Lista de índices separados por espacios
+    String vacío si el array no existe o no hay coincidencias
+
+Patrones soportados:
+    *          - Cero o más caracteres
+    ?          - Exactamente un carácter
+    [abc]      - Cualquier carácter del conjunto
+    [a-z]      - Cualquier carácter del rango
+
+Ejemplos:
+    SET datos(nombre) "Juan"
+    SET datos(edad) "30"
+    SET datos(nota1) "8"
+    SET datos(nota2) "9"
+
+    SET todos [ARRAY NAMES datos]              # "nombre edad nota1 nota2"
+    SET notas [ARRAY NAMES datos "nota*"]      # "nota1 nota2"
+    SET con_e [ARRAY NAMES datos "*e*"]        # "nombre edad"
+
+2.4. ARRAY GET
+--------------
+Devuelve una lista de pares índice-valor del array.
+
+Sintaxis:
+    ARRAY GET arrayName ?pattern?
+
+Parámetros:
+    arrayName  - Nombre del array
+    pattern    - (Opcional) Patrón glob para filtrar índices
+
+Retorna:
+    Lista alternando índices y valores: "idx1 val1 idx2 val2 ..."
+    String vacío si el array no existe o no hay coincidencias
+
+Ejemplos:
+    SET colores(rojo) "255,0,0"
+    SET colores(verde) "0,255,0"
+
+    SET todo [ARRAY GET colores]
+    # Resultado: "rojo 255,0,0 verde 0,255,0"
+
+    SET datos(x1) "10"
+    SET datos(x2) "20"
+    SET datos(y1) "30"
+
+    SET x_vals [ARRAY GET datos "x*"]
+    # Resultado: "x1 10 x2 20"
+
+Uso típico:
+    # Guardar estado del array
+    SET copia [ARRAY GET original]
+
+    # Restaurar en otro array
+    ARRAY SET nuevo $copia
+
+2.5. ARRAY SET
+--------------
+Establece elementos del array desde una lista de pares índice-valor.
+
+Sintaxis:
+    ARRAY SET arrayName list
+
+Parámetros:
+    arrayName  - Nombre del array
+    list       - Lista con número par de elementos (índice valor índice valor...)
+
+Comportamiento:
+    - La lista debe tener un número par de elementos
+    - Si el array ya existe, se añaden/reemplazan elementos
+    - Los elementos existentes que no estén en la lista no se modifican
+
+Ejemplos:
+    # Crear array desde lista
+    ARRAY SET config "host localhost port 8080 debug true"
+    # Resultado:
+    #   config(host) = "localhost"
+    #   config(port) = "8080"
+    #   config(debug) = "true"
+
+    # Copiar array
+    SET original_data [ARRAY GET original]
+    ARRAY SET copia $original_data
+
+Error:
+    Si la lista tiene un número impar de elementos, se genera un error:
+    "ARRAY SET: list must have an even number of elements"
+
+2.6. ARRAY UNSET
+----------------
+Elimina elementos del array que coincidan con el patrón.
+
+Sintaxis:
+    ARRAY UNSET arrayName ?pattern?
+
+Parámetros:
+    arrayName  - Nombre del array
+    pattern    - (Opcional) Patrón glob. Si se omite, se usa "*" (eliminar todo)
+
+Comportamiento:
+    - Si no se especifica patrón, elimina TODO el array
+    - Si se especifica patrón, elimina solo los elementos que coincidan
+
+Ejemplos:
+    SET datos(x1) "10"
+    SET datos(x2) "20"
+    SET datos(y1) "30"
+    SET datos(y2) "40"
+
+    # Eliminar solo elementos x*
+    ARRAY UNSET datos "x*"
+    # Quedan: datos(y1) y datos(y2)
+
+    # Eliminar todo el array
+    ARRAY UNSET datos
+    # El array ya no existe
+
+================================================================================
+3. EJEMPLOS DE USO
+================================================================================
+
+3.1. Directorio telefónico
+---------------------------
+    SET telefono(Juan) "555-1234"
+    SET telefono(Maria) "555-5678"
+    SET telefono(Pedro) "555-9012"
+
+    # Listar todos los contactos
+    SET contactos [ARRAY NAMES telefono]
+    PUTS "Contactos: $contactos"
+
+    # Mostrar cantidad
+    SET total [ARRAY SIZE telefono]
+    PUTS "Total de contactos: $total"
+
+3.2. Configuración de aplicación
+----------------------------------
+    # Cargar configuración
+    ARRAY SET config "
+        database_host localhost
+        database_port 3306
+        database_name myapp
+        cache_enabled true
+        cache_ttl 300
+    "
+
+    # Acceder a valores
+    PUTS "DB Host: $config(database_host)"
+    PUTS "Cache: $config(cache_enabled)"
+
+    # Listar opciones de base de datos
+    SET db_opts [ARRAY NAMES config "database_*"]
+    PUTS "Opciones DB: $db_opts"
+
+3.3. Estadísticas y contadores
+--------------------------------
+    # Inicializar contadores
+    SET contador(login) "0"
+    SET contador(logout) "0"
+    SET contador(error) "0"
+
+    # Incrementar
+    SET contador(login) [EXPR $contador(login) + 1]
+    SET contador(login) [EXPR $contador(login) + 1]
+    SET contador(error) [EXPR $contador(error) + 1]
+
+    # Mostrar resumen
+    SET stats [ARRAY GET contador]
+    PUTS "Estadísticas: $stats"
+
+3.4. Copiar y guardar arrays
+------------------------------
+    # Array original
+    SET original(a) "1"
+    SET original(b) "2"
+    SET original(c) "3"
+
+    # Copiar array
+    SET datos [ARRAY GET original]
+    ARRAY SET copia $datos
+
+    # Verificar
+    PUTS "Tamaño copia: [ARRAY SIZE copia]"
+
+3.5. Limpiar elementos temporales
+-----------------------------------
+    SET cache(temp_1) "data1"
+    SET cache(temp_2) "data2"
+    SET cache(permanent_1) "data3"
+    SET cache(permanent_2) "data4"
+
+    # Eliminar solo temporales
+    ARRAY UNSET cache "temp_*"
+
+    # Verificar
+    PUTS "Quedan: [ARRAY SIZE cache]"         # "2"
+
+================================================================================
+4. INTEGRACIÓN CON OTROS COMANDOS
+================================================================================
+
+4.1. Con INFO EXISTS
+---------------------
+    # Verificar si un elemento específico existe
+    IF [INFO EXISTS config(debug)] THEN
+        PUTS "Debug mode: $config(debug)"
+    END
+
+4.2. Con STRING MATCH
+----------------------
+    # Los patrones de ARRAY NAMES/GET/UNSET usan el mismo sistema que STRING MATCH
+    SET nombres [ARRAY NAMES datos "nota[0-9]"]
+
+4.3. Con LLENGTH y LINDEX
+--------------------------
+    # Procesar resultado de ARRAY NAMES
+    SET indices [ARRAY NAMES myarray]
+    SET cantidad [LLENGTH $indices]
+
+    # Procesar pares de ARRAY GET
+    SET pares [ARRAY GET myarray]
+    SET primer_indice [LINDEX $pares 0]
+    SET primer_valor [LINDEX $pares 1]
+
+================================================================================
+5. NOTAS DE IMPLEMENTACIÓN
+================================================================================
+
+- Los arrays se implementan como variables individuales: arrayname(index)
+- La búsqueda de elementos itera sobre la hash table de variables
+- El pattern matching usa el algoritmo glob estándar (*, ?, [])
+- Todas las comparaciones de patrones son case-sensitive
+- El orden de los elementos devueltos por ARRAY NAMES y ARRAY GET
+  depende del orden interno de la hash table (no garantizado)
+
+================================================================================
+6. DIFERENCIAS CON TCL
+================================================================================
+
+Similitudes:
+- Sintaxis y comportamiento general idénticos
+- Mismos subcomandos principales
+- Pattern matching compatible
+
+Diferencias menores:
+- BCL no implementa: ARRAY STARTSEARCH, ARRAY ANYMORE, ARRAY NEXTELEMENT,
+  ARRAY DONESEARCH (iteradores de Tcl)
+- BCL no implementa: ARRAY STATISTICS (información interna)
+
+================================================================================
+7. MENSAJES DE ERROR
+================================================================================
+
+ARRAY EXISTS: missing array name
+    - No se proporcionó el nombre del array
+
+ARRAY SIZE: missing array name
+    - No se proporcionó el nombre del array
+
+ARRAY NAMES: missing array name
+    - No se proporcionó el nombre del array
+
+ARRAY GET: missing array name
+    - No se proporcionó el nombre del array
+
+ARRAY SET: missing array name
+    - No se proporcionó el nombre del array
+
+ARRAY SET: missing list
+    - No se proporcionó la lista de pares
+
+ARRAY SET: list must have an even number of elements
+    - La lista tiene un número impar de elementos
+
+ARRAY UNSET: missing array name
+    - No se proporcionó el nombre del array
+
+ARRAY: wrong # args: should be "ARRAY option arrayName ?arg ...?"
+    - Número incorrecto de argumentos
+
+ARRAY: bad option "XXX": must be EXISTS, GET, NAMES, SET, SIZE, or UNSET
+    - Subcomando desconocido
+
+================================================================================
+8. COMPATIBILIDAD
+================================================================================
+
+Versión BCL: 1.5.1+
+Compatible con: Tcl 8.0+ (sintaxis ARRAY)
+
+================================================================================
+FIN DE LA ESPECIFICACIÓN
+================================================================================

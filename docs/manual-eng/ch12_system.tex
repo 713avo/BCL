@@ -1,0 +1,739 @@
+% ============================================================================
+% CHAPTER 12: SYSTEM INTERACTION
+% ============================================================================
+
+\chapter{System Interaction}
+\label{ch:system}
+
+BCL provides several commands to interact with the operating system, execute code dynamically, load external files, and control program flow. This chapter covers these powerful system-level features.
+
+\section{Dynamic Code Execution}
+
+\subsection{EVAL - Execute String as Code}
+
+\cmd{EVAL} evaluates a string as BCL code, allowing you to run code that's constructed at runtime.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+EVAL string
+\end{lstlisting}
+
+\begin{examplebox}[title=Basic EVAL Usage]
+\begin{lstlisting}[language=BCL]
+# Execute code from a string
+SET command "PUTS 'Hello from EVAL'"
+EVAL $command
+
+# Build code dynamically
+SET varname "result"
+SET value 42
+SET code "SET $varname $value"
+EVAL $code
+PUTS "result = $result"  # Prints: result = 42
+
+# Evaluate expressions
+SET expr "5 + 3 * 2"
+SET answer [EVAL "EXPR $expr"]
+PUTS "Answer: $answer"  # Prints: Answer: 11
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Hello from EVAL
+result = 42
+Answer: 11
+\end{verbatim}
+\end{examplebox}
+
+\begin{warningbox}
+\cmd{EVAL} executes code in the current scope with access to all variables. Be extremely careful when evaluating user input, as it can execute arbitrary code. Never use \cmd{EVAL} with untrusted data!
+\end{warningbox}
+
+\subsection{Practical EVAL Examples}
+
+\begin{examplebox}[title=Dynamic Command Dispatcher]
+\begin{lstlisting}[language=BCL]
+PROC dispatch_command WITH cmd DO
+  # Map user commands to BCL code
+  SWITCH $cmd
+    CASE "greet" DO
+      EVAL "PUTS 'Hello, user!'"
+    END
+    CASE "time" DO
+      EVAL "PUTS [CLOCK FORMAT [CLOCK SECONDS]]"
+    END
+    CASE "random" DO
+      EVAL "PUTS [EXPR rand() * 100]"
+    END
+    DEFAULT DO
+      PUTS "Unknown command: $cmd"
+    END
+  END
+END
+
+dispatch_command "greet"
+dispatch_command "time"
+dispatch_command "random"
+\end{lstlisting}
+\end{examplebox}
+
+\begin{examplebox}[title=Simple Calculator with EVAL]
+\begin{lstlisting}[language=BCL]
+PROC calculate WITH expression DO
+  # Add EXPR wrapper and evaluate
+  SET code "EXPR $expression"
+
+  # Use error handling (if available)
+  SET result [EVAL $code]
+
+  RETURN $result
+END
+
+PUTS "5 + 3 = [calculate "5 + 3"]"
+PUTS "10 * 2.5 = [calculate "10 * 2.5"]"
+PUTS "sqrt(16) = [calculate "sqrt(16)"]"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+5 + 3 = 8
+10 * 2.5 = 25.0
+sqrt(16) = 4.0
+\end{verbatim}
+\end{examplebox}
+
+\section{Loading External Code}
+
+\subsection{SOURCE - Load and Execute Files}
+
+\cmd{SOURCE} loads and executes BCL code from an external file, allowing you to organize large programs into modules.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+SOURCE filepath
+\end{lstlisting}
+
+\begin{examplebox}[title=Using SOURCE]
+Create a file \texttt{library.bcl}:
+\begin{lstlisting}[language=BCL]
+# library.bcl - Math utilities
+PROC square WITH x DO
+  RETURN [EXPR $x * $x]
+END
+
+PROC cube WITH x DO
+  RETURN [EXPR $x * $x * $x]
+END
+
+SET PI 3.14159
+\end{lstlisting}
+
+Main script:
+\begin{lstlisting}[language=BCL]
+# Load the library
+SOURCE "library.bcl"
+
+# Use functions and variables from library
+PUTS "5 squared = [square 5]"
+PUTS "3 cubed = [cube 3]"
+PUTS "PI = $PI"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+5 squared = 25
+3 cubed = 27
+PI = 3.14159
+\end{verbatim}
+\end{examplebox}
+
+\begin{tipbox}
+Use \cmd{SOURCE} to:
+\begin{itemize}
+  \item Split large programs into manageable files
+  \item Create reusable library modules
+  \item Share common code between multiple scripts
+  \item Keep configuration in separate files
+\end{itemize}
+\end{tipbox}
+
+\subsection{Practical SOURCE Examples}
+
+\begin{examplebox}[title=Configuration File]
+Create \texttt{config.bcl}:
+\begin{lstlisting}[language=BCL]
+# Application configuration
+SET APP_NAME "MyApp"
+SET APP_VERSION "1.0.0"
+SET DEBUG_MODE 1
+SET MAX_USERS 100
+\end{lstlisting}
+
+Main application:
+\begin{lstlisting}[language=BCL]
+# Load configuration
+SOURCE "config.bcl"
+
+PUTS "=== $APP_NAME v$APP_VERSION ==="
+PUTS "Debug mode: $DEBUG_MODE"
+PUTS "Max users: $MAX_USERS"
+
+IF $DEBUG_MODE THEN
+  PUTS "[DEBUG] Configuration loaded successfully"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+=== MyApp v1.0.0 ===
+Debug mode: 1
+Max users: 100
+[DEBUG] Configuration loaded successfully
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Module System]
+Create \texttt{string\_utils.bcl}:
+\begin{lstlisting}[language=BCL]
+PROC reverse_string WITH str DO
+  RETURN [STRING REVERSE $str]
+END
+
+PROC count_vowels WITH str DO
+  SET count 0
+  SET len [STRING LENGTH $str]
+  FOR 0 TO $len-1 DO
+    SET char [STRING INDEX $str $__FOR]
+    IF [REGEXP -nocase "\[aeiou\]" $char] THEN
+      INCR count
+    END
+  END
+  RETURN $count
+END
+\end{lstlisting}
+
+Main script:
+\begin{lstlisting}[language=BCL]
+SOURCE "string_utils.bcl"
+
+SET text "Hello World"
+PUTS "Original: $text"
+PUTS "Reversed: [reverse_string $text]"
+PUTS "Vowels: [count_vowels $text]"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Original: Hello World
+Reversed: dlroW olleH
+Vowels: 3
+\end{verbatim}
+\end{examplebox}
+
+\section{Timing and Delays}
+
+\subsection{AFTER - Pause Execution}
+
+\cmd{AFTER} suspends execution for a specified number of milliseconds.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+AFTER milliseconds
+\end{lstlisting}
+
+\begin{examplebox}[title=Using AFTER]
+\begin{lstlisting}[language=BCL]
+PUTS "Starting..."
+AFTER 1000        # Wait 1 second (1000 ms)
+PUTS "1 second later"
+
+AFTER 500         # Wait 0.5 seconds
+PUTS "0.5 seconds later"
+
+AFTER 2000        # Wait 2 seconds
+PUTS "Done!"
+\end{lstlisting}
+
+\textbf{Output:} (with delays)
+\begin{verbatim}
+Starting...
+[1 second pause]
+1 second later
+[0.5 second pause]
+0.5 seconds later
+[2 second pause]
+Done!
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Progress Animation]
+\begin{lstlisting}[language=BCL]
+PROC show_progress WITH steps DO
+  PUTSN "Progress: "
+
+  FOR 1 TO $steps DO
+    PUTSN "."
+    AFTER 200
+  END
+
+  PUTS " Done!"
+END
+
+PUTS "Loading"
+show_progress 10
+PUTS "Complete!"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Loading
+Progress: .......... Done!
+Complete!
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Countdown Timer]
+\begin{lstlisting}[language=BCL]
+PROC countdown WITH seconds DO
+  FOR $seconds TO 1 STEP -1 DO
+    PUTS "Time remaining: $__FOR seconds"
+    AFTER 1000
+  END
+  PUTS "Time's up!"
+END
+
+countdown 5
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Time remaining: 5 seconds
+Time remaining: 4 seconds
+Time remaining: 3 seconds
+Time remaining: 2 seconds
+Time remaining: 1 seconds
+Time's up!
+\end{verbatim}
+\end{examplebox}
+
+\section{System Command Execution}
+
+\subsection{EXEC - Execute System Commands}
+
+\cmd{EXEC} executes an operating system command and returns its output.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+EXEC command [arg1 arg2 ...]
+\end{lstlisting}
+
+\begin{warningbox}
+\cmd{EXEC} is typically only available on PC/desktop systems, not on embedded microcontrollers. It also poses security risks if used with untrusted input.
+\end{warningbox}
+
+\begin{examplebox}[title=Basic EXEC Usage]
+\begin{lstlisting}[language=BCL]
+# List files (Linux/Unix)
+SET files [EXEC "ls"]
+PUTS "Files:\n$files"
+
+# Get current date
+SET date [EXEC "date"]
+PUTS "Current date: $date"
+
+# Echo text
+SET output [EXEC "echo" "Hello from shell"]
+PUTS $output
+
+# Count files
+SET count [EXEC "ls" "-1" "|" "wc" "-l"]
+PUTS "File count: $count"
+\end{lstlisting}
+\end{examplebox}
+
+\begin{examplebox}[title=Practical EXEC Examples]
+\begin{lstlisting}[language=BCL]
+# Check if a file exists (using shell command)
+PROC file_exists_shell WITH filename DO
+  # Use test command
+  SET result [EXEC "test" "-f" $filename "&&" "echo" "1" "||" "echo" "0"]
+  RETURN [STRING TRIM $result]
+END
+
+# Get disk usage
+PROC get_disk_usage DO
+  SET usage [EXEC "df" "-h" "."]
+  RETURN $usage
+END
+
+# Backup a file
+PROC backup_file WITH filename DO
+  SET timestamp [CLOCK FORMAT [CLOCK SECONDS] FORMAT "%Y%m%d_%H%M%S"]
+  SET backup_name "$filename.backup_$timestamp"
+  EXEC "cp" $filename $backup_name
+  PUTS "Backed up to: $backup_name"
+END
+
+backup_file "important.txt"
+\end{lstlisting}
+\end{examplebox}
+
+\section{Environment Variables}
+
+\subsection{ENV - Access Environment Variables}
+
+\cmd{ENV} reads environment variables from the operating system.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+ENV variable_name
+\end{lstlisting}
+
+\begin{examplebox}[title=Reading Environment Variables]
+\begin{lstlisting}[language=BCL]
+# Get home directory
+SET home [ENV HOME]
+PUTS "Home directory: $home"
+
+# Get current user
+SET user [ENV USER]
+PUTS "Current user: $user"
+
+# Get PATH
+SET path [ENV PATH]
+PUTS "PATH: $path"
+
+# Check if a variable exists
+SET editor [ENV EDITOR]
+IF [STRING LENGTH $editor] > 0 THEN
+  PUTS "Default editor: $editor"
+ELSE
+  PUTS "No EDITOR set, using vi"
+  SET editor "vi"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Home directory: /home/user
+Current user: user
+PATH: /usr/local/bin:/usr/bin:/bin
+Default editor: vim
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Cross-Platform Paths]
+\begin{lstlisting}[language=BCL]
+PROC get_temp_dir DO
+  # Try different environment variables
+  SET temp [ENV TMPDIR]
+  IF [STRING LENGTH $temp] = 0 THEN
+    SET temp [ENV TEMP]
+  END
+  IF [STRING LENGTH $temp] = 0 THEN
+    SET temp [ENV TMP]
+  END
+  IF [STRING LENGTH $temp] = 0 THEN
+    SET temp "/tmp"  # Default for Unix
+  END
+  RETURN $temp
+END
+
+SET tempdir [get_temp_dir]
+PUTS "Temp directory: $tempdir"
+\end{lstlisting}
+\end{examplebox}
+
+\section{Command Line Arguments}
+
+\subsection{ARGV - Get Script Arguments}
+
+\cmd{ARGV} returns the list of command-line arguments passed to the script.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+ARGV
+\end{lstlisting}
+
+\begin{examplebox}[title=Processing Arguments]
+Save as \texttt{args.bcl}:
+\begin{lstlisting}[language=BCL]
+# Get arguments
+SET args [ARGV]
+SET count [LLENGTH $args]
+
+PUTS "Received $count argument(s):"
+
+IF $count == 0 THEN
+  PUTS "  (none)"
+ELSE
+  SET i 1
+  FOREACH arg IN $args DO
+    PUTS "  $i. $arg"
+    INCR i
+  END
+END
+\end{lstlisting}
+
+Run as: \texttt{bcl args.bcl one two three}
+
+\textbf{Output:}
+\begin{verbatim}
+Received 3 argument(s):
+  1. one
+  2. two
+  3. three
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Command-Line Tool]
+\begin{lstlisting}[language=BCL]
+# greet.bcl - A simple greeting tool
+SET args [ARGV]
+SET argc [LLENGTH $args]
+
+IF $argc == 0 THEN
+  PUTS "Usage: bcl greet.bcl <name> [title]"
+  EXIT 1
+END
+
+SET name [LINDEX $args 0]
+
+IF $argc >= 2 THEN
+  SET title [LINDEX $args 1]
+  PUTS "Hello, $title $name!"
+ELSE
+  PUTS "Hello, $name!"
+END
+\end{lstlisting}
+
+Usage:
+\begin{verbatim}
+$ bcl greet.bcl Alice
+Hello, Alice!
+
+$ bcl greet.bcl Bob Dr.
+Hello, Dr. Bob!
+\end{verbatim}
+\end{examplebox}
+
+\section{Program Termination}
+
+\subsection{EXIT - Terminate Execution}
+
+\cmd{EXIT} terminates the BCL script or interpreter and returns an exit code to the operating system.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+EXIT [code]
+\end{lstlisting}
+
+The \texttt{code} is optional:
+\begin{itemize}
+  \item \texttt{0} indicates success (default)
+  \item Non-zero indicates an error or specific condition
+\end{itemize}
+
+\begin{examplebox}[title=Using EXIT]
+\begin{lstlisting}[language=BCL]
+SET args [ARGV]
+
+IF [LLENGTH $args] == 0 THEN
+  PUTS "Error: No arguments provided"
+  EXIT 1    # Exit with error code
+END
+
+# Process arguments...
+PUTS "Processing..."
+
+# Success
+EXIT 0
+\end{lstlisting}
+\end{examplebox}
+
+\begin{examplebox}[title=Exit Codes for Different Errors]
+\begin{lstlisting}[language=BCL]
+PROC validate_file WITH filename DO
+  # Check if file exists
+  IF [FILE EXISTS $filename] = 0 THEN
+    PUTS "Error: File '$filename' not found"
+    EXIT 2    # File not found
+  END
+
+  # Check if file is readable
+  # (assuming FILE READABLE command exists)
+  # ...
+
+  PUTS "File validated successfully"
+END
+
+SET args [ARGV]
+IF [LLENGTH $args] == 0 THEN
+  PUTS "Usage: script.bcl <filename>"
+  EXIT 1    # Invalid usage
+END
+
+validate_file [LINDEX $args 0]
+PUTS "Done!"
+EXIT 0      # Success
+\end{lstlisting}
+\end{examplebox}
+
+\section{Practical System Integration Examples}
+
+\subsection{Script Launcher}
+
+\begin{examplebox}[title=Dynamic Script Loader]
+\begin{lstlisting}[language=BCL]
+PROC load_plugin WITH name DO
+  SET plugin_file "plugins/$name.bcl"
+
+  IF [FILE EXISTS $plugin_file] THEN
+    PUTS "Loading plugin: $name"
+    SOURCE $plugin_file
+    RETURN 1
+  ELSE
+    PUTS "Plugin not found: $name"
+    RETURN 0
+  END
+END
+
+# Load multiple plugins
+SET plugins [LIST "database" "network" "utils"]
+FOREACH plugin IN $plugins DO
+  load_plugin $plugin
+END
+\end{lstlisting}
+\end{examplebox}
+
+\subsection{Interactive Shell}
+
+\begin{examplebox}[title=Simple BCL Shell]
+\begin{lstlisting}[language=BCL]
+PUTS "=== BCL Interactive Shell ==="
+PUTS "Type 'exit' or 'quit' to exit"
+PUTS ""
+
+WHILE 1 DO
+  PUTSN "BCL> "
+  SET input [GETS stdin]
+
+  # Trim input
+  SET input [STRING TRIM $input]
+
+  # Check for exit
+  IF $input == "exit" OR $input == "quit" THEN
+    PUTS "Goodbye!"
+    BREAK
+  END
+
+  # Skip empty lines
+  IF [STRING LENGTH $input] == 0 THEN
+    CONTINUE
+  END
+
+  # Evaluate input as BCL code
+  EVAL $input
+END
+\end{lstlisting}
+\end{examplebox}
+
+\subsection{Build Script}
+
+\begin{examplebox}[title=Automated Build System]
+\begin{lstlisting}[language=BCL]
+PROC run_command WITH description command DO
+  PUTS ">>> $description"
+  SET result [EXEC $command]
+  PUTS $result
+  RETURN [STRING LENGTH $result]
+END
+
+PROC build DO
+  PUTS "==================================="
+  PUTS "  Starting Build Process"
+  PUTS "==================================="
+  PUTS ""
+
+  # Clean
+  run_command "Cleaning old files..." "make clean"
+  AFTER 500
+
+  # Build
+  run_command "Compiling..." "make"
+  AFTER 500
+
+  # Test
+  run_command "Running tests..." "make test"
+  AFTER 500
+
+  PUTS ""
+  PUTS "==================================="
+  PUTS "  Build Complete!"
+  PUTS "==================================="
+END
+
+# Check arguments
+SET args [ARGV]
+IF [LLENGTH $args] > 0 THEN
+  SET target [LINDEX $args 0]
+  IF $target == "build" THEN
+    build
+  ELSEIF $target == "clean" THEN
+    EXEC "make clean"
+  ELSE
+    PUTS "Unknown target: $target"
+    EXIT 1
+  END
+ELSE
+  PUTS "Usage: build.bcl <build|clean>"
+  EXIT 1
+END
+\end{lstlisting}
+\end{examplebox}
+
+\section{System Commands Summary}
+
+\begin{longtable}{lp{9cm}}
+\caption{System Interaction Commands} \\
+\toprule
+\textbf{Command} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{c}{{\tablename\ \thetable{} -- continued}} \\
+\toprule
+\textbf{Command} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+
+\texttt{EVAL string} & Execute string as BCL code \\
+\texttt{SOURCE file} & Load and execute external BCL file \\
+\texttt{AFTER ms} & Pause execution for milliseconds \\
+\texttt{EXEC cmd} & Execute system command, return output \\
+\texttt{ENV name} & Get environment variable \\
+\texttt{ARGV} & Get command-line arguments list \\
+\texttt{EXIT [code]} & Terminate program with exit code \\
+\end{longtable}
+
+\begin{warningbox}
+Security Considerations:
+\begin{itemize}
+  \item Never use \cmd{EVAL} or \cmd{EXEC} with untrusted user input
+  \item Validate and sanitize all external data before using it in commands
+  \item Be careful with \cmd{SOURCE} to avoid loading malicious code
+  \item Use exit codes consistently for better shell script integration
+\end{itemize}
+\end{warningbox}
+
+\begin{tipbox}
+Best Practices:
+\begin{itemize}
+  \item Use \cmd{SOURCE} to organize large projects into modules
+  \item Store configuration in separate files loaded with \cmd{SOURCE}
+  \item Use environment variables for system-specific settings
+  \item Provide helpful error messages and appropriate exit codes
+  \item Document your modules and libraries clearly
+\end{itemize}
+\end{tipbox}

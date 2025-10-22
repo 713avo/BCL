@@ -1,0 +1,402 @@
+% ============================================================================
+% CAPITULO 17: DATOS BINARIOS
+% ============================================================================
+
+\chapter{Datos Binarios}
+\label{ch:binary}
+
+El comando \cmd{BINARY} proporciona facilidades para manipular datos binarios en BCL, permitiendo la conversion entre representaciones binarias y valores BCL. Esto es esencial para trabajar con formatos de archivo, protocolos de red y estructuras de datos de bajo nivel.
+
+\section{Vision General}
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+BINARY subcomando argumentos
+\end{lstlisting}
+
+Dos subcomandos principales:
+\begin{itemize}
+  \item \textbf{FORMAT} - Construir cadenas binarias desde valores BCL
+  \item \textbf{SCAN} - Extraer valores BCL desde cadenas binarias
+\end{itemize}
+
+\section{BINARY FORMAT}
+
+Construye una cadena binaria segun una especificacion de formato.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+BINARY FORMAT formatString ?arg arg ...?
+\end{lstlisting}
+
+La cadena de formato contiene uno o mas especificadores de campo, cada uno consistente en un caracter de tipo y un conteo opcional.
+
+\subsection{Codigos de Formato}
+
+\begin{table}[h]
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Codigo} & \textbf{Descripcion} \\
+\hline
+\texttt{a} & Cadena ASCII, padding con nulos \\
+\texttt{A} & Cadena ASCII, padding con espacios \\
+\texttt{c} & Enteros sin signo de 8 bits \\
+\texttt{s} & Enteros de 16 bits, little-endian \\
+\texttt{S} & Enteros de 16 bits, big-endian \\
+\texttt{i} & Enteros de 32 bits, little-endian \\
+\texttt{I} & Enteros de 32 bits, big-endian \\
+\texttt{H} & Digitos hex, nibble alto primero \\
+\texttt{h} & Digitos hex, nibble bajo primero \\
+\texttt{x} & Insertar bytes nulos \\
+\texttt{X} & Retroceder cursor \\
+\texttt{@} & Posicion absoluta \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Ejemplos Basicos}
+
+\begin{examplebox}[title=Cadena con Padding]
+\begin{lstlisting}[language=BCL]
+# Cadena con padding nulo (10 bytes)
+SET data [BINARY FORMAT a10 "hola"]
+PUTS "Longitud: [STRING LENGTH $data]"
+
+# Cadena con padding espacios (10 bytes)
+SET data [BINARY FORMAT A10 "mundo"]
+PUTS "Longitud: [STRING LENGTH $data]"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Longitud: 4
+Longitud: 10
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Enteros de 8 bits]
+\begin{lstlisting}[language=BCL]
+# Empaquetar bytes: 65='A', 66='B', 67='C'
+SET data [BINARY FORMAT c3 "65 66 67"]
+PUTS "Data: $data"
+PUTS "Longitud: [STRING LENGTH $data]"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Data: ABC
+Longitud: 3
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Hexadecimal]
+\begin{lstlisting}[language=BCL]
+# Convertir cadena hex a binario
+SET data [BINARY FORMAT H8 "deadbeef"]
+PUTS "Longitud: [STRING LENGTH $data]"
+
+# Usar * para consumir toda la cadena
+SET data [BINARY FORMAT H* "0123456789abcdef"]
+PUTS "Longitud: [STRING LENGTH $data]"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Longitud: 4
+Longitud: 1
+\end{verbatim}
+\end{examplebox}
+
+\section{BINARY SCAN}
+
+Extrae campos de una cadena binaria y los almacena en variables.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+BINARY SCAN string formatString ?varName varName ...?
+\end{lstlisting}
+
+Retorna el numero de conversiones exitosas.
+
+\subsection{Ejemplos de Scan}
+
+\begin{examplebox}[title=Extraer Cadenas]
+\begin{lstlisting}[language=BCL]
+# Crear datos binarios
+SET data [BINARY FORMAT a10 "hola"]
+
+# Extraer 5 bytes
+SET count [BINARY SCAN $data a4 var1]
+PUTS "Extraido: '$var1'"
+PUTS "Conversiones: $count"
+
+# Extraer con recorte
+SET data [BINARY FORMAT A10 "hola"]
+SET count [BINARY SCAN $data A* var2]
+PUTS "Recortado: '$var2'"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Extraido: 'hola'
+Conversiones: 1
+Recortado: 'hola'
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Extraer Enteros]
+\begin{lstlisting}[language=BCL]
+# Empaquetar enteros
+SET data [BINARY FORMAT c5 "10 20 30 40 50"]
+
+# Desempaquetar enteros
+SET count [BINARY SCAN $data c5 numeros]
+PUTS "Numeros: $numeros"
+PUTS "Conversiones: $count"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Numeros: 10 20 30 40 50
+Conversiones: 1
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Extraer Hexadecimal]
+\begin{lstlisting}[language=BCL]
+# Crear datos binarios desde hex
+SET data [BINARY FORMAT H8 "cafebabe"]
+
+# Extraer como cadena hex
+SET count [BINARY SCAN $data H* hex]
+PUTS "Hex: $hex"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Hex: cafebabe
+\end{verbatim}
+\end{examplebox}
+
+\section{Ejemplos Practicos}
+
+\subsection{Conversion Completa}
+
+\begin{examplebox}[title=Empaquetar y Desempaquetar]
+\begin{lstlisting}[language=BCL]
+# Datos originales
+SET orig_a "10"
+SET orig_b "20"
+SET orig_c "30"
+
+# Empaquetar
+SET packed [BINARY FORMAT c3 "$orig_a $orig_b $orig_c"]
+PUTS "Longitud empaquetado: [STRING LENGTH $packed]"
+
+# Desempaquetar
+SET count [BINARY SCAN $packed c3 unpacked]
+PUTS "Desempaquetado: $unpacked"
+PUTS "Conversiones: $count"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Longitud empaquetado: 3
+Desempaquetado: 10 20 30
+Conversiones: 1
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Serializacion de Estructuras}
+
+\begin{examplebox}[title=Formato Simple de Registro]
+\begin{lstlisting}[language=BCL]
+# Crear registro: nombre(10 bytes) + edad(8-bit) + id(8-bit)
+SET nombre "Alicia"
+SET edad "25"
+SET id "42"
+
+SET record [BINARY FORMAT a10c2 "Alicia" "$edad $id"]
+PUTS "Tamano registro: [STRING LENGTH $record]"
+
+# Leer registro
+SET count [BINARY SCAN $record a10c2 nombre_guardado data]
+SET edad_guardada [LINDEX $data 0]
+SET id_guardado [LINDEX $data 1]
+
+PUTS "Nombre: '$nombre_guardado'"
+PUTS "Edad: $edad_guardada"
+PUTS "ID: $id_guardado"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Tamano registro: 12
+Nombre: 'Alicia'
+Edad: 25
+ID: 42
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Utilidad Hex Dump}
+
+\begin{examplebox}[title=Volcado Hexadecimal]
+\begin{lstlisting}[language=BCL]
+PROC hexdump WITH data DO
+    SET len [STRING LENGTH $data]
+    SET i 0
+
+    WHILE $i < $len DO
+        # Obtener un byte
+        SET byte [STRING INDEX $data $i]
+        SET tmp [BINARY FORMAT a1 $byte]
+        BINARY SCAN $tmp H2 hex
+
+        PUTSN "$hex "
+        INCR i
+
+        # Nueva linea cada 16 bytes
+        IF [EXPR $i % 16] == 0 THEN
+            PUTS ""
+        END
+    END
+    PUTS ""
+END
+
+SET data "Hola Mundo!"
+hexdump $data
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+48 6f 6c 61 20 4d 75 6e 64 6f 21
+\end{verbatim}
+\end{examplebox}
+
+\section{Endianness}
+
+BCL soporta ordenamiento de bytes little-endian y big-endian:
+
+\begin{tipbox}
+\textbf{Little-Endian (s, i):}
+\begin{itemize}
+  \item Byte menos significativo primero
+  \item Comun en arquitecturas x86/x64
+  \item Ejemplo: 0x1234 se almacena como [0x34, 0x12]
+\end{itemize}
+
+\textbf{Big-Endian (S, I):}
+\begin{itemize}
+  \item Byte mas significativo primero
+  \item Comun en protocolos de red (orden de bytes de red)
+  \item Ejemplo: 0x1234 se almacena como [0x12, 0x34]
+\end{itemize}
+
+Para intercambio de datos multiplataforma, preferir big-endian (S, I).
+\end{tipbox}
+
+\section{Limitaciones}
+
+\begin{notebox}
+\textbf{Importante:} BCL usa cadenas C terminadas en nulo internamente. Esto significa:
+\begin{itemize}
+  \item Los datos binarios que contienen bytes nulos (0x00) en el medio pueden truncarse
+  \item Esto afecta principalmente a enteros de 16/32 bits con valores pequenos
+  \item \textbf{Solucion:} Usar enteros de 8 bits (c) o hexadecimal (H) cuando sea posible
+\end{itemize}
+
+La implementacion actual NO soporta:
+\begin{itemize}
+  \item Tipos float/double ('f', 'd')
+  \item Representacion binaria de digitos ('b', 'B')
+\end{itemize}
+\end{notebox}
+
+\section{Patrones Comunes}
+
+\subsection{Calculo de Checksum}
+
+\begin{examplebox}[title=Suma Simple de Bytes]
+\begin{lstlisting}[language=BCL]
+PROC checksum WITH data DO
+    SET sum 0
+    SET i 0
+
+    WHILE $i < [STRING LENGTH $data] DO
+        SET byte [STRING INDEX $data $i]
+        BINARY SCAN $byte c val
+        SET sum [EXPR $sum + $val]
+        INCR i
+    END
+
+    RETURN [EXPR $sum % 256]
+END
+
+SET msg "Hola"
+SET cs [checksum $msg]
+PUTS "Checksum de '$msg': $cs"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Checksum de 'Hola': 172
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Cabecera de Protocolo Simple}
+
+\begin{examplebox}[title=Protocolo de Mensaje]
+\begin{lstlisting}[language=BCL]
+# Crear mensaje: tipo(8-bit) + longitud(8-bit) + datos
+SET msg_tipo "1"
+SET msg_datos "Hola"
+SET msg_long [STRING LENGTH $msg_datos]
+
+SET paquete [BINARY FORMAT c2a* "$msg_tipo $msg_long" $msg_datos]
+PUTS "Tamano paquete: [STRING LENGTH $paquete]"
+
+# Analizar mensaje
+BINARY SCAN $paquete c2a* cabecera payload
+SET tipo [LINDEX $cabecera 0]
+SET long [LINDEX $cabecera 1]
+
+PUTS "Tipo: $tipo"
+PUTS "Longitud: $long"
+PUTS "Payload: $payload"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Tamano paquete: 6
+Tipo: 1
+Longitud: 4
+Payload: Hola
+\end{verbatim}
+\end{examplebox}
+
+\section{Referencia Rapida}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Tipo} & \textbf{Tamano} & \textbf{Proposito} \\
+\hline
+a/A & variable & Cadenas ASCII \\
+c & 1 byte & Enteros 8-bit sin signo \\
+s/S & 2 bytes & Enteros 16-bit (little/big) \\
+i/I & 4 bytes & Enteros 32-bit (little/big) \\
+H/h & variable & Digitos hexadecimales \\
+x & variable & Padding/espaciado \\
+X & - & Retroceder cursor \\
+@ & - & Posicionamiento absoluto \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Modificadores de Conteo:}
+\begin{itemize}
+  \item Numero: conteo exacto
+  \item * : consumir todo disponible
+  \item Omitir: por defecto 1
+\end{itemize}

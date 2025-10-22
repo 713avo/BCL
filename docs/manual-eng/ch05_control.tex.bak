@@ -1,0 +1,395 @@
+% ============================================================================
+% CHAPTER 5: CONTROL STRUCTURES
+% ============================================================================
+
+\chapter{Control Structures}
+\label{ch:control}
+
+Control structures let you change the order in which your program executes commands based on conditions or repetition.
+
+\section{IF...THEN...ELSE...END}
+
+The \cmd{IF} statement executes code conditionally.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+IF condition THEN
+  commands
+[ELSEIF condition THEN
+  commands]
+[ELSE
+  commands]
+END
+\end{lstlisting}
+
+\begin{examplebox}[title=Simple IF]
+\begin{lstlisting}[language=BCL]
+SET temperature 25
+
+IF $temperature > 30 THEN
+  PUTS "It's hot!"
+ELSEIF $temperature > 20 THEN
+  PUTS "It's warm"
+ELSEIF $temperature > 10 THEN
+  PUTS "It's cool"
+ELSE
+  PUTS "It's cold!"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+It's warm
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Nested IF]
+\begin{lstlisting}[language=BCL]
+SET age 25
+SET student 1
+
+IF $age < 18 THEN
+  PUTS "Minor - discounted ticket"
+ELSE
+  IF $student THEN
+    PUTS "Adult student - discounted ticket"
+  ELSE
+    PUTS "Regular adult ticket"
+  END
+END
+\end{lstlisting}
+\end{examplebox}
+
+\section{WHILE Loops}
+
+\cmd{WHILE} repeats code as long as a condition is true.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+WHILE condition DO
+  commands
+END
+\end{lstlisting}
+
+\begin{examplebox}[title=Countdown]
+\begin{lstlisting}[language=BCL]
+SET count 5
+
+WHILE $count > 0 DO
+  PUTS "Countdown: $count"
+  INCR count -1
+END
+
+PUTS "Liftoff!"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Countdown: 5
+Countdown: 4
+Countdown: 3
+Countdown: 2
+Countdown: 1
+Liftoff!
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Input Validation]
+\begin{lstlisting}[language=BCL]
+SET valid 0
+
+WHILE NOT $valid DO
+  PUTS "Enter a number between 1 and 10:"
+  SET input [GETS stdin]
+
+  IF $input >= 1 AND $input <= 10 THEN
+    SET valid 1
+    PUTS "Thank you! You entered $input"
+  ELSE
+    PUTS "Invalid input. Try again."
+  END
+END
+\end{lstlisting}
+\end{examplebox}
+
+\section{FOR Loops}
+
+BCL supports two styles of \cmd{FOR} loops.
+
+\subsection{FOR with Explicit Variable}
+
+\begin{examplebox}[title=FOR Loop - Explicit Variable]
+\begin{lstlisting}[language=BCL]
+FOR [SET i 1] TO $i <= 10 DO
+  PUTS "Iteration $i"
+  INCR i
+END
+\end{lstlisting}
+\end{examplebox}
+
+\subsection{FOR with Internal Counter}
+
+\begin{examplebox}[title=FOR Loop - Internal Counter]
+\begin{lstlisting}[language=BCL]
+FOR 1 TO 10 DO
+  PUTS "Number: $__FOR"
+END
+
+# With STEP
+FOR 0 TO 100 STEP 10 DO
+  PUTS "Value: $__FOR"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Number: 1
+Number: 2
+...
+Number: 10
+Value: 0
+Value: 10
+...
+Value: 100
+\end{verbatim}
+\end{examplebox}
+
+\begin{notebox}
+The internal counter variable is named \var{\_\_FOR} and is automatically created by BCL.
+\end{notebox}
+
+\section{FOREACH Loops}
+
+\cmd{FOREACH} iterates over list elements.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+FOREACH variable IN list DO
+  commands
+END
+\end{lstlisting}
+
+\begin{examplebox}[title=Iterating Lists]
+\begin{lstlisting}[language=BCL]
+SET colors [LIST red green blue yellow]
+
+FOREACH color IN $colors DO
+  PUTS "Color: $color"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Color: red
+Color: green
+Color: blue
+Color: yellow
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Processing Data]
+\begin{lstlisting}[language=BCL]
+SET scores [LIST 85 92 78 95 88]
+SET total 0
+SET count 0
+
+FOREACH score IN $scores DO
+  SET total [EXPR $total + $score]
+  INCR count
+END
+
+SET average [EXPR $total / $count]
+PUTS [FORMAT "Average score: %.2f" $average]
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Average score: 87.60
+\end{verbatim}
+\end{examplebox}
+
+\section{SWITCH Statement}
+
+\cmd{SWITCH} selects one of many code blocks to execute.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+SWITCH expression DO
+  CASE value1
+    commands
+  CASE value2
+    commands
+  DEFAULT
+    commands
+END
+\end{lstlisting}
+
+\begin{examplebox}[title=SWITCH Example]
+\begin{lstlisting}[language=BCL]
+SET day "Tuesday"
+
+SWITCH $day DO
+  CASE "Monday"
+    PUTS "Start of work week"
+  CASE "Tuesday"
+    PUTS "Second day"
+  CASE "Wednesday"
+    PUTS "Midweek"
+  CASE "Thursday"
+    PUTS "Almost Friday"
+  CASE "Friday"
+    PUTS "Last work day!"
+  DEFAULT
+    PUTS "Weekend!"
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Second day
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Menu System]
+\begin{lstlisting}[language=BCL]
+PUTS "Select an option:"
+PUTS "1. New file"
+PUTS "2. Open file"
+PUTS "3. Save file"
+PUTS "4. Exit"
+
+SET choice [GETS stdin]
+
+SWITCH $choice DO
+  CASE "1"
+    PUTS "Creating new file..."
+  CASE "2"
+    PUTS "Opening file..."
+  CASE "3"
+    PUTS "Saving file..."
+  CASE "4"
+    PUTS "Goodbye!"
+    EXIT
+  DEFAULT
+    PUTS "Invalid choice"
+END
+\end{lstlisting}
+\end{examplebox}
+
+\section{BREAK and CONTINUE}
+
+\subsection{BREAK: Exit Loop Early}
+
+\cmd{BREAK} terminates the innermost loop immediately.
+
+\begin{examplebox}[title=Using BREAK]
+\begin{lstlisting}[language=BCL]
+# Search for a number
+SET target 7
+SET found 0
+
+FOR 1 TO 10 DO
+  IF $__FOR = $target THEN
+    SET found $__FOR
+    BREAK
+  END
+END
+
+IF $found THEN
+  PUTS "Found $target"
+ELSE
+  PUTS "Not found"
+END
+\end{lstlisting}
+\end{examplebox}
+
+\subsection{CONTINUE: Skip to Next Iteration}
+
+\cmd{CONTINUE} skips the rest of the current iteration and goes to the next one.
+
+\begin{examplebox}[title=Using CONTINUE]
+\begin{lstlisting}[language=BCL]
+# Print odd numbers only
+FOR 1 TO 10 DO
+  SET num $__FOR
+  SET remainder [EXPR $num % 2]
+
+  IF $remainder = 0 THEN
+    CONTINUE  # Skip even numbers
+  END
+
+  PUTS $num
+END
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+1
+3
+5
+7
+9
+\end{verbatim}
+\end{examplebox}
+
+\section{EXIT: Terminating the Program}
+
+\cmd{EXIT} terminates the entire program (or REPL session).
+
+\begin{lstlisting}[language=BCL]
+EXIT          # Exit with code 0
+EXIT 1        # Exit with code 1 (error)
+\end{lstlisting}
+
+\section{Complete Examples}
+
+\subsection{Number Guessing Game}
+
+\begin{examplebox}[title=Guessing Game]
+\begin{lstlisting}[language=BCL]
+# Generate random number 1-100
+SET secret [EXPR int(rand() * 100) + 1]
+SET guesses 0
+SET found 0
+
+PUTS "I'm thinking of a number between 1 and 100"
+
+WHILE NOT $found DO
+  PUTS "Enter your guess:"
+  SET guess [GETS stdin]
+  INCR guesses
+
+  IF $guess = $secret THEN
+    SET found 1
+    PUTS "Correct! You won in $guesses guesses!"
+  ELSEIF $guess < $secret THEN
+    PUTS "Too low!"
+  ELSE
+    PUTS "Too high!"
+  END
+END
+\end{lstlisting}
+\end{examplebox}
+
+\subsection{FizzBuzz}
+
+\begin{examplebox}[title=FizzBuzz Classic]
+\begin{lstlisting}[language=BCL]
+FOR 1 TO 100 DO
+  SET num $__FOR
+  SET by3 [EXPR $num % 3]
+  SET by5 [EXPR $num % 5]
+
+  IF $by3 = 0 AND $by5 = 0 THEN
+    PUTS "FizzBuzz"
+  ELSEIF $by3 = 0 THEN
+    PUTS "Fizz"
+  ELSEIF $by5 = 0 THEN
+    PUTS "Buzz"
+  ELSE
+    PUTS $num
+  END
+END
+\end{lstlisting}
+\end{examplebox}
+

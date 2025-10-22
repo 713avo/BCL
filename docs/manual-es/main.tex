@@ -1,0 +1,57 @@
+\documentclass[11pt,a4paper,oneside]{book}
+
+% ============================================================================
+% PREÁMBULO - Cargar configuración de paquetes
+% ============================================================================
+\input{preamble.tex}
+
+% ============================================================================
+% INICIO DEL DOCUMENTO
+% ============================================================================
+
+\begin{document}
+
+% ============================================================================
+% PÁGINAS PRELIMINARES
+% ============================================================================
+\input{frontmatter.tex}
+
+% ============================================================================
+% CONTENIDO PRINCIPAL - Capítulos
+% ============================================================================
+
+\mainmatter
+
+\input{ch01_introduccion.tex}
+\input{ch02_fundamentos.tex}
+\input{ch03_variables.tex}
+\input{ch04_expresiones.tex}
+\input{ch05_control.tex}
+\input{ch06_procedimientos.tex}
+\input{ch07_listas.tex}
+\input{ch08_cadenas.tex}
+\input{ch09_archivos.tex}
+\input{ch10_regexp.tex}
+\input{ch11_tiempo.tex}
+\input{ch12_sistema.tex}
+\input{ch13_introspeccion.tex}
+\input{ch14_ejemplos.tex}
+\input{ch15_referencia.tex}
+\input{ch16_arrays.tex}
+\input{ch17_binary.tex}
+
+% ============================================================================
+% APÉNDICES
+% ============================================================================
+\input{apendices.tex}
+
+% ============================================================================
+% PÁGINAS FINALES
+% ============================================================================
+
+\backmatter
+
+% Índice
+\printindex
+
+\end{document}

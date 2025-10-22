@@ -1,0 +1,172 @@
+\label{ch:examples}
+
+\section{Text File Processor}
+
+\begin{examplebox}[title=Word Counter]
+\begin{lstlisting}[language=BCL]
+PROC count_words WITH filename DO
+  IF [FILE EXISTS $filename] = 0 THEN
+    PUTS "Error: File not found"
+    RETURN 0
+  END
+
+  SET fh [OPEN $filename R]
+  SET content [READ $fh]
+  CLOSE $fh
+
+  # Split on whitespace
+  SET words [SPLIT $content " "]
+  SET count [LLENGTH $words]
+
+  RETURN $count
+END
+
+SET wc [count_words "document.txt"]
+PUTS "Word count: $wc"
+\end{lstlisting}
+\end{examplebox}
+
+\section{Simple Calculator}
+
+\begin{examplebox}[title=Interactive Calculator]
+\begin{lstlisting}[language=BCL]
+PUTS "Simple Calculator"
+PUTS "Enter expressions (e.g., 5 + 3)"
+PUTS "Type 'quit' to exit"
+PUTS ""
+
+SET running 1
+WHILE $running DO
+  PUTSN "> "
+  SET input [GETS stdin]
+
+  IF $input == "quit" THEN
+    SET running 0
+    CONTINUE
+  END
+
+  SET result [EXPR $input]
+  PUTS "= $result"
+END
+
+PUTS "Goodbye!"
+\end{lstlisting}
+\end{examplebox}
+
+\section{Todo List Manager}
+
+\begin{examplebox}[title=Todo List Application]
+\begin{lstlisting}[language=BCL]
+SET todos [LIST]
+
+PROC add_todo WITH task DO
+  GLOBAL todos
+  SET todos [LAPPEND $todos $task]
+  PUTS "Added: $task"
+END
+
+PROC list_todos DO
+  GLOBAL todos
+  SET count [LLENGTH $todos]
+
+  IF $count == 0 THEN
+    PUTS "No todos"
+    RETURN
+  END
+
+  PUTS "Todo List:"
+  SET i 0
+  FOREACH todo IN $todos DO
+    INCR i
+    PUTS "  $i. $todo"
+  END
+END
+
+PROC remove_todo WITH index DO
+  GLOBAL todos
+  SET idx [EXPR $index - 1]
+  SET count [LLENGTH $todos]
+
+  IF $idx >= 0 AND $idx < $count THEN
+    SET todos [LREPLACE $todos $idx $idx]
+    PUTS "Removed todo #$index"
+  ELSE
+    PUTS "Invalid index"
+  END
+END
+
+# Main loop
+SET running 1
+WHILE $running DO
+  PUTS ""
+  PUTS "1. Add todo"
+  PUTS "2. List todos"
+  PUTS "3. Remove todo"
+  PUTS "4. Quit"
+  PUTSN "Choice: "
+
+  SET choice [GETS stdin]
+
+  SWITCH $choice DO
+    CASE "1"
+      PUTS "Enter task:"
+      SET task [GETS stdin]
+      add_todo $task
+    CASE "2"
+      list_todos
+    CASE "3"
+      PUTS "Enter todo number:"
+      SET num [GETS stdin]
+      remove_todo $num
+    CASE "4"
+      SET running 0
+    DEFAULT
+      PUTS "Invalid choice"
+  END
+END
+\end{lstlisting}
+\end{examplebox}
+
+\section{Log File Analyzer}
+
+\begin{examplebox}[title=Analyze Logs]
+\begin{lstlisting}[language=BCL]
+PROC analyze_log WITH logfile DO
+  IF [FILE EXISTS $logfile] = 0 THEN
+    PUTS "Log file not found"
+    RETURN
+  END
+
+  SET fh [OPEN $logfile R]
+
+  SET errors 0
+  SET warnings 0
+  SET info 0
+  SET total 0
+
+  WHILE [EOF $fh] = 0 DO
+    SET line [GETS $fh]
+    INCR total
+
+    IF [REGEXP "ERROR" $line NOCASE] THEN
+      INCR errors
+    ELSEIF [REGEXP "WARN" $line NOCASE] THEN
+      INCR warnings
+    ELSEIF [REGEXP "INFO" $line NOCASE] THEN
+      INCR info
+    END
+  END
+
+  CLOSE $fh
+
+  PUTS "Log Analysis Results:"
+  PUTS "  Total lines: $total"
+  PUTS "  Errors: $errors"
+  PUTS "  Warnings: $warnings"
+  PUTS "  Info: $info"
+END
+
+analyze_log "application.log"
+\end{lstlisting}
+\end{examplebox}
+

@@ -1,0 +1,343 @@
+BCL — Manual de Referencia Específico: LISTAS (v1.1)
+----------------------------------------------------
+Autor: Rafa
+Fecha: Octubre 2025
+
+Basado en la implementación de BCL v1.5 (Edición PC).
+Inspirado en Tcl 8.6.13, con sintaxis simplificada tipo BASIC.
+
+----------------------------------------------------
+SECCIÓN: LISTAS Y FUNCIONES ASOCIADAS
+----------------------------------------------------
+
+En BCL, las listas son colecciones de valores almacenados en una sola variable.
+Cada elemento de una lista es un string, y las operaciones sobre listas devuelven
+nuevas listas o extraen elementos de las existentes. No existen arrays como tal,
+las listas son estructuras básicas universales.
+
+Todos los comandos relacionados con listas son sensibles a espacios. Los elementos
+que contengan espacios deben ir entre comillas.
+
+----------------------------------------------------
+1. LIST
+----------------------------------------------------
+Propósito:
+Crea una lista con los elementos especificados.
+
+Sintaxis:
+  LIST elemento1 elemento2 elemento3 ...
+
+Ejemplo:
+SET L [LIST uno dos tres]
+PUTS $L
+;# Resultado: uno dos tres
+
+Las listas pueden contener valores con espacios:
+SET L [LIST "hola mundo" "buen día"]
+PUTS $L
+;# Resultado: hola mundo buen día
+
+----------------------------------------------------
+2. SPLIT
+----------------------------------------------------
+Propósito:
+Divide una cadena en una lista, usando un separador.
+
+Sintaxis:
+  SPLIT texto separador
+
+Ejemplo:
+SET T "a,b,c,d"
+SET L [SPLIT $T ","]
+PUTS $L
+;# Resultado: a b c d
+
+----------------------------------------------------
+3. JOIN
+----------------------------------------------------
+Propósito:
+Une una lista en una cadena, usando un separador.
+
+Sintaxis:
+  JOIN lista separador
+
+Ejemplo:
+SET L [LIST a b c]
+SET T [JOIN $L "-"]
+PUTS $T
+;# Resultado: a-b-c
+
+----------------------------------------------------
+4. LINDEX
+----------------------------------------------------
+Propósito:
+Obtiene el elemento de una lista en una posición determinada.
+
+Sintaxis:
+  LINDEX lista índice
+
+Ejemplo:
+SET L [LIST uno dos tres]
+SET x [LINDEX $L 1]
+PUTS $x
+;# Resultado: dos
+
+----------------------------------------------------
+5. LRANGE
+----------------------------------------------------
+Propósito:
+Devuelve una sublista comprendida entre dos índices.
+
+Sintaxis:
+  LRANGE lista inicio fin
+
+Ejemplo:
+SET L [LIST a b c d e]
+SET sub [LRANGE $L 1 3]
+PUTS $sub
+;# Resultado: b c d
+
+----------------------------------------------------
+6. LLENGTH
+----------------------------------------------------
+Propósito:
+Devuelve el número de elementos en una lista.
+
+Sintaxis:
+  LLENGTH lista
+
+Ejemplo:
+SET L [LIST a b c d]
+SET n [LLENGTH $L]
+PUTS "La lista tiene $n elementos"
+
+----------------------------------------------------
+7. LAPPEND
+----------------------------------------------------
+Propósito:
+Añade elementos al final de una lista y devuelve la nueva lista.
+
+Sintaxis:
+  LAPPEND lista elementos...
+
+Ejemplo:
+SET L [LIST a b]
+SET L [LAPPEND $L c d]
+PUTS $L
+;# Resultado: a b c d
+
+----------------------------------------------------
+8. LINSERT
+----------------------------------------------------
+Propósito:
+Inserta elementos en una posición específica.
+
+Sintaxis:
+  LINSERT lista índice elemento1 ?elemento2...?
+
+Ejemplo:
+SET L [LIST a b d]
+SET L [LINSERT $L 2 c]
+PUTS $L
+;# Resultado: a b c d
+
+También puede insertar al final usando 'end':
+SET L [LINSERT $L end z]
+;# Resultado: a b c d z
+
+----------------------------------------------------
+9. LREPLACE
+----------------------------------------------------
+Propósito:
+Reemplaza o elimina un rango de elementos en la lista.
+
+Sintaxis:
+  LREPLACE lista inicio fin ?nuevos...?
+
+Ejemplo:
+SET L [LIST a b c d e]
+SET L [LREPLACE $L 1 3 X Y]
+PUTS $L
+;# Resultado: a X Y e
+
+Eliminación sin reemplazo:
+SET L [LREPLACE $L 1 2]
+;# Resultado: a e
+
+----------------------------------------------------
+10. CONCAT
+----------------------------------------------------
+Propósito:
+Combina múltiples listas o cadenas en una sola lista (similar a Tcl 'concat').
+Cada argumento puede ser una lista o una cadena; si no es lista, se trata como
+un único elemento.
+
+Sintaxis:
+  CONCAT lista1 [lista2 ...]
+
+Notas:
+- Los elementos de cada lista se concatenan en orden.
+- Las listas vacías no afectan al resultado.
+- No inserta separadores adicionales (usa espacios como delimitador de lista).
+- Devuelve la lista resultante.
+
+Ejemplo 1 — combinación básica:
+SET A [LIST uno dos]
+SET B [LIST tres cuatro]
+SET C [CONCAT $A $B]
+PUTS $C
+;# uno dos tres cuatro
+
+Ejemplo 2 — con valores simples:
+SET C [CONCAT $A "cinco" "seis"]
+PUTS $C
+;# uno dos cinco seis
+
+Ejemplo 3 — listas mixtas y vacías:
+SET X [LIST a b]
+SET Y [LIST]
+SET Z [LIST c d]
+SET R [CONCAT $X $Y $Z "e" "f"]
+PUTS $R
+;# a b c d e f
+
+Ejemplo 4 — anidación múltiple:
+SET L1 [LIST 1 2]
+SET L2 [LIST [LIST 3 4] [LIST 5 6]]
+SET RESULT [CONCAT $L1 $L2]
+PUTS $RESULT
+;# 1 2 {3 4} {5 6}
+
+----------------------------------------------------
+11. LSORT
+----------------------------------------------------
+Propósito:
+Ordena los elementos de una lista en orden ASCII (sensible a mayúsculas).
+
+Sintaxis:
+  LSORT lista
+
+Ejemplo:
+SET L [LIST perro gato lobo]
+SET S [LSORT $L]
+PUTS $S
+;# Resultado: gato lobo perro
+
+Nota: en orden ASCII, las mayúsculas van antes que las minúsculas.
+
+Truco: Ordenar numéricamente (simulando modo entero)
+SET nums [LIST 1 10 2 3]
+SET aux ""
+FOREACH v IN $nums DO
+  SET k [FORMAT "%08d" $v]
+  SET aux [LAPPEND $aux "$k $v"]
+END
+SET aux [LSORT $aux]
+SET out ""
+FOREACH p IN $aux DO
+  SET out [LAPPEND $out [LINDEX $p 1]]
+END
+PUTS $out
+;# Resultado: 1 2 3 10
+
+----------------------------------------------------
+12. LSEARCH
+----------------------------------------------------
+Propósito:
+Busca un valor dentro de una lista y devuelve su índice, o -1 si no lo encuentra.
+Búsqueda ASCII case-sensitive.
+
+Sintaxis:
+  LSEARCH lista valor
+
+Ejemplo:
+SET L [LIST uno dos tres]
+SET idx [LSEARCH $L "dos"]
+PUTS $idx
+;# Resultado: 1
+
+Truco: búsqueda sin distinguir mayúsculas
+SET lower ""
+FOREACH x IN $L DO
+  SET lower [LAPPEND $lower [STRING TOLOWER $x]]
+END
+SET idx [LSEARCH $lower [STRING TOLOWER "TRES"]]
+PUTS $idx
+
+Truco: encontrar todas las ocurrencias
+PROC FINDALL WITH L pat DO
+  SET res ""
+  SET i 0
+  SET n [LLENGTH $L]
+  WHILE $i < $n DO
+    IF [LINDEX $L $i] == $pat THEN
+      SET res [LAPPEND $res $i]
+    END
+    INCR i
+  END
+  RETURN $res
+END
+SET L [LIST a b a c a]
+PUTS [FINDALL $L "a"]
+;# Resultado: 0 2 4
+
+----------------------------------------------------
+13. FOREACH
+----------------------------------------------------
+Propósito:
+Recorre los elementos de una lista, asignando cada uno a una variable.
+
+Sintaxis:
+  FOREACH variable IN lista DO
+    ...
+  END
+
+Ejemplo:
+SET L [LIST rojo verde azul]
+FOREACH color IN $L DO
+  PUTS "Color: $color"
+END
+
+Truco: recorrer dos listas a la vez
+SET L1 [LIST a b c]
+SET L2 [LIST 1 2 3]
+SET n [LLENGTH $L1]
+SET i 0
+WHILE $i < $n DO
+  PUTS [FORMAT "%s -> %d" [LINDEX $L1 $i] [LINDEX $L2 $i]]
+  INCR i
+END
+
+----------------------------------------------------
+14. COMBINACIÓN DE COMANDOS DE LISTA
+----------------------------------------------------
+Ejemplo avanzado: procesamiento de datos
+
+SET datos [LIST "A 10" "B 5" "C 20"]
+SET tot 0
+FOREACH linea IN $datos DO
+  SCAN $linea "%s %d" id valor
+  INCR tot $valor
+END
+PUTS [FORMAT "Total acumulado: %d" $tot]
+
+----------------------------------------------------
+15. RESUMEN GENERAL DE COMANDOS DE LISTA
+----------------------------------------------------
+LIST        -> Crea una lista
+SPLIT       -> Divide texto en lista
+JOIN        -> Une lista en texto
+LINDEX      -> Devuelve un elemento
+LRANGE      -> Devuelve sublista
+LLENGTH     -> Devuelve tamaño
+LAPPEND     -> Añade elementos
+LINSERT     -> Inserta en posición
+LREPLACE    -> Sustituye o elimina rango
+CONCAT      -> Concatena listas/elementos en una lista
+LSORT       -> Ordena lista (ASCII, case-sensitive)
+LSEARCH     -> Busca un valor
+FOREACH     -> Itera lista
+
+----------------------------------------------------
+FIN DEL DOCUMENTO
+----------------------------------------------------

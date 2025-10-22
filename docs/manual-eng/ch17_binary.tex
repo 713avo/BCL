@@ -1,0 +1,402 @@
+% ============================================================================
+% CHAPTER 17: BINARY DATA
+% ============================================================================
+
+\chapter{Binary Data}
+\label{ch:binary}
+
+The \cmd{BINARY} command provides facilities for manipulating binary data in BCL, allowing conversion between binary representations and BCL values. This is essential for working with file formats, network protocols, and low-level data structures.
+
+\section{Overview}
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+BINARY subcommand arguments
+\end{lstlisting}
+
+Two main subcommands:
+\begin{itemize}
+  \item \textbf{FORMAT} - Build binary strings from BCL values
+  \item \textbf{SCAN} - Extract BCL values from binary strings
+\end{itemize}
+
+\section{BINARY FORMAT}
+
+Constructs a binary string according to a format specification.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+BINARY FORMAT formatString ?arg arg ...?
+\end{lstlisting}
+
+The format string contains one or more field specifiers, each consisting of a type character and an optional count.
+
+\subsection{Format Codes}
+
+\begin{table}[h]
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Code} & \textbf{Description} \\
+\hline
+\texttt{a} & ASCII string, null padding \\
+\texttt{A} & ASCII string, space padding \\
+\texttt{c} & 8-bit unsigned integers \\
+\texttt{s} & 16-bit integers, little-endian \\
+\texttt{S} & 16-bit integers, big-endian \\
+\texttt{i} & 32-bit integers, little-endian \\
+\texttt{I} & 32-bit integers, big-endian \\
+\texttt{H} & Hex digits, high nibble first \\
+\texttt{h} & Hex digits, low nibble first \\
+\texttt{x} & Insert null bytes \\
+\texttt{X} & Backspace (move cursor back) \\
+\texttt{@} & Absolute position \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Basic Examples}
+
+\begin{examplebox}[title=String with Padding]
+\begin{lstlisting}[language=BCL]
+# Null-padded string (10 bytes)
+SET data [BINARY FORMAT a10 "hello"]
+PUTS "Length: [STRING LENGTH $data]"
+
+# Space-padded string (10 bytes)
+SET data [BINARY FORMAT A10 "world"]
+PUTS "Length: [STRING LENGTH $data]"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Length: 5
+Length: 10
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=8-bit Integers]
+\begin{lstlisting}[language=BCL]
+# Pack bytes: 65='A', 66='B', 67='C'
+SET data [BINARY FORMAT c3 "65 66 67"]
+PUTS "Data: $data"
+PUTS "Length: [STRING LENGTH $data]"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Data: ABC
+Length: 3
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Hexadecimal]
+\begin{lstlisting}[language=BCL]
+# Convert hex string to binary
+SET data [BINARY FORMAT H8 "deadbeef"]
+PUTS "Length: [STRING LENGTH $data]"
+
+# Use * to consume entire string
+SET data [BINARY FORMAT H* "0123456789abcdef"]
+PUTS "Length: [STRING LENGTH $data]"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Length: 4
+Length: 1
+\end{verbatim}
+\end{examplebox}
+
+\section{BINARY SCAN}
+
+Extracts fields from a binary string and stores them in variables.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+BINARY SCAN string formatString ?varName varName ...?
+\end{lstlisting}
+
+Returns the number of successful conversions.
+
+\subsection{Scan Examples}
+
+\begin{examplebox}[title=Extracting Strings]
+\begin{lstlisting}[language=BCL]
+# Create binary data
+SET data [BINARY FORMAT a10 "hello"]
+
+# Extract 5 bytes
+SET count [BINARY SCAN $data a5 var1]
+PUTS "Extracted: '$var1'"
+PUTS "Conversions: $count"
+
+# Extract with trimming
+SET data [BINARY FORMAT A10 "hello"]
+SET count [BINARY SCAN $data A* var2]
+PUTS "Trimmed: '$var2'"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Extracted: 'hello'
+Conversions: 1
+Trimmed: 'hello'
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Extracting Integers]
+\begin{lstlisting}[language=BCL]
+# Pack integers
+SET data [BINARY FORMAT c5 "10 20 30 40 50"]
+
+# Unpack integers
+SET count [BINARY SCAN $data c5 numbers]
+PUTS "Numbers: $numbers"
+PUTS "Conversions: $count"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Numbers: 10 20 30 40 50
+Conversions: 1
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Extracting Hexadecimal]
+\begin{lstlisting}[language=BCL]
+# Create binary data from hex
+SET data [BINARY FORMAT H8 "cafebabe"]
+
+# Extract as hex string
+SET count [BINARY SCAN $data H* hex]
+PUTS "Hex: $hex"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Hex: cafebabe
+\end{verbatim}
+\end{examplebox}
+
+\section{Practical Examples}
+
+\subsection{Round-Trip Conversion}
+
+\begin{examplebox}[title=Pack and Unpack]
+\begin{lstlisting}[language=BCL]
+# Original data
+SET orig_a "10"
+SET orig_b "20"
+SET orig_c "30"
+
+# Pack
+SET packed [BINARY FORMAT c3 "$orig_a $orig_b $orig_c"]
+PUTS "Packed length: [STRING LENGTH $packed]"
+
+# Unpack
+SET count [BINARY SCAN $packed c3 unpacked]
+PUTS "Unpacked: $unpacked"
+PUTS "Conversions: $count"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Packed length: 3
+Unpacked: 10 20 30
+Conversions: 1
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Data Structure Serialization}
+
+\begin{examplebox}[title=Simple Record Format]
+\begin{lstlisting}[language=BCL]
+# Create record: name(10 bytes) + age(8-bit) + id(8-bit)
+SET name "Alice"
+SET age "25"
+SET id "42"
+
+SET record [BINARY FORMAT a10c2 "Alice" "$age $id"]
+PUTS "Record size: [STRING LENGTH $record]"
+
+# Read record
+SET count [BINARY SCAN $record a10c2 stored_name data]
+SET stored_age [LINDEX $data 0]
+SET stored_id [LINDEX $data 1]
+
+PUTS "Name: '$stored_name'"
+PUTS "Age: $stored_age"
+PUTS "ID: $stored_id"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Record size: 12
+Name: 'Alice'
+Age: 25
+ID: 42
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Hex Dump Utility}
+
+\begin{examplebox}[title=Hex Dump]
+\begin{lstlisting}[language=BCL]
+PROC hexdump WITH data DO
+    SET len [STRING LENGTH $data]
+    SET i 0
+
+    WHILE $i < $len DO
+        # Get one byte
+        SET byte [STRING INDEX $data $i]
+        SET tmp [BINARY FORMAT a1 $byte]
+        BINARY SCAN $tmp H2 hex
+
+        PUTSN "$hex "
+        INCR i
+
+        # New line every 16 bytes
+        IF [EXPR $i % 16] == 0 THEN
+            PUTS ""
+        END
+    END
+    PUTS ""
+END
+
+SET data "Hello World!"
+hexdump $data
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+48 65 6c 6c 6f 20 57 6f 72 6c 64 21
+\end{verbatim}
+\end{examplebox}
+
+\section{Endianness}
+
+BCL supports both little-endian and big-endian byte ordering:
+
+\begin{tipbox}
+\textbf{Little-Endian (s, i):}
+\begin{itemize}
+  \item Least significant byte first
+  \item Common on x86/x64 architectures
+  \item Example: 0x1234 stored as [0x34, 0x12]
+\end{itemize}
+
+\textbf{Big-Endian (S, I):}
+\begin{itemize}
+  \item Most significant byte first
+  \item Common in network protocols (network byte order)
+  \item Example: 0x1234 stored as [0x12, 0x34]
+\end{itemize}
+
+For cross-platform data exchange, prefer big-endian (S, I).
+\end{tipbox}
+
+\section{Limitations}
+
+\begin{notebox}
+\textbf{Important:} BCL uses null-terminated C strings internally. This means:
+\begin{itemize}
+  \item Binary data containing null bytes (0x00) in the middle may be truncated
+  \item This mainly affects 16/32-bit integers with small values
+  \item \textbf{Workaround:} Use 8-bit integers (c) or hexadecimal (H) when possible
+\end{itemize}
+
+The current implementation does NOT support:
+\begin{itemize}
+  \item Float/double types ('f', 'd')
+  \item Binary digit representation ('b', 'B')
+\end{itemize}
+\end{notebox}
+
+\section{Common Patterns}
+
+\subsection{Checksum Calculation}
+
+\begin{examplebox}[title=Simple Byte Sum]
+\begin{lstlisting}[language=BCL]
+PROC checksum WITH data DO
+    SET sum 0
+    SET i 0
+
+    WHILE $i < [STRING LENGTH $data] DO
+        SET byte [STRING INDEX $data $i]
+        BINARY SCAN $byte c val
+        SET sum [EXPR $sum + $val]
+        INCR i
+    END
+
+    RETURN [EXPR $sum % 256]
+END
+
+SET msg "Hello"
+SET cs [checksum $msg]
+PUTS "Checksum of '$msg': $cs"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Checksum of 'Hello': 244
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Simple Protocol Header}
+
+\begin{examplebox}[title=Message Protocol]
+\begin{lstlisting}[language=BCL]
+# Create message: type(8-bit) + length(8-bit) + data
+SET msg_type "1"
+SET msg_data "Hello"
+SET msg_len [STRING LENGTH $msg_data]
+
+SET packet [BINARY FORMAT c2a* "$msg_type $msg_len" $msg_data]
+PUTS "Packet size: [STRING LENGTH $packet]"
+
+# Parse message
+BINARY SCAN $packet c2a* header payload
+SET type [LINDEX $header 0]
+SET len [LINDEX $header 1]
+
+PUTS "Type: $type"
+PUTS "Length: $len"
+PUTS "Payload: $payload"
+\end{lstlisting}
+
+\textbf{Output:}
+\begin{verbatim}
+Packet size: 7
+Type: 1
+Length: 5
+Payload: Hello
+\end{verbatim}
+\end{examplebox}
+
+\section{Quick Reference}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Type} & \textbf{Size} & \textbf{Purpose} \\
+\hline
+a/A & variable & ASCII strings \\
+c & 1 byte & Unsigned 8-bit integers \\
+s/S & 2 bytes & 16-bit integers (little/big) \\
+i/I & 4 bytes & 32-bit integers (little/big) \\
+H/h & variable & Hexadecimal digits \\
+x & variable & Padding/spacing \\
+X & - & Backspace cursor \\
+@ & - & Absolute positioning \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Count Modifiers:}
+\begin{itemize}
+  \item Number: exact count
+  \item * : consume all available
+  \item Omit: default to 1
+\end{itemize}

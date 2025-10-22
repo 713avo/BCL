@@ -1,0 +1,133 @@
+% ============================================================================
+% PREÁMBULO - Configuración de Paquetes
+% ============================================================================
+
+% Codificación e idioma
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+
+% Diseño de página
+\usepackage[margin=2.5cm,top=3cm,bottom=3cm]{geometry}
+
+% Fuentes (compatible con LuaLaTeX)
+\usepackage{lmodern}
+
+% Encabezados y pies de página
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\nouppercase{\leftmark}}
+\fancyhead[R]{BCL v1.5.1}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Gráficos y colores
+\usepackage{xcolor}
+\usepackage{graphicx}
+
+% Tablas
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+
+% Listas
+\usepackage{enumitem}
+
+% Listados de código con lenguaje BCL personalizado
+\usepackage{listings}
+
+% Definir lenguaje BCL para listings
+\lstdefinelanguage{BCL}{
+  keywords={SET, UNSET, GLOBAL, INCR, APPEND, PUTS, PUTSN, GETS, EXPR, IF, THEN, ELSEIF, ELSE, END, WHILE, DO, FOR, TO, STEP, FOREACH, IN, SWITCH, CASE, DEFAULT, BREAK, CONTINUE, EXIT, PROC, WITH, RETURN, LIST, SPLIT, JOIN, LINDEX, LRANGE, LLENGTH, LAPPEND, LINSERT, LREPLACE, LSORT, LSEARCH, CONCAT, STRING, FORMAT, SCAN, OPEN, CLOSE, READ, TELL, SEEK, EOF, FILE, EXISTS, SIZE, DELETE, RENAME, PWD, GLOB, DIRECTORY, TAILS, NOCOMPLAIN, TYPES, REGEXP, REGSUB, NOCASE, LINE, LINESTOP, LINEANCHOR, EXPANDED, ALL, INDICES, START, MATCH, SUBMATCHES, COUNT, CLOCK, SECONDS, MILLISECONDS, MICROSECONDS, TIMEZONE, LOCALE, GMT, BASE, INFO, COMMANDS, GLOBALS, LOCALS, PROCS, VARS, ARGS, BCLVERSION, EVAL, SOURCE, AFTER, EXEC, ENV, ARGV, AND, OR, NOT},
+  sensitive=false,
+  comment=[l]{\#},
+  morestring=[b]",
+  morestring=[b]',
+}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{green!60!black}\itshape,
+  stringstyle=\color{red!80!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=5pt,
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=2,
+  showstringspaces=false,
+  captionpos=b,
+}
+
+% Cajas coloreadas para ejemplos, consejos, advertencias, notas
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+
+% Definir cajas personalizadas
+\newtcolorbox{tipbox}[1][]{
+  colback=blue!5!white,
+  colframe=blue!75!black,
+  fonttitle=\bfseries,
+  title=Consejo,
+  breakable,
+  #1
+}
+
+\newtcolorbox{warningbox}[1][]{
+  colback=orange!5!white,
+  colframe=orange!75!black,
+  fonttitle=\bfseries,
+  title=Advertencia,
+  breakable,
+  #1
+}
+
+\newtcolorbox{examplebox}[1][]{
+  colback=green!5!white,
+  colframe=green!75!black,
+  fonttitle=\bfseries,
+  title=Ejemplo,
+  breakable,
+  #1
+}
+
+\newtcolorbox{notebox}[1][]{
+  colback=gray!5!white,
+  colframe=gray!75!black,
+  fonttitle=\bfseries,
+  title=Nota,
+  breakable,
+  #1
+}
+
+% Hiperenlaces y referencias
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  filecolor=magenta,
+  urlcolor=cyan,
+  citecolor=green,
+  pdftitle={Manual de Usuario de BCL},
+  pdfauthor={Rafa},
+  pdfsubject={Manual del Lenguaje de Programación BCL},
+  pdfkeywords={BCL, programación, scripting, Tcl, BASIC},
+  bookmarksnumbered=true,
+  bookmarksopen=true,
+  pdfpagemode=UseOutlines,
+}
+
+% Índice
+\usepackage{makeidx}
+\makeindex
+
+% Comandos personalizados
+\newcommand{\bcl}{\texttt{BCL}}
+\newcommand{\cmd}[1]{\texttt{\textbf{#1}}}
+\newcommand{\var}[1]{\texttt{\$#1}}
+\newcommand{\file}[1]{\texttt{#1}}

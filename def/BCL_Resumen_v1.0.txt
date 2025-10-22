@@ -1,0 +1,188 @@
+BCL — RESUMEN GENERAL DEL LENGUAJE (v1.0)
+----------------------------------------------------
+Autor: Rafa
+Fecha: Octubre 2025
+
+Basado en BCL v1.5 (Edición PC)
+Sintaxis tipo BASIC, inspirada en Tcl 8.x
+Case-insensitive — Todo valor es STRING
+
+----------------------------------------------------
+0) INTRODUCCIÓN
+----------------------------------------------------
+BCL (Basic Command Language) es un lenguaje interpretado, compacto y extensible,
+diseñado para microcontroladores y sistemas embebidos de bajo consumo.
+Toda la información se maneja como cadenas (strings) y los comandos se agrupan
+por categorías funcionales.
+
+Los bloques de control usan la palabra END para su cierre.
+Los procedimientos se definen con PROC ... DO ... END y se invocan por su nombre.
+
+----------------------------------------------------
+1) GESTIÓN DE VARIABLES
+----------------------------------------------------
+SET         — Asigna o muestra el valor de una variable.
+UNSET       — Elimina una variable del entorno actual.
+GLOBAL      — Declara variables globales accesibles dentro de un PROC.
+INCR        — Incrementa (o decrementa) una variable numérica.
+APPEND      — Añade texto al final de una variable (in-place).
+
+----------------------------------------------------
+2) ENTRADA / SALIDA
+----------------------------------------------------
+PUTS        — Imprime texto seguido de nueva línea.
+PUTSN       — Imprime texto sin nueva línea.
+GETS        — Lee una línea desde entrada estándar o un canal abierto (archivo).
+
+----------------------------------------------------
+3) EXPRESIONES Y CÁLCULO
+----------------------------------------------------
+EXPR        — Evalúa expresiones aritméticas, lógicas o de texto.
+Incluye funciones: sin, cos, tan, asin, acos, atan, sqrt, pow, abs, int,
+double, ln, log, hypo, rand(), etc.
+
+----------------------------------------------------
+4) ESTRUCTURAS DE CONTROL
+----------------------------------------------------
+IF ... THEN ... [ELSEIF ... THEN] [ELSE ...] END
+             — Estructura condicional de ejecución.
+
+WHILE ... DO ... END
+             — Bucle condicionado al inicio.
+
+FOR ... TO ... [STEP ...] DO ... END
+             — Bucle de rango numérico o variable.
+
+FOREACH var IN lista DO ... END
+             — Itera sobre elementos de una lista.
+
+SWITCH expr DO ... CASE ... DEFAULT ... END
+             — Selección múltiple por coincidencia literal.
+
+BREAK        — Sale de un bucle.
+CONTINUE     — Salta al siguiente ciclo del bucle.
+EXIT         — Termina la ejecución del script o modo REPL.
+
+----------------------------------------------------
+5) PROCEDIMIENTOS
+----------------------------------------------------
+PROC nombre WITH param1 param2 ... DO ... END
+             — Define un procedimiento con parámetros posicionales.
+
+RETURN       — Finaliza un procedimiento devolviendo un valor.
+@param       — Parámetro opcional (detectable con INFO EXISTS).
+GLOBAL       — Permite acceder/modificar variables globales desde un PROC.
+
+----------------------------------------------------
+6) LISTAS
+----------------------------------------------------
+LIST         — Crea una lista de elementos.
+LINDEX       — Devuelve un elemento por índice.
+LRANGE       — Devuelve un rango de elementos.
+LLENGTH      — Devuelve la longitud de una lista.
+LAPPEND      — Añade elementos al final de una lista.
+LINSERT      — Inserta elementos en una posición.
+LREPLACE     — Sustituye elementos por otros.
+LSORT        — Ordena una lista (modo ASCII, case-sensitive).
+LSEARCH      — Busca un elemento en la lista (modo ASCII, case-sensitive).
+CONCAT       — Concatena varias listas o elementos.
+
+----------------------------------------------------
+7) CADENAS DE TEXTO
+----------------------------------------------------
+STRING LEN texto
+STRING FIND texto sub
+STRING SUB texto i len
+STRING REPLACE texto i len nuevo
+STRING TOUPPER texto
+STRING TOLOWER texto
+STRING TRIM texto [chars]
+STRING COMPARE a b
+STRING MATCH patrón texto
+             — Comandos de manipulación, comparación y búsqueda en cadenas.
+
+FORMAT       — Formatea texto usando patrones tipo %d, %s, %f...
+SCAN         — Extrae valores desde un texto formateado.
+
+----------------------------------------------------
+8) ARCHIVOS Y E/S
+----------------------------------------------------
+OPEN ruta modo
+             — Abre un archivo en modo R, W, A o RW.
+CLOSE handle — Cierra un archivo abierto.
+READ handle [n]
+             — Lee contenido del archivo o canal.
+PUTS handle texto
+             — Escribe texto en un archivo (equivalente a WRITE).
+TELL handle  — Devuelve la posición actual del puntero de archivo.
+SEEK handle offset whence
+             — Mueve el puntero (whence=SET|CUR|END).
+EOF handle   — Indica si se ha alcanzado el final del archivo.
+FILE EXISTS ruta
+FILE SIZE ruta
+FILE DELETE ruta
+FILE RENAME src dst
+             — Operaciones de gestión de ficheros.
+
+----------------------------------------------------
+9) SISTEMA / TIEMPO / ENTORNO
+----------------------------------------------------
+ENV nombre   — Devuelve el valor de una variable de entorno.
+ARGV         — Lista de argumentos de línea de comandos.
+EXEC cmd     — Ejecuta un comando del sistema (solo en versión PC).
+EXIT         — Sale del intérprete.
+
+----------------------------------------------------
+10) INFORMACIÓN E INTROSPECCIÓN
+----------------------------------------------------
+INFO EXISTS varname     — Comprueba si una variable existe.
+INFO ARGS procname      — Lista parámetros de un procedimiento.
+INFO COMMANDS [pat]     — Lista comandos disponibles.
+INFO GLOBALS [pat]      — Lista variables globales.
+INFO LOCALS [pat]       — Lista variables locales del PROC actual.
+INFO PROCS [pat]        — Lista procedimientos definidos.
+INFO VARS [pat]         — Lista variables visibles (locales + globales accesibles).
+INFO BCLVERSION         — Devuelve la versión del intérprete.
+
+----------------------------------------------------
+11) EVALUACIÓN Y CARGA DE CÓDIGO
+----------------------------------------------------
+EVAL código   — Evalúa una cadena como código BCL.
+SOURCE ruta   — Carga y ejecuta un archivo BCL.
+
+----------------------------------------------------
+12) DIVERSOS / UTILIDADES
+----------------------------------------------------
+RANDOM        — Implementado como EXPR rand().
+ASSERT        — Verificación de condiciones (opcional futuro).
+ALIAS         — Definición de alias de comandos (opcional futuro).
+
+----------------------------------------------------
+13) ESTRUCTURA GENERAL DE PROGRAMA
+----------------------------------------------------
+# Comentarios con #
+SET nombre "BCL"
+PUTS "Hola $nombre"
+
+PROC SUMA WITH a b DO
+  RETURN [EXPR $a + $b]
+END
+
+SET r [SUMA 2 3]
+PUTS "Resultado=$r"
+
+----------------------------------------------------
+14) NOTAS GLOBALES
+----------------------------------------------------
+- Todo en BCL es STRING.
+- Case-insensitive: SET X 1 == set x 1.
+- Los bloques cierran con END (no ENDIF/ENDFOR).
+- Los procedimientos se invocan por nombre (sin CALL).
+- Las variables locales se crean con SET dentro de PROC.
+- Los parámetros opcionales se marcan con @.
+- Los operadores lógicos y aritméticos siguen sintaxis EXPR.
+- La expansión de variables usa $var exclusivamente.
+
+----------------------------------------------------
+FIN DEL DOCUMENTO
+----------------------------------------------------

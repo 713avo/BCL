@@ -1,0 +1,321 @@
+% CAPÍTULO 7: LISTAS
+% ============================================================================
+
+\chapter{Listas}
+\label{ch:lists}
+
+Las listas son colecciones de valores almacenados en una sola variable. BCL proporciona comandos completos para manipulación de listas.
+
+\section{Crear Listas}
+
+\subsection{Comando LIST}
+
+\begin{examplebox}[title=Crear Listas]
+\begin{lstlisting}[language=BCL]
+SET numbers [LIST 1 2 3 4 5]
+SET colors [LIST red green blue]
+SET mixed [LIST "hello world" 42 3.14]
+
+PUTS $numbers
+PUTS $colors
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+1 2 3 4 5
+red green blue
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Comando SPLIT}
+
+\cmd{SPLIT} crea una lista dividiendo una cadena en un separador.
+
+\begin{examplebox}[title=Dividir Cadenas]
+\begin{lstlisting}[language=BCL]
+SET csv "apple,banana,cherry,date"
+SET fruits [SPLIT $csv ","]
+
+FOREACH fruit IN $fruits DO
+  PUTS "Fruit: $fruit"
+END
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Fruit: apple
+Fruit: banana
+Fruit: cherry
+Fruit: date
+\end{verbatim}
+\end{examplebox}
+
+\section{Acceder a Elementos de Listas}
+
+\subsection{LINDEX: Obtener Elemento por Índice}
+
+\begin{examplebox}[title=Acceder a Elementos]
+\begin{lstlisting}[language=BCL]
+SET names [LIST Alice Bob Charlie Diana]
+
+SET first [LINDEX $names 0]
+SET second [LINDEX $names 1]
+SET last [LINDEX $names 3]
+
+PUTS "First: $first"
+PUTS "Second: $second"
+PUTS "Last: $last"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+First: Alice
+Second: Bob
+Last: Diana
+\end{verbatim}
+\end{examplebox}
+
+\subsection{LRANGE: Obtener Sublista}
+
+\begin{examplebox}[title=Extraer Sublistas]
+\begin{lstlisting}[language=BCL]
+SET numbers [LIST 10 20 30 40 50 60]
+
+SET first_three [LRANGE $numbers 0 2]
+SET last_two [LRANGE $numbers 4 5]
+SET middle [LRANGE $numbers 2 4]
+
+PUTS "First three: $first_three"
+PUTS "Last two: $last_two"
+PUTS "Middle: $middle"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+First three: 10 20 30
+Last two: 50 60
+Middle: 30 40 50
+\end{verbatim}
+\end{examplebox}
+
+\subsection{LLENGTH: Obtener Longitud de Lista}
+
+\begin{examplebox}[title=Longitud de Lista]
+\begin{lstlisting}[language=BCL]
+SET items [LIST pen paper pencil eraser]
+SET count [LLENGTH $items]
+
+PUTS "The list has $count items"
+
+# Iterate using length
+SET i 0
+WHILE $i < $count DO
+  SET item [LINDEX $items $i]
+  PUTS "Item $i: $item"
+  INCR i
+END
+\end{lstlisting}
+\end{examplebox}
+
+\section{Modificar Listas}
+
+\subsection{LAPPEND: Agregar al Final}
+
+\begin{examplebox}[title=Agregar a Listas]
+\begin{lstlisting}[language=BCL]
+SET fruits [LIST apple banana]
+SET fruits [LAPPEND $fruits cherry]
+SET fruits [LAPPEND $fruits date elderberry]
+
+PUTS $fruits
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+apple banana cherry date elderberry
+\end{verbatim}
+\end{examplebox}
+
+\subsection{LINSERT: Insertar en Posición}
+
+\begin{examplebox}[title=Insertar Elementos]
+\begin{lstlisting}[language=BCL]
+SET numbers [LIST 1 2 4 5]
+# Insert 3 at index 2
+SET numbers [LINSERT $numbers 2 3]
+
+PUTS $numbers  # Prints: 1 2 3 4 5
+\end{lstlisting}
+\end{examplebox}
+
+\subsection{LREPLACE: Reemplazar Rango}
+
+\begin{examplebox}[title=Reemplazar Elementos]
+\begin{lstlisting}[language=BCL]
+SET letters [LIST a b c d e]
+
+# Replace index 1-2 with X Y
+SET letters [LREPLACE $letters 1 2 X Y]
+PUTS $letters  # Prints: a X Y d e
+
+# Delete elements (no replacement)
+SET letters [LREPLACE $letters 1 2]
+PUTS $letters  # Prints: a d e
+\end{lstlisting}
+\end{examplebox}
+
+\section{Ordenar y Buscar}
+
+\subsection{LSORT: Ordenar Listas}
+
+\begin{examplebox}[title=Ordenar]
+\begin{lstlisting}[language=BCL]
+SET unsorted [LIST zebra apple monkey dog cat]
+SET sorted [LSORT $unsorted]
+
+PUTS "Unsorted: $unsorted"
+PUTS "Sorted: $sorted"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Unsorted: zebra apple monkey dog cat
+Sorted: apple cat dog monkey zebra
+\end{verbatim}
+\end{examplebox}
+
+\begin{notebox}
+\cmd{LSORT} realiza ordenamiento ASCII, que es sensible a mayúsculas/minúsculas. Las letras mayúsculas vienen antes que las minúsculas.
+\end{notebox}
+
+\subsection{LSEARCH: Encontrar Elemento}
+
+\begin{examplebox}[title=Buscar en Listas]
+\begin{lstlisting}[language=BCL]
+SET fruits [LIST apple banana cherry date]
+
+SET idx1 [LSEARCH $fruits "banana"]
+SET idx2 [LSEARCH $fruits "grape"]
+
+PUTS "Index of banana: $idx1"  # 1
+PUTS "Index of grape: $idx2"   # -1 (not found)
+
+IF $idx1 != -1 THEN
+  PUTS "Found banana at position $idx1"
+END
+\end{lstlisting}
+\end{examplebox}
+
+\section{Operaciones con Listas}
+
+\subsection{JOIN: Lista a Cadena}
+
+\begin{examplebox}[title=Unir Listas]
+\begin{lstlisting}[language=BCL]
+SET words [LIST Hello World from BCL]
+
+SET sentence [JOIN $words " "]
+SET csv [JOIN $words ","]
+
+PUTS $sentence  # Hello World from BCL
+PUTS $csv       # Hello,World,from,BCL
+\end{lstlisting}
+\end{examplebox}
+
+\subsection{CONCAT: Combinar Listas}
+
+\begin{examplebox}[title=Concatenar Listas]
+\begin{lstlisting}[language=BCL]
+SET list1 [LIST 1 2 3]
+SET list2 [LIST 4 5 6]
+SET list3 [LIST 7 8 9]
+
+SET combined [CONCAT $list1 $list2 $list3]
+PUTS $combined  # 1 2 3 4 5 6 7 8 9
+\end{lstlisting}
+\end{examplebox}
+
+\section{Ejemplos Prácticos}
+
+\subsection{Gestor de Lista de Compras}
+
+\begin{examplebox}[title=Lista de Compras]
+\begin{lstlisting}[language=BCL]
+SET shopping_list [LIST]
+
+PROC add_item WITH item DO
+  GLOBAL shopping_list
+  SET shopping_list [LAPPEND $shopping_list $item]
+  PUTS "Added: $item"
+END
+
+PROC show_list DO
+  GLOBAL shopping_list
+  SET count [LLENGTH $shopping_list]
+
+  IF $count == 0 THEN
+    PUTS "Shopping list is empty"
+    RETURN
+  END
+
+  PUTS "Shopping List ($count items):"
+  SET i 0
+  FOREACH item IN $shopping_list DO
+    INCR i
+    PUTS "  $i. $item"
+  END
+END
+
+add_item "Milk"
+add_item "Bread"
+add_item "Eggs"
+show_list
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Added: Milk
+Added: Bread
+Added: Eggs
+Shopping List (3 items):
+  1. Milk
+  2. Bread
+  3. Eggs
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Calculadora de Calificaciones}
+
+\begin{examplebox}[title=Calcular Promedio de Calificaciones]
+\begin{lstlisting}[language=BCL]
+SET grades [LIST 85 92 78 90 88 95]
+
+# Calculate sum
+SET sum 0
+FOREACH grade IN $grades DO
+  SET sum [EXPR $sum + $grade]
+END
+
+# Calculate average
+SET count [LLENGTH $grades]
+SET average [EXPR $sum / $count]
+
+# Find min and max
+SET sorted [LSORT $grades]
+SET min [LINDEX $sorted 0]
+SET max [LINDEX $sorted [EXPR $count - 1]]
+
+PUTS [FORMAT "Count: %d" $count]
+PUTS [FORMAT "Average: %.2f" $average]
+PUTS [FORMAT "Minimum: %d" $min]
+PUTS [FORMAT "Maximum: %d" $max]
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Count: 6
+Average: 88.00
+Minimum: 78
+Maximum: 95
+\end{verbatim}
+\end{examplebox}

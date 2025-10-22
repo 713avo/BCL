@@ -1,0 +1,233 @@
+BCL — MANUAL GENERAL DEL LENGUAJE (v1.0)
+----------------------------------------------------
+Autor: Rafa
+Fecha: Octubre 2025
+
+Basado en BCL v1.5 (Edición PC)
+Sintaxis tipo BASIC con filosofía Tcl
+Case-insensitive — Todo valor es STRING — Soporte Unicode completo
+
+----------------------------------------------------
+0) INTRODUCCIÓN
+----------------------------------------------------
+BCL (Basic Command Language) es un lenguaje interpretado, diseñado para ser
+ligero, expresivo y flexible, inspirado en Tcl 8.x pero con una sintaxis más
+legible tipo BASIC. Su objetivo es ofrecer un lenguaje de scripting portable
+para microcontroladores, sistemas embebidos o entornos de PC con recursos limitados.
+
+Todo en BCL se maneja como texto (STRING). Las operaciones numéricas, lógicas o
+de formato se evalúan dinámicamente.
+
+Los bloques se delimitan con END, y el lenguaje es insensible a mayúsculas o minúsculas.
+
+----------------------------------------------------
+1) COMENTARIOS
+----------------------------------------------------
+Los comentarios comienzan con el carácter **#** y se extienden hasta el final de la línea.
+
+Ejemplo de comentario de línea completa:
+# Este es un comentario completo
+
+Para añadir un comentario al final de una línea de programa se usa `;#` o simplemente `#`:
+
+  SET A 10 ;# Se pone A a 10
+  SET B 20 # También válido
+
+El separador ';' es **opcional**, aunque puede mejorar la claridad cuando hay más comandos
+en la misma línea.
+
+----------------------------------------------------
+2) COMANDO EVAL
+----------------------------------------------------
+**Propósito:** Evalúa una cadena como código BCL.
+
+Sintaxis:
+  EVAL texto
+
+Notas:
+- El texto puede ser literal o el contenido de una variable.
+- Se ejecuta en el ámbito actual (acceso a las mismas variables visibles).
+- El resultado es el valor devuelto por el último comando ejecutado.
+
+Ejemplo:
+SET comando "SET X 42"
+EVAL $comando
+PUTS "X=$X"        ;# Muestra "X=42"
+
+Ejemplo anidado:
+SET script "PUTS 'Hola desde eval'"
+EVAL $script
+
+----------------------------------------------------
+3) COMANDO SOURCE
+----------------------------------------------------
+**Propósito:** Carga y ejecuta un archivo de código BCL externo.
+
+Sintaxis:
+  SOURCE ruta
+
+Notas:
+- Permite dividir programas grandes en módulos reutilizables.
+- La ejecución ocurre en el mismo contexto que el script principal.
+- Admite rutas relativas o absolutas.
+
+Ejemplo:
+SOURCE "./init.bcl"   ;# Ejecuta el código del archivo init.bcl
+
+----------------------------------------------------
+4) COMANDO AFTER
+----------------------------------------------------
+**Propósito:** Suspende la ejecución durante un número de milisegundos.
+
+Sintaxis:
+  AFTER milisegundos
+
+Ejemplo:
+PUTS "Inicio"
+AFTER 1000
+PUTS "1 segundo después"
+AFTER 500
+PUTS "0.5 segundos más"
+
+Notas:
+- AFTER puede usarse también en bucles o dentro de procedimientos.
+- El intérprete se bloquea durante la pausa (no es asíncrono).
+
+----------------------------------------------------
+5) COMANDO EXEC
+----------------------------------------------------
+**Propósito:** Ejecuta un comando del sistema operativo y devuelve su salida.
+
+Sintaxis:
+  EXEC comando [arg1 arg2 ...]
+
+Notas:
+- Sustituye al comando SYSTEM.
+- La salida estándar del proceso se captura como retorno del comando.
+- En entornos embebidos puede no estar disponible.
+
+Ejemplos (PC):
+SET res [EXEC "echo Hola mundo"]
+PUTS $res
+
+SET listado [EXEC "ls"]
+PUTS $listado
+
+----------------------------------------------------
+6) COMANDO ENV
+----------------------------------------------------
+**Propósito:** Accede a las variables de entorno del sistema.
+
+Sintaxis:
+  ENV nombre
+
+Ejemplo:
+PUTS [ENV PATH]
+SET usuario [ENV USER]
+PUTS "Usuario actual: $usuario"
+
+Notas:
+- Si la variable no existe, retorna cadena vacía.
+- Útil para adaptar scripts a entornos o configuraciones externas.
+
+----------------------------------------------------
+7) COMANDO ARGV
+----------------------------------------------------
+**Propósito:** Devuelve la lista de argumentos pasados al script en su ejecución.
+
+Sintaxis:
+  ARGV
+
+Ejemplo (ejecutado como "bcl programa.bcl uno dos tres"):
+
+ARGV → devuelve: uno dos tres
+
+Ejemplo práctico:
+ARGV -> args
+PUTS "Número de argumentos: [LLENGTH $args]"
+FOREACH a IN $args DO
+  PUTS "arg: $a"
+END
+
+----------------------------------------------------
+8) COMANDO EXIT
+----------------------------------------------------
+**Propósito:** Termina la ejecución del script o del intérprete.
+
+Sintaxis:
+  EXIT [código]
+
+Notas:
+- Si se proporciona un código numérico, se devuelve al sistema operativo.
+- Si se omite, se usa 0 (éxito).
+
+Ejemplo:
+PUTS "Fin del script"
+EXIT 0
+
+----------------------------------------------------
+9) SOPORTE UNICODE Y SECUENCIAS DE ESCAPE
+----------------------------------------------------
+BCL soporta completamente texto **Unicode**, tanto en variables como en salida.
+Los comandos **PUTS** y **PUTSN** aceptan secuencias de escape al estilo Tcl/Python.
+
+Ejemplos:
+PUTS "Hola mundo — Unicode ok"
+PUTS "\u201D"         ;# Comilla tipográfica derecha ”
+
+Secuencias de escape admitidas:
+  \n   → nueva línea
+  \t   → tabulación
+  \r   → retorno de carro
+  \a   → campana (beep)
+  \b   → retroceso
+  \f   → salto de página
+  \uXXXX → carácter Unicode (hexadecimal)
+
+----------------------------------------------------
+10) EJEMPLOS DE SECUENCIAS ANSI
+----------------------------------------------------
+Los terminales compatibles con ANSI permiten el uso de códigos de escape
+para controlar el cursor, limpiar pantalla o cambiar colores.
+
+Ejemplo: borrar la pantalla
+  PUTS "\033[2J"        ;# Limpia toda la pantalla
+  PUTS "\033[H"         ;# Mueve el cursor al inicio
+
+Ejemplo: texto con color
+  PUTS "\033[31mTexto rojo\033[0m"
+
+Ejemplo: tabulación y sonido
+  PUTS "Valor1\tValor2\tValor3"
+  PUTS "\a"              ;# Campana (beep)
+
+----------------------------------------------------
+11) EJEMPLO COMPLETO
+----------------------------------------------------
+# Ejemplo demostrativo de comandos globales
+
+PUTS "Inicio del programa BCL"
+AFTER 500
+
+SET nombre "Rafa"
+PUTS "Hola $nombre\n"
+
+PUTS "Probando EVAL..."
+SET expr "SET A [EXPR 10 + 5]"
+EVAL $expr
+PUTS "A=$A"
+
+PUTS "Cargando archivo externo con SOURCE..."
+SOURCE "./submodulo.bcl"
+
+PUTS "Ejecutando comando del sistema..."
+SET out [EXEC "echo Ejecutado"]
+PUTS "Salida: $out"
+
+PUTS "\033[2J\033[H" ;# Limpia pantalla
+PUTS "Fin del programa"
+EXIT
+
+----------------------------------------------------
+FIN DEL DOCUMENTO
+----------------------------------------------------

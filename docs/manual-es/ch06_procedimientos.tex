@@ -1,0 +1,317 @@
+% ============================================================================
+% CAPÍTULO 6: PROCEDIMIENTOS (FUNCIONES)
+% ============================================================================
+
+\chapter{Procedimientos (Funciones)}
+\label{ch:procedures}
+
+Los procedimientos (también llamados funciones en otros lenguajes) te permiten empaquetar código en bloques reutilizables.
+
+\section{Definir Procedimientos}
+
+\textbf{Sintaxis con parámetros:}
+\begin{lstlisting}[language=BCL]
+PROC name WITH param1 param2 ... DO
+  commands
+  RETURN value
+END
+\end{lstlisting}
+
+\textbf{Sintaxis sin parámetros:}
+\begin{lstlisting}[language=BCL]
+PROC name DO
+  commands
+  RETURN value
+END
+\end{lstlisting}
+
+\begin{notebox}
+Cuando un procedimiento no tiene parámetros, la palabra clave \cmd{WITH} puede omitirse.
+\end{notebox}
+
+\begin{examplebox}[title=Procedimiento con Parámetro]
+\begin{lstlisting}[language=BCL]
+PROC greet WITH name DO
+  PUTS "Hello, $name!"
+END
+
+greet "Alice"
+greet "Bob"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Hello, Alice!
+Hello, Bob!
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Procedimiento sin Parámetros]
+\begin{lstlisting}[language=BCL]
+PROC show_version DO
+  PUTS "BCL Interpreter v1.5.0"
+END
+
+show_version
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+BCL Interpreter v1.5.0
+\end{verbatim}
+\end{examplebox}
+
+\begin{notebox}
+Los procedimientos se invocan por su nombre solo—no se necesita palabra clave \cmd{CALL}.
+\end{notebox}
+
+\section{Parámetros}
+
+\subsection{Parámetros Fijos}
+
+Los parámetros se declaran en la cláusula \cmd{WITH} y son accesibles como variables dentro del procedimiento.
+
+\begin{examplebox}[title=Múltiples Parámetros]
+\begin{lstlisting}[language=BCL]
+PROC add WITH a b DO
+  SET result [EXPR $a + $b]
+  RETURN $result
+END
+
+SET sum [add 5 3]
+PUTS "5 + 3 = $sum"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+5 + 3 = 8
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Parámetros Opcionales}
+
+Los parámetros opcionales se prefijan con \texttt{@}. Pueden o no proporcionarse al llamar al procedimiento.
+
+\begin{examplebox}[title=Parámetros Opcionales]
+\begin{lstlisting}[language=BCL]
+PROC greet WITH name @title DO
+  IF [INFO EXISTS title] THEN
+    PUTS "Hello, $title $name"
+  ELSE
+    PUTS "Hello, $name"
+  END
+END
+
+greet "Smith"
+greet "Smith" "Dr."
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Hello, Smith
+Hello, Dr. Smith
+\end{verbatim}
+\end{examplebox}
+
+\begin{tipbox}
+Usa \cmd{INFO EXISTS} para verificar si se proporcionó un parámetro opcional.
+\end{tipbox}
+
+\section{Valores de Retorno}
+
+El comando \cmd{RETURN} sale de un procedimiento y opcionalmente devuelve un valor.
+
+\begin{examplebox}[title=Devolver Valores]
+\begin{lstlisting}[language=BCL]
+PROC square WITH n DO
+  SET result [EXPR $n * $n]
+  RETURN $result
+END
+
+PROC is_even WITH n DO
+  SET remainder [EXPR $n % 2]
+  IF $remainder == 0 THEN
+    RETURN 1  # true
+  ELSE
+    RETURN 0  # false
+  END
+END
+
+SET s [square 7]
+PUTS "7 squared = $s"
+
+IF [is_even 10] THEN
+  PUTS "10 is even"
+END
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+7 squared = 49
+10 is even
+\end{verbatim}
+\end{examplebox}
+
+\begin{notebox}
+Si \cmd{RETURN} se llama sin un valor, o si un procedimiento alcanza su \cmd{END} sin devolver nada, devuelve una cadena vacía.
+\end{notebox}
+
+\section{Alcance de Variables en Procedimientos}
+
+\subsection{Variables Locales}
+
+Las variables creadas con \cmd{SET} dentro de un procedimiento son locales—solo existen dentro de ese procedimiento.
+
+\begin{examplebox}[title=Variables Locales]
+\begin{lstlisting}[language=BCL]
+PROC calculate WITH x DO
+  SET double [EXPR $x * 2]  # local variable
+  SET triple [EXPR $x * 3]  # local variable
+  PUTS "Inside: double=$double, triple=$triple"
+END
+
+calculate 5
+# PUTS $double  # ERROR: double doesn't exist here
+\end{lstlisting}
+\end{examplebox}
+
+\subsection{Acceder a Variables Globales}
+
+Usa \cmd{GLOBAL} para acceder o modificar variables globales desde dentro de un procedimiento.
+
+\begin{examplebox}[title=Variables Globales en Procedimientos]
+\begin{lstlisting}[language=BCL]
+SET counter 0
+
+PROC increment WITH amount DO
+  GLOBAL counter
+  INCR counter $amount
+  PUTS "Counter is now: $counter"
+END
+
+increment 5
+increment 3
+PUTS "Final counter: $counter"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Counter is now: 5
+Counter is now: 8
+Final counter: 8
+\end{verbatim}
+\end{examplebox}
+
+\section{Procedimientos Recursivos}
+
+Los procedimientos pueden llamarse a sí mismos—esto se llama recursión.
+
+\begin{examplebox}[title=Factorial (Recursivo)]
+\begin{lstlisting}[language=BCL]
+PROC factorial WITH n DO
+  IF $n <= 1 THEN
+    RETURN 1
+  ELSE
+    SET prev [factorial [EXPR $n - 1]]
+    RETURN [EXPR $n * $prev]
+  END
+END
+
+PUTS "5! = [factorial 5]"
+PUTS "10! = [factorial 10]"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+5! = 120
+10! = 3628800
+\end{verbatim}
+\end{examplebox}
+
+\begin{warningbox}
+¡Los procedimientos recursivos deben tener un caso base (condición de terminación) para evitar recursión infinita!
+\end{warningbox}
+
+\begin{examplebox}[title=Fibonacci (Recursivo)]
+\begin{lstlisting}[language=BCL]
+PROC fib WITH n DO
+  IF $n <= 1 THEN
+    RETURN $n
+  ELSE
+    SET n1 [EXPR $n - 1]
+    SET n2 [EXPR $n - 2]
+    SET f1 [fib $n1]
+    SET f2 [fib $n2]
+    RETURN [EXPR $f1 + $f2]
+  END
+END
+
+# Print first 10 Fibonacci numbers
+FOR 0 TO 9 DO
+  SET f [fib $__FOR]
+  PUTS "fib($__FOR) = $f"
+END
+\end{lstlisting}
+\end{examplebox}
+
+\section{Ejemplos Prácticos}
+
+\subsection{Convertidor de Temperatura}
+
+\begin{examplebox}[title=Celsius a Fahrenheit]
+\begin{lstlisting}[language=BCL]
+PROC celsius_to_fahrenheit WITH celsius DO
+  SET fahrenheit [EXPR ($celsius * 9.0 / 5.0) + 32]
+  RETURN $fahrenheit
+END
+
+PROC fahrenheit_to_celsius WITH fahrenheit DO
+  SET celsius [EXPR ($fahrenheit - 32) * 5.0 / 9.0]
+  RETURN $celsius
+END
+
+SET c 25
+SET f [celsius_to_fahrenheit $c]
+PUTS [FORMAT "%d\textdegreeC = %.1f\textdegreeF" $c $f]
+
+SET f2 100
+SET c2 [fahrenheit_to_celsius $f2]
+PUTS [FORMAT "%d\textdegreeF = %.1f\textdegreeC" $f2 $c2]
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+25\textdegreeC = 77.0\textdegreeF
+100\textdegreeF = 37.8\textdegreeC
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Utilidades de Cadenas}
+
+\begin{examplebox}[title=Procedimientos Auxiliares de Cadenas]
+\begin{lstlisting}[language=BCL]
+PROC reverse_string WITH str DO
+  RETURN [STRING REVERSE $str]
+END
+
+PROC capitalize WITH str DO
+  SET first [STRING INDEX $str 0]
+  SET rest [STRING RANGE $str 1 end]
+  SET first_upper [STRING TOUPPER $first]
+  SET rest_lower [STRING TOLOWER $rest]
+  RETURN [STRING CAT $first_upper $rest_lower]
+END
+
+SET text "hello world"
+PUTS "Original: $text"
+PUTS "Reversed: [reverse_string $text]"
+PUTS "Capitalized: [capitalize $text]"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Original: hello world
+Reversed: dlrow olleh
+Capitalized: Hello world
+\end{verbatim}
+\end{examplebox}

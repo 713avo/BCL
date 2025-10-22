@@ -1,0 +1,118 @@
+BCL — Manual de Referencia Específico: FORMAT y SCAN
+----------------------------------------------------
+Autor: Rafa
+Fecha: Octubre 2025
+
+Basado en la implementación de BCL v1.5 (Edición PC).
+Inspirado en Tcl 8.6.13, con sintaxis simplificada tipo BASIC.
+
+----------------------------------------------------
+25. FORMAT
+----------------------------------------------------
+Propósito:
+Formatea texto a partir de una plantilla y una lista de argumentos. Es el equivalente funcional
+de printf en C o format en Tcl. Devuelve una cadena resultante con los valores insertados según
+el formato especificado.
+
+Sintaxis:
+  FORMAT plantilla arg1 arg2 ...
+
+Notas:
+- La plantilla puede contener secuencias de formato de estilo C (%d, %f, %s, etc.).
+- Los argumentos se insertan en orden.
+- Soporta ancho, precisión y alineación (%10s, %-10s, %05d, %.3f, etc.).
+- Los números flotantes se redondean según precisión.
+- Devuelve la cadena resultante (no la imprime).
+- Puede usarse dentro de PUTS [FORMAT ...] para salida directa.
+
+Ejemplos básicos:
+SET a 42
+SET b 3.14159
+SET c "Rafa"
+
+PUTS [FORMAT "a=%d pi=%.2f" $a $b]
+PUTS [FORMAT "Hola %s" $c]
+PUTS [FORMAT "%05d" 7]           ;# salida: 00007
+PUTS [FORMAT "%-10s fin" "texto"] ;# salida: "texto     fin"
+
+Alineación y precisión:
+SET n 123
+SET x 1.23456
+PUTS [FORMAT "n=%6d" $n]         ;# ancho fijo
+PUTS [FORMAT "x=%.3f" $x]        ;# tres decimales
+PUTS [FORMAT "%10s %10s" "Col1" "Col2"]
+
+Combinación con listas o cálculos:
+SET total [EXPR 5 * 3.5]
+PUTS [FORMAT "Total: %.2f euros" $total]
+
+Truco: formatear números con ceros a la izquierda
+FOR SET i 1 ; $i <= 5 ; INCR i DO
+  PUTS [FORMAT "ITEM_%03d" $i]
+END
+
+Truco: crear columnas alineadas
+PUTS [FORMAT "%-10s %10s" "Producto" "Precio"]
+PUTS [FORMAT "%-10s %10.2f" "Pan" 1.25]
+PUTS [FORMAT "%-10s %10.2f" "Leche" 0.95]
+
+----------------------------------------------------
+26. SCAN
+----------------------------------------------------
+Propósito:
+Extrae datos desde una cadena de texto según una plantilla de formato, al estilo de scanf en C
+o scan en Tcl. Permite descomponer una línea en variables individuales, interpretando números,
+texto y flotantes automáticamente.
+
+Sintaxis:
+  SCAN texto plantilla var1 var2 ...
+
+Notas:
+- La plantilla usa los mismos especificadores de formato que FORMAT (%d, %f, %s, etc.).
+- Cada especificador corresponde a una variable donde se almacenará el resultado.
+- Devuelve el número de valores correctamente leídos.
+- Si no se pueden extraer todos los valores, las variables restantes se mantienen vacías.
+- Las variables se asignan automáticamente sin necesidad de SET.
+
+Ejemplo básico:
+SET linea "ID: 42 nombre: Rafa valor: 3.5"
+SCAN $linea "ID: %d nombre: %s valor: %f" id nombre valor
+PUTS "id=$id nombre=$nombre valor=$valor"
+
+Lectura de números enteros y flotantes:
+SET t "10 20 30.5"
+SCAN $t "%d %d %f" a b c
+PUTS "a=$a b=$b c=$c"
+
+Truco: extraer subcampos de una línea de texto fija
+SET l "1234 ABC 99.5"
+SCAN $l "%4d %s %f" cod desc valor
+PUTS "Código=$cod Descripción=$desc Valor=$valor"
+
+Truco: lectura parcial en bucle
+SET fh [OPEN "./datos.txt" R]
+WHILE [EOF $fh] == 0 DO
+  SET linea [GETS $fh]
+  SCAN $linea "%s %f" producto precio
+  PUTS [FORMAT "%-10s %.2f" $producto $precio]
+END
+CLOSE $fh
+
+Truco: validación de entradas del usuario
+PUTS "Introduce edad y peso:"
+GETS stdin entrada
+SCAN $entrada "%d %f" edad peso
+IF $edad > 0 AND $peso > 0 THEN
+  PUTS [FORMAT "Edad: %d años, Peso: %.1f kg" $edad $peso]
+ELSE
+  PUTS "Error de entrada"
+END
+
+Truco: procesar texto delimitado por comas
+SET datos "A,10,2.5"
+SCAN $datos "%[^,],%d,%f" id cantidad precio
+PUTS "ID=$id Cantidad=$cantidad Precio=$precio"
+
+----------------------------------------------------
+FIN DEL DOCUMENTO
+----------------------------------------------------

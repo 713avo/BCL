@@ -1,0 +1,263 @@
+BCL — Manual de Referencia Específico: INFO (v1.0)
+----------------------------------------------------
+Autor: Rafa
+Fecha: Octubre 2025
+
+Basado en BCL v1.5 (Edición PC). Inspirado en Tcl 'info', adaptado al estilo BCL.
+Todo en BCL es STRING y case-insensitive. Las listas se devuelven como cadenas separadas por espacios.
+
+----------------------------------------------------
+0) VISIÓN GENERAL
+----------------------------------------------------
+El comando INFO proporciona metadatos en tiempo de ejecución sobre el entorno del intérprete,
+variables, procedimientos y versión. En BCL las opciones implementadas son:
+
+  INFO EXISTS varname
+  INFO ARGS procname
+  INFO COMMANDS [pat]
+  INFO GLOBALS [pat]
+  INFO LOCALS [pat]
+  INFO PROCS [pat]
+  INFO VARS [pat]
+  INFO BCLVERSION
+
+Entre corchetes [pat] se indica un argumento opcional de filtrado por patrón simple.
+Si se omite, se listan todos los elementos aplicables.
+
+----------------------------------------------------
+1) INFO EXISTS varname
+----------------------------------------------------
+Propósito:
+Indica si una variable existe en el ámbito actual (y es accesible).
+
+Sintaxis:
+  INFO EXISTS nombreVariable
+
+Retorno:
+  "1" si la variable existe y es accesible; "0" en caso contrario.
+
+Notas de ámbito:
+- Fuera de PROC, las variables creadas con SET son globales.
+- Dentro de PROC, las variables creadas con SET son locales.
+- Las variables globales sólo son visibles dentro de PROC si se declararon con GLOBAL.
+- INFO EXISTS sigue estas reglas de visibilidad.
+
+Ejemplos:
+SET A 10
+PUTS [INFO EXISTS A]           ;# 1
+UNSET A
+PUTS [INFO EXISTS A]           ;# 0
+
+PROC DEMO WITH p @opt DO
+  SET localX 1
+  PUTS [INFO EXISTS localX]    ;# 1
+  PUTS [INFO EXISTS p]         ;# 1 (parámetro fijo existe)
+  PUTS [INFO EXISTS opt]       ;# 1 si se pasó, 0 si no
+END
+
+DEMO 3
+DEMO 3 7
+
+----------------------------------------------------
+2) INFO ARGS procname
+----------------------------------------------------
+Propósito:
+Devuelve la lista de parámetros definidos para un procedimiento.
+
+Sintaxis:
+  INFO ARGS nombreProcedimiento
+
+Retorno:
+  Lista (string) con los nombres de parámetros, en orden. Los parámetros opcionales
+  se devuelven con el prefijo '@' tal como fueron definidos.
+
+Ejemplos:
+PROC PRUEBA WITH x y DO
+  RETURN ""
+END
+PUTS [INFO ARGS PRUEBA]        ;# x y
+
+PROC P2 WITH p1 @p2 @p3 DO
+  RETURN ""
+END
+PUTS [INFO ARGS P2]            ;# p1 @p2 @p3
+
+Notas:
+- BCL no define valores por defecto en la firma; el manejo de opcionales se hace con '@'
+  y comprobación con INFO EXISTS dentro del cuerpo.
+
+----------------------------------------------------
+3) INFO COMMANDS [pat]
+----------------------------------------------------
+Propósito:
+Lista los comandos disponibles del intérprete (comandos built-in + palabras clave de control).
+
+Sintaxis:
+  INFO COMMANDS
+  INFO COMMANDS patrón
+
+Retorno:
+  Lista (string) con nombres de comandos.
+
+Filtrado (pat):
+- Patrón opcional, comparación simple que acepta:
+  * '*' (cualquier secuencia, incluyendo vacía)
+  * '?' (un carácter)
+  * Coincidencia literal de resto de caracteres
+- La comparación es case-insensitive (BCL es case-insensitive).
+
+Ejemplos:
+PUTS [INFO COMMANDS]
+PUTS [INFO COMMANDS "l*"]      ;# comandos que empiezan por 'l' (list, lindex, lrange, ...)
+
+Notas:
+- Esta lista incluye comandos como: SET, UNSET, PUTS, PUTSN, GETS, EXPR, IF, WHILE, FOR,
+  FOREACH, BREAK, CONTINUE, SWITCH, CASE, DEFAULT, END, RETURN, PROC, SOURCE, EVAL, FORMAT,
+  SCAN, STRING, LIST, SPLIT, JOIN, LINDEX, LRANGE, LLENGTH, LAPPEND, LINSERT, LREPLACE,
+  LSORT, LSEARCH, CONCAT, FILE, OPEN, CLOSE, READ, TELL, SEEK, EOF, ENV, ARGV,  
+  APPEND, INCR, INFO, EXIT, etc. (según build).
+
+----------------------------------------------------
+4) INFO GLOBALS [pat]
+----------------------------------------------------
+Propósito:
+Lista las variables globales definidas actualmente.
+
+Sintaxis:
+  INFO GLOBALS
+  INFO GLOBALS patrón
+
+Retorno:
+  Lista con nombres de variables globales.
+
+Notas de ámbito:
+- Fuera de PROC, todas las variables creadas con SET son globales.
+- Dentro de PROC, INFO GLOBALS lista las globales del entorno principal.
+- El filtrado 'pat' usa las mismas reglas que INFO COMMANDS.
+
+Ejemplo:
+SET G1 10
+SET G2 "hola"
+PUTS [INFO GLOBALS]            ;# G1 G2 (y otras si existen)
+PUTS [INFO GLOBALS "g*"]       ;# G1 G2 (case-insensitive)
+
+----------------------------------------------------
+5) INFO LOCALS [pat]
+----------------------------------------------------
+Propósito:
+Lista las variables locales del PROC actual (si existe un contexto de procedimiento).
+
+Sintaxis:
+  INFO LOCALS
+  INFO LOCALS patrón
+
+Retorno:
+  Lista con nombres de variables locales (creadas con SET) y parámetros recibidos (fijos y @opcionales presentes).
+
+Notas:
+- Si se invoca fuera de un PROC, devuelve cadena vacía.
+- Dentro de PROC incluye parámetros posicionales fijos y sólo los @opcionales que existan.
+- Filtrado 'pat' con las mismas reglas de patrones.
+
+Ejemplo:
+PROC DUMP WITH a @b DO
+  SET x 1
+  PUTS [INFO LOCALS]           ;# a x (y b si se pasó)
+END
+
+DUMP 3
+DUMP 3 4
+
+----------------------------------------------------
+6) INFO PROCS [pat]
+----------------------------------------------------
+Propósito:
+Lista los procedimientos definidos por el usuario.
+
+Sintaxis:
+  INFO PROCS
+  INFO PROCS patrón
+
+Retorno:
+  Lista con los nombres de procedimientos.
+
+Ejemplos:
+PROC SALUDA WITH nombre DO
+  RETURN "Hola "$nombre
+END
+
+PUTS [INFO PROCS]              ;# incluye SALUDA
+PUTS [INFO PROCS "s*"]         ;# patrones (case-insensitive)
+
+----------------------------------------------------
+7) INFO VARS [pat]
+----------------------------------------------------
+Propósito:
+Lista variables visibles en el ámbito actual (unión de locales visibles + globales accesibles).
+
+Sintaxis:
+  INFO VARS
+  INFO VARS patrón
+
+Retorno:
+  Lista con los nombres de variables visibles.
+
+Notas:
+- Fuera de PROC, equivale a INFO GLOBALS.
+- Dentro de PROC, incluye:
+  * Variables locales (SET dentro del proc).
+  * Parámetros fijos y @opcionales presentes.
+  * Variables globales que se hayan declarado con GLOBAL en ese PROC.
+- Filtrado 'pat' como en las demás opciones.
+
+Ejemplo (dentro de PROC):
+PROC EJ WITH a DO
+  GLOBAL shared
+  SET x 1
+  PUTS [INFO VARS]             ;# a x shared (si shared existe globalmente)
+END
+
+SET shared 42
+EJ 9
+
+----------------------------------------------------
+8) INFO BCLVERSION
+----------------------------------------------------
+Propósito:
+Devuelve la versión del lenguaje BCL que ejecuta el intérprete.
+
+Sintaxis:
+  INFO BCLVERSION
+
+Retorno (ejemplo):
+  "1.5"
+
+Ejemplo:
+PUTS [INFO BCLVERSION]         ;# 1.5
+
+----------------------------------------------------
+9) PATRONES (pat) — REGLAS
+----------------------------------------------------
+- '*' coincide con cualquier secuencia (incluyendo vacía).
+- '?' coincide con un único carácter.
+- El resto de caracteres coinciden literalmente.
+- La comparación es case-insensitive.
+- Los resultados se devuelven como lista (string con elementos separados por espacio).
+
+Ejemplos:
+PUTS [INFO COMMANDS "*file*"]
+PUTS [INFO PROCS "test?"]
+PUTS [INFO VARS "g*"]
+
+----------------------------------------------------
+10) BUENAS PRÁCTICAS
+----------------------------------------------------
+- Usar INFO EXISTS para detectar parámetros opcionales (@) dentro de PROC.
+- INFO VARS es útil para depurar el estado visible sin mezclar ámbitos.
+- INFO GLOBALS ayuda a auditar estado compartido.
+- INFO COMMANDS y INFO PROCS sirven para introspección y shells interactivos.
+- Evitar depender del orden de INFO VARS/LOCALS/GLOBALS: tratar las listas como no ordenadas.
+
+----------------------------------------------------
+FIN DEL DOCUMENTO
+----------------------------------------------------

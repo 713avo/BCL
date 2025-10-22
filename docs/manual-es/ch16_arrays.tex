@@ -1,0 +1,549 @@
+% ============================================================================
+% CAPÍTULO 16: ARRAYS ASOCIATIVOS
+% ============================================================================
+
+\chapter{Arrays Asociativos}
+\label{ch:arrays}
+
+BCL soporta arrays asociativos (también conocidos como diccionarios o mapas hash en otros lenguajes), inspirados en la sintaxis de arrays de Tcl. Los arrays permiten almacenar valores indexados por claves arbitrarias, ya sean números o cadenas de texto.
+
+\section{Sintaxis Básica}
+
+\textbf{Asignación:}
+\begin{lstlisting}[language=BCL]
+SET nombreArray(indice) valor
+\end{lstlisting}
+
+\textbf{Acceso:}
+\begin{lstlisting}[language=BCL]
+$nombreArray(indice)
+\end{lstlisting}
+
+\begin{examplebox}[title=Array Simple]
+\begin{lstlisting}[language=BCL]
+SET frutas(1) "manzana"
+SET frutas(2) "naranja"
+SET frutas(3) "platano"
+
+PUTS $frutas(1)    # manzana
+PUTS $frutas(2)    # naranja
+PUTS $frutas(3)    # platano
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+manzana
+naranja
+plátano
+\end{verbatim}
+\end{examplebox}
+
+\section{Índices Numéricos}
+
+Los arrays pueden usar números como índices, similar a los arrays tradicionales:
+
+\begin{examplebox}[title=Índices Numéricos con Bucle]
+\begin{lstlisting}[language=BCL]
+SET colores(1) "rojo"
+SET colores(2) "verde"
+SET colores(3) "azul"
+
+SET i 1
+WHILE $i <= 3 DO
+  PUTS "colores($i) = $colores($i)"
+  INCR i
+END
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+colores(1) = rojo
+colores(2) = verde
+colores(3) = azul
+\end{verbatim}
+\end{examplebox}
+
+\section{Índices de Texto (Asociativos)}
+
+El verdadero poder de los arrays de BCL viene de usar claves de texto:
+
+\begin{examplebox}[title=Directorio Telefónico]
+\begin{lstlisting}[language=BCL]
+SET telefono(Juan) "555-1234"
+SET telefono(Maria) "555-5678"
+SET telefono(Pedro) "555-9012"
+
+SET contacto "Maria"
+PUTS "Telefono de $contacto: $telefono($contacto)"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Teléfono de María: 555-5678
+\end{verbatim}
+\end{examplebox}
+
+\section{Índices Variables}
+
+Puedes usar variables como índices de array:
+
+\begin{examplebox}[title=Variable como Índice]
+\begin{lstlisting}[language=BCL]
+SET datos(lunes) "10"
+SET datos(martes) "15"
+SET datos(miercoles) "12"
+
+SET dia "martes"
+PUTS "Datos del $dia: $datos($dia)"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Datos del martes: 15
+\end{verbatim}
+\end{examplebox}
+
+\section{Índices con Expresiones}
+
+Los índices pueden ser expresiones, permitiendo acceso calculado al array:
+
+\begin{examplebox}[title=Expresión como Índice]
+\begin{lstlisting}[language=BCL]
+SET tabla(1) "A"
+SET tabla(2) "B"
+SET tabla(3) "C"
+
+SET i 1
+SET j [EXPR $i + 1]
+PUTS $tabla($j)    # B
+
+SET k [EXPR $i * 3]
+PUTS $tabla($k)    # C
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+B
+C
+\end{verbatim}
+\end{examplebox}
+
+\section{Arrays Multidimensionales (Simulados)}
+
+BCL simula arrays multidimensionales usando índices compuestos:
+
+\begin{examplebox}[title=Matriz 2D]
+\begin{lstlisting}[language=BCL]
+SET matriz(1,1) "A"
+SET matriz(1,2) "B"
+SET matriz(2,1) "C"
+SET matriz(2,2) "D"
+
+PUTS "$matriz(1,1) $matriz(1,2)"
+PUTS "$matriz(2,1) $matriz(2,2)"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+A B
+C D
+\end{verbatim}
+\end{examplebox}
+
+\section{Verificar Existencia de Elementos}
+
+Usa \cmd{INFO EXISTS} para verificar si un elemento del array existe:
+
+\begin{examplebox}[title=Verificar Existencia]
+\begin{lstlisting}[language=BCL]
+SET config(debug) "true"
+
+IF [INFO EXISTS config(debug)] THEN
+  PUTS "Debug es: $config(debug)"
+ELSE
+  PUTS "Debug no establecido"
+END
+
+IF [INFO EXISTS config(timeout)] THEN
+  PUTS "Timeout es: $config(timeout)"
+ELSE
+  PUTS "Timeout no configurado"
+END
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Debug es: true
+Timeout no configurado
+\end{verbatim}
+\end{examplebox}
+
+\section{Ejemplos Prácticos}
+
+\subsection{Configuración de Aplicación}
+
+\begin{examplebox}[title=Configuración]
+\begin{lstlisting}[language=BCL]
+SET config(host) "localhost"
+SET config(port) "8080"
+SET config(timeout) "30"
+SET config(debug) "false"
+
+PUTS "Servidor: $config(host):$config(port)"
+PUTS "Timeout: $config(timeout)s"
+PUTS "Modo debug: $config(debug)"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Servidor: localhost:8080
+Timeout: 30s
+Modo debug: false
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Contador de Eventos}
+
+\begin{examplebox}[title=Rastreo de Eventos]
+\begin{lstlisting}[language=BCL]
+SET contador(login) "0"
+SET contador(logout) "0"
+SET contador(error) "0"
+
+# Simular eventos
+SET contador(login) [EXPR $contador(login) + 1]
+SET contador(login) [EXPR $contador(login) + 1]
+SET contador(logout) [EXPR $contador(logout) + 1]
+SET contador(error) [EXPR $contador(error) + 1]
+SET contador(login) [EXPR $contador(login) + 1]
+
+PUTS "Login: $contador(login)"
+PUTS "Logout: $contador(logout)"
+PUTS "Error: $contador(error)"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Login: 3
+Logout: 1
+Error: 1
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Tabla de Multiplicar}
+
+\begin{examplebox}[title=Tabla de Multiplicar]
+\begin{lstlisting}[language=BCL]
+SET num 5
+SET i 1
+WHILE $i <= 10 DO
+  SET tabla($num,$i) [EXPR $num * $i]
+  PUTS "$num x $i = $tabla($num,$i)"
+  INCR i
+END
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+5 x 1 = 5
+5 x 2 = 10
+...
+5 x 10 = 50
+\end{verbatim}
+\end{examplebox}
+
+\section{Arrays vs Listas}
+
+\begin{tipbox}
+\textbf{Cuándo usar Arrays:}
+\begin{itemize}
+  \item Mapeos clave-valor (directorio telefónico, configuración)
+  \item Índices arbitrarios (números no consecutivos o cadenas)
+  \item Búsqueda rápida por clave
+\end{itemize}
+
+\textbf{Cuándo usar Listas:}
+\begin{itemize}
+  \item Colecciones ordenadas
+  \item Procesamiento secuencial
+  \item Operaciones como ordenar, unir, dividir
+\end{itemize}
+\end{tipbox}
+
+\section{Arrays en Procedimientos}
+
+Los arrays se pueden usar con la palabra clave \cmd{GLOBAL} en procedimientos:
+
+\begin{examplebox}[title=Arrays Globales en Procedimientos]
+\begin{lstlisting}[language=BCL]
+PROC mostrar_persona DO
+  GLOBAL persona
+  PUTS "Nombre: $persona(nombre)"
+  PUTS "Edad: $persona(edad)"
+END
+
+SET persona(nombre) "Alicia"
+SET persona(edad) "30"
+mostrar_persona
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Nombre: Alicia
+Edad: 30
+\end{verbatim}
+\end{examplebox}
+
+\begin{notebox}
+Los elementos de array se almacenan como variables individuales con nombres como \texttt{nombrearray(indice)}. Se comportan como variables regulares y siguen las mismas reglas de alcance.
+\end{notebox}
+
+\section{El Comando ARRAY}
+
+BCL proporciona el comando \cmd{ARRAY} para la manipulacion avanzada de arrays, inspirado en Tcl. Este comando ofrece operaciones poderosas para trabajar con arrays como estructuras completas.
+
+\subsection{ARRAY EXISTS}
+
+Verifica si un array existe (tiene al menos un elemento):
+
+\begin{lstlisting}[language=BCL]
+ARRAY EXISTS nombreArray
+\end{lstlisting}
+
+Devuelve \texttt{"1"} si el array existe, \texttt{"0"} en caso contrario.
+
+\begin{examplebox}[title=Verificar Existencia de Array]
+\begin{lstlisting}[language=BCL]
+SET resultado [ARRAY EXISTS config]    # "0"
+SET config(debug) "true"
+SET resultado [ARRAY EXISTS config]    # "1"
+\end{lstlisting}
+\end{examplebox}
+
+\subsection{ARRAY SIZE}
+
+Obtiene el numero de elementos en un array:
+
+\begin{lstlisting}[language=BCL]
+ARRAY SIZE nombreArray
+\end{lstlisting}
+
+\begin{examplebox}[title=Tamano de Array]
+\begin{lstlisting}[language=BCL]
+SET colores(rojo) "#FF0000"
+SET colores(verde) "#00FF00"
+SET colores(azul) "#0000FF"
+
+SET tam [ARRAY SIZE colores]       # "3"
+PUTS "El array tiene $tam elementos"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+El array tiene 3 elementos
+\end{verbatim}
+\end{examplebox}
+
+\subsection{ARRAY NAMES}
+
+Obtiene una lista de indices del array, opcionalmente filtrados por un patron:
+
+\begin{lstlisting}[language=BCL]
+ARRAY NAMES nombreArray ?patron?
+\end{lstlisting}
+
+Los patrones soportan comodines glob: \texttt{*} (cualquier caracter), \texttt{?} (un caracter), \texttt{[abc]} (conjunto de caracteres).
+
+\begin{examplebox}[title=Listar Indices de Array]
+\begin{lstlisting}[language=BCL]
+SET datos(nombre) "Juan"
+SET datos(edad) "30"
+SET datos(nota1) "8"
+SET datos(nota2) "9"
+
+SET todos [ARRAY NAMES datos]            # Todos los indices
+SET notas [ARRAY NAMES datos "nota*"]    # Solo notas
+SET con_a [ARRAY NAMES datos "*a*"]      # Que contengan 'a'
+
+PUTS "Todos: $todos"
+PUTS "Notas: $notas"
+PUTS "Con 'a': $con_a"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Todos: nombre edad nota1 nota2
+Notas: nota1 nota2
+Con 'a': nombre edad nota1 nota2
+\end{verbatim}
+\end{examplebox}
+
+\subsection{ARRAY GET}
+
+Obtiene el contenido del array como una lista de pares indice-valor:
+
+\begin{lstlisting}[language=BCL]
+ARRAY GET nombreArray ?patron?
+\end{lstlisting}
+
+Devuelve indices y valores alternados, opcionalmente filtrados por patron.
+
+\begin{examplebox}[title=Obtener Contenido de Array]
+\begin{lstlisting}[language=BCL]
+SET colores(rojo) "255,0,0"
+SET colores(verde) "0,255,0"
+SET colores(azul) "0,0,255"
+
+SET todos [ARRAY GET colores]
+PUTS "Todos los colores: $todos"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Todos los colores: rojo 255,0,0 verde 0,255,0 azul 0,0,255
+\end{verbatim}
+\end{examplebox}
+
+\subsection{ARRAY SET}
+
+Puebla un array desde una lista de pares indice-valor:
+
+\begin{lstlisting}[language=BCL]
+ARRAY SET nombreArray lista
+\end{lstlisting}
+
+La lista debe tener un numero par de elementos.
+
+\begin{examplebox}[title=Establecer Array desde Lista]
+\begin{lstlisting}[language=BCL]
+# Crear array desde lista
+ARRAY SET config "host localhost port 8080 debug true"
+
+PUTS "Host: $config(host)"
+PUTS "Puerto: $config(port)"
+PUTS "Debug: $config(debug)"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Host: localhost
+Puerto: 8080
+Debug: true
+\end{verbatim}
+\end{examplebox}
+
+\textbf{Copiar Arrays:}
+
+\begin{examplebox}[title=Copiar un Array]
+\begin{lstlisting}[language=BCL]
+SET original(a) "1"
+SET original(b) "2"
+SET original(c) "3"
+
+# Copiar array
+SET datos [ARRAY GET original]
+ARRAY SET copia $datos
+
+PUTS "Tamano copia: [ARRAY SIZE copia]"
+PUTS "copia(a) = $copia(a)"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Tamano copia: 3
+copia(a) = 1
+\end{verbatim}
+\end{examplebox}
+
+\subsection{ARRAY UNSET}
+
+Elimina elementos del array que coincidan con un patron:
+
+\begin{lstlisting}[language=BCL]
+ARRAY UNSET nombreArray ?patron?
+\end{lstlisting}
+
+Si no se especifica patron, elimina el array completo.
+
+\begin{examplebox}[title=Eliminacion Selectiva]
+\begin{lstlisting}[language=BCL]
+SET cache(temp_1) "data1"
+SET cache(temp_2) "data2"
+SET cache(perm_1) "data3"
+
+PUTS "Antes: [ARRAY SIZE cache]"    # "3"
+ARRAY UNSET cache "temp_*"
+PUTS "Despues: [ARRAY SIZE cache]"  # "1"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Antes: 3
+Despues: 1
+\end{verbatim}
+\end{examplebox}
+
+\begin{examplebox}[title=Eliminar Array Completo]
+\begin{lstlisting}[language=BCL]
+SET miarray(1) "valor1"
+SET miarray(2) "valor2"
+
+ARRAY UNSET miarray
+
+SET existe [ARRAY EXISTS miarray]    # "0"
+PUTS "Array existe: $existe"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Array existe: 0
+\end{verbatim}
+\end{examplebox}
+
+\subsection{Ejemplo Practico: Gestor de Configuracion}
+
+\begin{examplebox}[title=Gestor de Configuracion]
+\begin{lstlisting}[language=BCL]
+# Cargar configuracion
+ARRAY SET config "
+    db_host localhost
+    db_port 3306
+    db_name myapp
+    cache_enabled true
+    cache_ttl 300
+"
+
+# Mostrar configuracion de base de datos
+PUTS "Configuracion Base de Datos:"
+SET db_keys [ARRAY NAMES config "db_*"]
+SET i 0
+WHILE $i < [LLENGTH $db_keys] DO
+    SET key [LINDEX $db_keys $i]
+    PUTS "  $key = $config($key)"
+    INCR i
+END
+
+# Mostrar configuracion de cache
+PUTS ""
+PUTS "Configuracion Cache:"
+SET cache_keys [ARRAY NAMES config "cache_*"]
+SET i 0
+WHILE $i < [LLENGTH $cache_keys] DO
+    SET key [LINDEX $cache_keys $i]
+    PUTS "  $key = $config($key)"
+    INCR i
+END
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Configuracion Base de Datos:
+  db_host = localhost
+  db_port = 3306
+  db_name = myapp
+
+Configuracion Cache:
+  cache_enabled = true
+  cache_ttl = 300
+\end{verbatim}
+\end{examplebox}

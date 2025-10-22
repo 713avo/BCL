@@ -1,0 +1,120 @@
+% ============================================================================
+% CAPÍTULO 1: INTRODUCCIÓN
+% ============================================================================
+
+\chapter{Introducción}
+\label{ch:introduction}
+
+\section{¿Qué es BCL?}
+
+BCL (Basic Command Language) es un lenguaje de scripting interpretado y ligero diseñado para combinar el poder de Tcl con la legibilidad de BASIC. Fue creado con los siguientes objetivos en mente:
+
+\begin{itemize}
+  \item \textbf{Simplicidad}: Fácil de aprender para principiantes
+  \item \textbf{Portabilidad}: Se ejecuta tanto en PC como en sistemas embebidos
+  \item \textbf{Flexibilidad}: Todo es una cadena, lo que hace que la manipulación de datos sea directa
+  \item \textbf{Expresividad}: Estructura de comandos inspirada en Tcl con palabras clave al estilo BASIC
+  \item \textbf{Insensibilidad a mayúsculas/minúsculas}: Los comandos y palabras clave no distinguen entre mayúsculas y minúsculas
+\end{itemize}
+
+\begin{notebox}
+BCL trata \textbf{todo como una cadena}. Números, listas e incluso código están representados como texto. Esto simplifica el modelo del lenguaje y facilita el trabajo con datos de diversas fuentes.
+\end{notebox}
+
+\section{¿Por qué BCL?}
+
+BCL llena un nicho único en el ecosistema de lenguajes de scripting:
+
+\begin{itemize}
+  \item \textbf{Para principiantes}: La sintaxis al estilo BASIC (\cmd{IF...THEN...END}, \cmd{WHILE...DO...END}) es más intuitiva que las llaves
+  \item \textbf{Para usuarios de Tcl}: Estructura de comandos y modelo de evaluación familiar
+  \item \textbf{Para sistemas embebidos}: Intérprete compacto adecuado para entornos con recursos limitados
+  \item \textbf{Para automatización}: E/S de archivos simple, procesamiento de cadenas e interacción con el sistema
+\end{itemize}
+
+\section{Instalación y Primeros Pasos}
+
+\subsection{Instalación}
+
+BCL puede instalarse en varias plataformas. La distribución estándar incluye:
+
+\begin{itemize}
+  \item El ejecutable del intérprete BCL (\file{bcl})
+  \item Scripts de la biblioteca estándar
+  \item Programas de ejemplo
+  \item Documentación
+\end{itemize}
+
+Consulte el Apéndice~\ref{app:installation} para obtener instrucciones detalladas de instalación para su plataforma.
+
+\subsection{Ejecución de Programas BCL}
+
+Los programas BCL pueden ejecutarse de dos formas:
+
+\begin{enumerate}
+  \item \textbf{Modo script}: Ejecutar un archivo de script BCL
+  \begin{lstlisting}[language=bash]
+bcl myscript.bcl
+  \end{lstlisting}
+
+  \item \textbf{Modo interactivo (REPL)}: Iniciar el intérprete BCL sin argumentos
+  \begin{lstlisting}[language=bash]
+bcl
+  \end{lstlisting}
+\end{enumerate}
+
+\subsection{Tu Primer Programa BCL}
+
+Comencemos con el tradicional programa "¡Hola, Mundo!":
+
+\begin{examplebox}[title=Hola Mundo]
+\begin{lstlisting}[language=BCL]
+# This is a comment - my first BCL program
+PUTS "Hello, World!"
+\end{lstlisting}
+
+\textbf{Salida:}
+\begin{verbatim}
+Hello, World!
+\end{verbatim}
+
+\textbf{Explicación:} El comando \cmd{PUTS} imprime texto en la consola seguido de una nueva línea. El texto encerrado entre comillas dobles se trata como una cadena literal.
+\end{examplebox}
+
+\subsection{Usando el REPL}
+
+El REPL (Read-Eval-Print Loop) es el modo interactivo de BCL. Es perfecto para experimentar con comandos y probar pequeños fragmentos de código.
+
+\begin{examplebox}[title=Sesión REPL]
+\begin{verbatim}
+$ bcl
+BCL> PUTS "Hello from REPL"
+Hello from REPL
+BCL> SET x 42
+BCL> PUTS "The answer is $x"
+The answer is 42
+BCL> EXIT
+\end{verbatim}
+
+\textbf{Explicación:} En modo REPL, escribes comandos y ves resultados inmediatos. El comando \cmd{EXIT} cierra el intérprete.
+\end{examplebox}
+
+\begin{tipbox}
+¡Usa el REPL para probar comandos BCL mientras lees este manual. Es una excelente manera de aprender interactivamente!
+\end{tipbox}
+
+\section{Filosofía de BCL}
+
+Comprender la filosofía central de BCL te ayudará a escribir mejor código:
+
+\begin{enumerate}
+  \item \textbf{Todo es una cadena}: Todos los valores son texto. Las operaciones determinan cómo se interpretan las cadenas (como números, listas, etc.)
+
+  \item \textbf{Los comandos devuelven valores}: Casi todos los comandos BCL devuelven un valor que puede ser usado por otros comandos
+
+  \item \textbf{Sustitución antes de evaluación}: Los valores de variables (usando \$) y los resultados de comandos (usando []) se sustituyen antes de que el comando se ejecute
+
+  \item \textbf{Los bloques terminan con END}: Las estructuras de control usan palabras clave \cmd{END} explícitas en lugar de llaves o indentación
+
+  \item \textbf{Insensible a mayúsculas/minúsculas}: \cmd{PUTS}, \cmd{puts}, y \cmd{Puts} son todos el mismo comando
+\end{enumerate}

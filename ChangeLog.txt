@@ -7,6 +7,206 @@ Fecha: Octubre 2025
 ================================================================================
 
 --------------------------------------------------------------------------------
+[1.5.1] - 2025-10-22
+--------------------------------------------------------------------------------
+
+*** CARACTERÍSTICAS PRINCIPALES ***
+
+1. IMPLEMENTACIÓN DE ARRAY (ARRAYS ASOCIATIVOS)
+   ---------------------------------------------
+
+   * ARRAY EXISTS - Verificar si un array existe
+     - Sintaxis: ARRAY EXISTS arrayName
+     - Retorna 1 si existe, 0 si no
+
+   * ARRAY SIZE - Obtener número de elementos
+     - Sintaxis: ARRAY SIZE arrayName
+     - Retorna cantidad de elementos en el array
+
+   * ARRAY NAMES - Listar índices del array
+     - Sintaxis: ARRAY NAMES arrayName [pattern]
+     - Soporta patrones glob: *, ?, [abc]
+     - Retorna lista de índices que coinciden
+
+   * ARRAY GET - Obtener pares índice-valor
+     - Sintaxis: ARRAY GET arrayName [pattern]
+     - Retorna lista plana: índice1 valor1 índice2 valor2 ...
+
+   * ARRAY SET - Inicializar array desde lista
+     - Sintaxis: ARRAY SET arrayName list
+     - Lista debe tener número par de elementos
+
+   * ARRAY UNSET - Eliminar array completo o elementos específicos
+     - Sintaxis: ARRAY UNSET arrayName [pattern]
+     - Sin patrón: elimina array completo
+     - Con patrón: elimina elementos que coinciden
+
+   * Sintaxis Tcl compatible: $array($index)
+     - Lectura: SET val $myarray(key)
+     - Escritura: SET myarray(index) value
+
+   * Archivo: src/bcl_array.c (550+ líneas)
+
+2. IMPLEMENTACIÓN DE BINARY (MANIPULACIÓN BINARIA)
+   ------------------------------------------------
+
+   * BINARY FORMAT - Empaquetar datos en formato binario
+     - Códigos de formato:
+       * a - String con padding null
+       * A - String con padding espacio
+       * c - Entero 8-bit sin signo
+       * s/S - Entero 16-bit (little/big endian)
+       * i/I - Entero 32-bit (little/big endian)
+       * H/h - Hexadecimal (high/low nibble first)
+       * x - Byte null
+       * X - Retroceder posición
+       * @ - Posición absoluta
+     - Modificadores de repetición: número, *, omitir
+
+   * BINARY SCAN - Desempaquetar datos binarios
+     - Mismos códigos de formato que FORMAT
+     - Asigna valores a variables especificadas
+     - Retorna número de conversiones exitosas
+
+   * Casos de uso:
+     - Protocolos de red (headers, packets)
+     - Archivos binarios (lectura/escritura)
+     - Checksums y hashes
+     - Serialización de datos
+
+   * Archivo: src/bcl_binary.c (700+ líneas)
+
+3. DOCUMENTACIÓN COMPLETA EN DOS IDIOMAS
+   --------------------------------------
+
+   * Manual en Inglés (131 páginas)
+     - docs/manual-eng/main.pdf
+     - 17 capítulos completos
+     - Capítulo 16: ARRAY (arrays asociativos)
+     - Capítulo 17: BINARY (datos binarios)
+
+   * Manual en Español (132 páginas)
+     - docs/manual-es/main.pdf
+     - 17 capítulos completos
+     - Capítulo 16: ARRAY (arreglos asociativos)
+     - Capítulo 17: BINARY (datos binarios)
+
+   * Especificaciones técnicas:
+     - def/BCL_ARRAY_v1.0.txt
+     - def/BCL_BINARY_v1.0.txt
+
+4. MEJORAS DE SINTAXIS
+   -------------------
+
+   * Operador de igualdad cambiado de = a ==
+     - BEFORE: IF $a = 5 THEN
+     - NOW: IF $a == 5 THEN
+     - Más familiar para programadores de C/Java/JavaScript
+
+   * PROC sin parámetros mejorado
+     - BEFORE: PROC nombre WITH DO
+     - NOW: PROC nombre DO (WITH es opcional)
+     - Sintaxis más limpia para procedimientos simples
+
+5. CONTROL DE VERSIONES
+   ---------------------
+
+   * Repositorio Git inicializado
+     - Commit inicial: a5d07a6
+     - Branch: master
+     - 142 archivos versionados
+     - .gitignore configurado
+
+*** ESTADÍSTICAS ***
+
+   - Comandos totales: 62 (ARRAY + BINARY añadidos)
+   - Líneas de código: ~12,700 (+1,250 nuevas)
+   - Archivos fuente: 25 archivos .c (+2 nuevos)
+   - Documentación: 263 páginas totales (131 ENG + 132 ESP)
+   - Sin dependencias externas: Totalmente standalone
+
+*** ARCHIVOS NUEVOS/MODIFICADOS ***
+
+   - src/bcl_array.c         - NUEVO (550+ líneas) - Arrays asociativos
+   - src/bcl_binary.c        - NUEVO (700+ líneas) - Datos binarios
+   - src/bcl_eval.c          - Modificado (registro ARRAY/BINARY)
+   - include/bcl_commands.h  - Modificado (declaraciones)
+   - docs/manual-eng/*.tex   - Capítulos 16-17 añadidos
+   - docs/manual-es/*.tex    - Capítulos 16-17 añadidos
+   - def/BCL_ARRAY_v1.0.txt  - NUEVO - Especificación ARRAY
+   - def/BCL_BINARY_v1.0.txt - NUEVO - Especificación BINARY
+   - .gitignore              - NUEVO - Reglas para Git
+   - GIT_INFO.md             - NUEVO - Documentación del repo
+
+*** LIMITACIONES CONOCIDAS ***
+
+   BINARY - Null Bytes:
+   --------------------
+   - BCL usa strings terminados en null (C strings)
+   - Datos binarios con bytes 0x00 se truncan
+   - IMPACTO: Enteros 16/32-bit con valores pequeños
+   - SOLUCIÓN: Usar enteros 8-bit (c) o hexadecimal (H/h)
+   - DOCUMENTADO: En manual y especificación
+
+   ARRAY - Sin Hash Collision Handling Avanzado:
+   ----------------------------------------------
+   - Usa función hash básica
+   - Sin resolución de colisiones optimizada
+   - Rendimiento: O(n) en peor caso, O(1) en promedio
+
+*** CASOS DE USO ***
+
+   ARRAYS ASOCIATIVOS:
+   -------------------
+   # Configuración
+   SET config(host) "localhost"
+   SET config(port) 8080
+   PUTS "Server: $config(host):$config(port)"
+
+   # Conteo de palabras
+   FOREACH word IN $words DO
+       IF [ARRAY EXISTS counts] THEN
+           IF [INFO EXISTS counts($word)] THEN
+               INCR counts($word)
+           ELSE
+               SET counts($word) 1
+           END
+       ELSE
+           ARRAY SET counts [LIST $word 1]
+       END
+   END
+
+   BINARY DATA:
+   ------------
+   # Crear header de protocolo (16 bytes)
+   SET version 1
+   SET type 2
+   SET length 100
+   SET header [BINARY FORMAT ccS $version $type $length]
+
+   # Leer header
+   BINARY SCAN $header ccS ver typ len
+   PUTS "Version: $ver, Type: $typ, Length: $len"
+
+*** DIFERENCIAS CON TCL 8.X ***
+
+   COMPATIBILIDAD:
+   ---------------
+   ✓ Sintaxis de arrays: $array(index) - Compatible
+   ✓ ARRAY comando: Subcomandos principales - Compatible
+   ✓ BINARY FORMAT/SCAN: Códigos básicos - Compatible
+
+   DIFERENCIAS:
+   ------------
+   ✗ ARRAY STARTSEARCH/NEXTELEMENT/ANYMORE - No implementado
+   ✗ ARRAY STATISTICS - No implementado
+   ✗ BINARY FORMAT: Códigos avanzados (b, B, w, W, q, Q) - No
+   ✗ BINARY SCAN: @* (scan hasta el final) - No implementado
+
+   CONCLUSIÓN: Compatibilidad suficiente para uso típico de arrays
+   y manipulación binaria básica.
+
+--------------------------------------------------------------------------------
 [1.6.0] - 2025-10-21
 --------------------------------------------------------------------------------
 

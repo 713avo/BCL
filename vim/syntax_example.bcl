@@ -1,0 +1,292 @@
+#!/usr/bin/env bcl
+################################################################################
+# BCL Syntax Highlighting Example
+# This file demonstrates all syntax highlighting features
+################################################################################
+
+# Comments are highlighted in a different color
+# They start with # and go to end of line
+
+# ============================================================================
+# 1. VARIABLES
+# ============================================================================
+
+# Simple variable assignment
+SET name "John Doe"
+SET age 42
+SET pi 3.14159
+SET hex_value 0xFF
+
+# Variable references (highlighted with $ prefix)
+PUTS "Name: $name"
+PUTS "Age: $age"
+
+# Array variables
+SET colors(0) "red"
+SET colors(1) "green"
+SET colors(2) "blue"
+SET person(name) "Alice"
+SET person(age) 30
+
+PUTS $colors(0)
+PUTS $person(name)
+
+# ============================================================================
+# 2. CONTROL STRUCTURES
+# ============================================================================
+
+# IF-THEN-ELSE
+IF [EXPR $age >= 18] THEN
+    PUTS "Adult"
+ELSEIF [EXPR $age >= 13] THEN
+    PUTS "Teenager"
+ELSE
+    PUTS "Child"
+END
+
+# WHILE loop
+SET counter 0
+WHILE [EXPR $counter < 5] DO
+    PUTS "Counter: $counter"
+    INCR counter
+END
+
+# FOR loop
+FOR i FROM 1 TO 10 STEP 2 DO
+    PUTS "i = $i"
+END
+
+# FOREACH loop with IN keyword
+SET fruits [LIST apple banana cherry]
+FOREACH fruit IN $fruits DO
+    PUTS "Fruit: $fruit"
+END
+
+# SWITCH statement
+SWITCH $color
+    CASE "red"
+        PUTS "Stop"
+    CASE "yellow"
+        PUTS "Caution"
+    CASE "green"
+        PUTS "Go"
+    DEFAULT
+        PUTS "Unknown"
+END
+
+# BREAK and CONTINUE
+FOREACH num IN 1 2 3 4 5 DO
+    IF [EXPR $num == 3] THEN
+        CONTINUE
+    END
+    IF [EXPR $num == 5] THEN
+        BREAK
+    END
+    PUTS $num
+END
+
+# ============================================================================
+# 3. PROCEDURES
+# ============================================================================
+
+PROC greet WITH name DO
+    PUTS "Hello, $name!"
+END
+
+PROC calculate WITH x y DO
+    SET result [EXPR $x + $y]
+    RETURN $result
+END
+
+PROC show_global DO
+    GLOBAL config
+    PUTS $config
+END
+
+# ============================================================================
+# 4. STRING OPERATIONS
+# ============================================================================
+
+# String literals with escape sequences
+SET message "Line 1\nLine 2\tTabbed"
+SET path "C:\\Users\\John\\Documents"
+SET quote "He said \"Hello\""
+
+# STRING commands
+SET length [STRING LENGTH $name]
+SET upper [STRING TOUPPER $name]
+SET lower [STRING TOLOWER $name]
+SET substr [STRING RANGE $name 0 3]
+
+# FORMAT command (printf-style)
+SET formatted [FORMAT "Name: %s, Age: %d, Pi: %.2f" $name $age $pi]
+
+# ============================================================================
+# 5. LIST OPERATIONS
+# ============================================================================
+
+# Create lists
+SET mylist [LIST one two three four five]
+SET numbers [LIST 10 20 30 40 50]
+
+# List operations
+SET first [LINDEX $mylist 0]
+SET last [LINDEX $mylist end]
+SET length [LLENGTH $mylist]
+SET range [LRANGE $mylist 1 3]
+
+# Modify lists
+LAPPEND mylist six
+LINSERT mylist 2 "two-and-half"
+SET sorted [LSORT $numbers]
+
+# Split and join
+SET words [SPLIT "hello world foo bar" " "]
+SET joined [JOIN $words "-"]
+
+# ============================================================================
+# 6. FILE OPERATIONS
+# ============================================================================
+
+# File existence and properties
+IF [FILE EXISTS "/tmp/test.txt"] THEN
+    SET size [FILE SIZE "/tmp/test.txt"]
+    PUTS "File size: $size"
+END
+
+# Directory operations
+SET cwd [PWD]
+SET files [GLOB "*.bcl"]
+
+# File I/O
+SET fd [OPEN "/tmp/output.txt" w]
+PUTS $fd "Hello, file!"
+CLOSE $fd
+
+# ============================================================================
+# 7. REGULAR EXPRESSIONS
+# ============================================================================
+
+# Pattern matching
+IF [REGEXP {^[0-9]+$} $input] THEN
+    PUTS "Input is numeric"
+END
+
+# Extract matches
+REGEXP {([0-9]+)-([0-9]+)-([0-9]+)} $date match year month day
+
+# Substitution
+SET cleaned [REGSUB -ALL {[^a-zA-Z0-9]} $text "_"]
+
+# ============================================================================
+# 8. EXPRESSIONS
+# ============================================================================
+
+# Arithmetic operators
+SET sum [EXPR $a + $b]
+SET diff [EXPR $a - $b]
+SET product [EXPR $a * $b]
+SET quotient [EXPR $a / $b]
+SET remainder [EXPR $a % $b]
+
+# Comparison operators
+SET equal [EXPR $a == $b]
+SET not_equal [EXPR $a != $b]
+SET less [EXPR $a < $b]
+SET greater [EXPR $a > $b]
+SET less_eq [EXPR $a <= $b]
+SET greater_eq [EXPR $a >= $b]
+
+# Logical operators
+SET and_result [EXPR $a > 0 && $b > 0]
+SET or_result [EXPR $a > 0 || $b > 0]
+SET not_result [EXPR !$flag]
+
+# ============================================================================
+# 9. COMMAND SUBSTITUTION
+# ============================================================================
+
+# Commands in brackets are evaluated first
+SET current_time [CLOCK SECONDS]
+SET files_count [LLENGTH [SPLIT [GLOB "*.txt"] " "]]
+SET upper_name [STRING TOUPPER [STRING RANGE $name 0 4]]
+
+# Nested command substitution
+SET result [EXPR [LINDEX [LIST 1 2 3] 0] + [LINDEX [LIST 4 5 6] 0]]
+
+# ============================================================================
+# 10. ARRAY OPERATIONS
+# ============================================================================
+
+# Array commands
+ARRAY SET myarray [LIST key1 val1 key2 val2 key3 val3]
+
+IF [ARRAY EXISTS myarray key1] THEN
+    PUTS "Key exists"
+END
+
+SET size [ARRAY SIZE myarray]
+SET keys [ARRAY NAMES myarray]
+SET values [ARRAY KEYS myarray]
+
+# ============================================================================
+# 11. BINARY OPERATIONS
+# ============================================================================
+
+# Binary format
+SET bytes [BINARY FORMAT "i i i" 1 2 3]
+SET hex [BINARY FORMAT "H*" "48656c6c6f"]
+
+# Binary scan
+BINARY SCAN $bytes "i i i" a b c
+
+# ============================================================================
+# 12. TIME OPERATIONS
+# ============================================================================
+
+# Clock commands
+SET now [CLOCK SECONDS]
+SET millis [CLOCK MILLISECONDS]
+SET micros [CLOCK MICROSECONDS]
+SET formatted [CLOCK FORMAT $now "%Y-%m-%d %H:%M:%S"]
+
+# ============================================================================
+# 13. SYSTEM OPERATIONS
+# ============================================================================
+
+# Execute external commands
+SET output [EXEC "ls -la"]
+
+# Environment variables
+SET home $ENV(HOME)
+SET path $ENV(PATH)
+
+# Source other files
+SOURCE "lib/common.bcl"
+
+# Evaluate code
+EVAL "SET x 42"
+
+# Command line arguments
+PUTS "Script: $ARGV(0)"
+PUTS "First arg: $ARGV(1)"
+
+# ============================================================================
+# 14. INTROSPECTION
+# ============================================================================
+
+# Get information
+SET cmds [INFO COMMANDS]
+SET procs [INFO PROCS]
+SET globals [INFO GLOBALS]
+SET locals [INFO LOCALS]
+
+IF [INFO EXISTS myvar] THEN
+    PUTS "Variable exists"
+END
+
+# ============================================================================
+# End of syntax example
+# ============================================================================
+
+PUTS "Syntax highlighting demo complete!"

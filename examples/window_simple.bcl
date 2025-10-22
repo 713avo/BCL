@@ -1,0 +1,53 @@
+#!/usr/bin/env bcl
+################################################################################
+# window_simple.bcl - Simple Window Demo using WINDOW.BLB
+################################################################################
+
+SOURCE "lib/WINDOW.BLB"
+
+# Initialize
+WIN_INIT
+
+# Create and draw first window with "HOLA"
+WIN_CREATE 0 5 30 20 10 "Ventana 1"
+WIN_SET_COLOR 0 $ANSI_FG_WHITE $ANSI_BG_BLUE
+WIN_DRAW 0
+WIN_PRINT 0 4 "    HOLA"
+
+# Wait 3 seconds
+AFTER 3000
+
+# Create and draw second window with Cyrillic
+WIN_CREATE 1 3 20 40 15 "Alfabeto Cirílico"
+WIN_SET_COLOR 1 $ANSI_FG_WHITE $ANSI_BG_GREEN
+WIN_DRAW 1
+WIN_PRINT 1 2 " А Б В Г Д Е Ё Ж З И Й К Л М Н"
+WIN_PRINT 1 3 " О П Р С Т У Ф Х Ц Ч Ш Щ Ъ Ы Ь"
+WIN_PRINT 1 4 " Э Ю Я"
+WIN_PRINT 1 6 " а б в г д е ё ж з и й к л м н"
+WIN_PRINT 1 7 " о п р с т у ф х ц ч ш щ ъ ы ь"
+WIN_PRINT 1 8 " э ю я"
+
+# Wait 3 seconds
+AFTER 3000
+
+# Delete cyrillic window
+WIN_DELETE 1
+
+# Wait 2 seconds
+AFTER 2000
+
+# Delete HOLA window
+WIN_DELETE 0
+
+# Create and draw goodbye window
+WIN_CREATE 2 8 28 25 8 "Despedida"
+WIN_SET_COLOR 2 $ANSI_FG_YELLOW $ANSI_BG_RED
+WIN_DRAW 2
+WIN_PRINT 2 3 "      ADIÓS"
+
+# Wait 2 seconds
+AFTER 2000
+
+# Cleanup and exit
+WIN_CLEANUP

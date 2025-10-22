@@ -1,0 +1,139 @@
+#!/usr/bin/env bcl
+################################################################################
+# fileman.bcl - Norton Commander-style File Manager
+################################################################################
+
+SOURCE "lib/WINDOW.BLB"
+
+# Globals
+SET LEFT_DIR [PWD]
+SET RIGHT_DIR [PWD]
+SET LEFT_SEL 0
+SET RIGHT_SEL 0
+SET ACTIVE 0
+
+# Main
+WIN_INIT
+
+# Draw interface
+WIN_CREATE 0 1 1 38 20 ""
+WIN_SET_COLOR 0 $ANSI_FG_CYAN $ANSI_BG_BLUE
+
+WIN_CREATE 1 1 40 38 20 ""
+WIN_SET_COLOR 1 $ANSI_FG_CYAN $ANSI_BG_BLUE
+
+# Function bar
+ANSI_CURSOR_GOTO 22 1
+ANSI_SET_COLOR $ANSI_FG_BLACK $ANSI_BG_CYAN
+PUTSN "1"
+ANSI_SET_COLOR $ANSI_FG_WHITE $ANSI_BG_BLACK
+PUTSN "Help  "
+ANSI_SET_COLOR $ANSI_FG_BLACK $ANSI_BG_CYAN
+PUTSN "10"
+ANSI_SET_COLOR $ANSI_FG_WHITE $ANSI_BG_BLACK
+PUTS "Quit"
+ANSI_RESET
+
+# Initial draw
+SET win_id(0.title) $LEFT_DIR
+WIN_DRAW 0
+SET left_files [GLOB "$LEFT_DIR/*"]
+SET left_list [SPLIT $left_files " "]
+SET left_total [LLENGTH $left_list]
+
+SET row 1
+SET idx 0
+WHILE [EXPR $idx < 16] DO
+    IF [EXPR $idx < $left_total] THEN
+        SET fpath [LINDEX $left_list $idx]
+        SET fname [FILE TAIL $fpath]
+
+        IF [FILE ISDIRECTORY $fpath] THEN
+            APPEND fname "/"
+        END
+
+        # Pad
+        WHILE [EXPR [STRING LENGTH $fname] < 33] DO
+            APPEND fname " "
+        END
+
+        IF [EXPR $idx == $LEFT_SEL] THEN
+            IF [EXPR $ACTIVE == 0] THEN
+                WIN_PRINT_INVERSE 0 $row " $fname"
+            ELSE
+                WIN_PRINT 0 $row " $fname"
+            END
+        ELSE
+            WIN_PRINT 0 $row " $fname"
+        END
+    ELSE
+        WIN_FILL_LINE 0 $row
+    END
+
+    INCR idx
+    INCR row
+END
+
+WIN_PRINT 0 18 " Files: $left_total"
+
+# Right panel
+SET win_id(1.title) $RIGHT_DIR
+WIN_DRAW 1
+SET right_files [GLOB "$RIGHT_DIR/*"]
+SET right_list [SPLIT $right_files " "]
+SET right_total [LLENGTH $right_list]
+
+SET row 1
+SET idx 0
+WHILE [EXPR $idx < 16] DO
+    IF [EXPR $idx < $right_total] THEN
+        SET fpath [LINDEX $right_list $idx]
+        SET fname [FILE TAIL $fpath]
+
+        IF [FILE ISDIRECTORY $fpath] THEN
+            APPEND fname "/"
+        END
+
+        # Pad
+        WHILE [EXPR [STRING LENGTH $fname] < 33] DO
+            APPEND fname " "
+        END
+
+        IF [EXPR $idx == $RIGHT_SEL] THEN
+            IF [EXPR $ACTIVE == 1] THEN
+                WIN_PRINT_INVERSE 1 $row " $fname"
+            ELSE
+                WIN_PRINT 1 $row " $fname"
+            END
+        ELSE
+            WIN_PRINT 1 $row " $fname"
+        END
+    ELSE
+        WIN_FILL_LINE 1 $row
+    END
+
+    INCR idx
+    INCR row
+END
+
+WIN_PRINT 1 18 " Files: $right_total"
+
+WIN_STATUS "j/k=move, TAB=switch, ENTER=chdir, q=quit (simple version)"
+
+# Simple loop - just for demo
+SET running 1
+WHILE [EXPR $running == 1] DO
+    ANSI_CURSOR_GOTO 23 1
+    ANSI_CURSOR_SHOW
+    SET cmd [GETS]
+    ANSI_CURSOR_HIDE
+
+    IF [STRING EQUAL $cmd "q"] THEN
+        SET running 0
+    ELSE
+        WIN_STATUS "Command: $cmd - Press 'q' to quit"
+    END
+END
+
+WIN_CLEANUP
+PUTS "File manager closed."

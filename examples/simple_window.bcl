@@ -1,0 +1,20 @@
+#!/usr/bin/env bcl
+################################################################################
+# simple_window.bcl - Simple Window Demo
+################################################################################
+
+SOURCE "lib/WINDOW.BLB"
+
+# Initialize
+WIN_INIT
+
+# Create a 20x20 window with "hola"
+WIN_CREATE 0 5 30 20 20 "Demo"
+WIN_PRINT 0 9 "      hola"
+WIN_DRAW 0
+
+# Wait 3 seconds
+AFTER 3000
+
+# Cleanup
+WIN_CLEANUP

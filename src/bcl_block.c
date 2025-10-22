@@ -802,9 +802,108 @@ bcl_result_t bcl_exec_block(bcl_interp_t *interp, bcl_block_t *block) {
             break;
 
         case BLOCK_FOREACH:
-            /* FOREACH var IN lista - requiere implementación de listas */
-            bcl_set_error(interp, "FOREACH: not yet implemented (requires list support)");
-            return BCL_ERROR;
+            /* FOREACH var IN lista DO ... END */
+            {
+                if (!block->condition) {
+                    bcl_set_error(interp, "FOREACH: missing condition");
+                    return BCL_ERROR;
+                }
+
+                /* Parsear: "var IN lista" o "var lista" (aceptar ambas sintaxis) */
+                char *cond = bcl_strdup(block->condition);
+                char *saveptr = NULL;
+                char *varname = strtok_r(cond, " \t", &saveptr);
+
+                if (!varname) {
+                    free(cond);
+                    bcl_set_error(interp, "FOREACH: missing variable name");
+                    return BCL_ERROR;
+                }
+
+                /* Siguiente token: puede ser "IN" o la lista directamente */
+                char *next_token = strtok_r(NULL, " \t", &saveptr);
+                char *lista_expr = NULL;
+
+                if (next_token && (strcmp(next_token, "IN") == 0 || strcmp(next_token, "in") == 0)) {
+                    /* Sintaxis: FOREACH var IN lista */
+                    lista_expr = saveptr;
+                } else if (next_token) {
+                    /* Sintaxis: FOREACH var lista (sin IN) */
+                    /* Reconstruir la lista: next_token + resto */
+                    size_t len = strlen(next_token) + (saveptr ? strlen(saveptr) : 0) + 2;
+                    lista_expr = malloc(len);
+                    if (saveptr && strlen(saveptr) > 0) {
+                        snprintf((char*)lista_expr, len, "%s %s", next_token, saveptr);
+                    } else {
+                        snprintf((char*)lista_expr, len, "%s", next_token);
+                    }
+                }
+
+                if (!lista_expr || strlen(lista_expr) == 0) {
+                    free(cond);
+                    if (lista_expr && lista_expr != saveptr) free((char*)lista_expr);
+                    bcl_set_error(interp, "FOREACH: missing list");
+                    return BCL_ERROR;
+                }
+
+                /* Hacer una copia del varname antes de liberar cond */
+                char *var_copy = bcl_strdup(varname);
+
+                /* Recordar si lista_expr fue asignado con malloc */
+                bool lista_expr_allocated = (next_token && strcmp(next_token, "IN") != 0 && strcmp(next_token, "in") != 0);
+
+                /* Evaluar la expresión de lista (puede ser $variable) */
+                char *lista_val = NULL;
+                if (lista_expr[0] == '$') {
+                    /* Es una variable */
+                    char *vname = lista_expr + 1;
+                    bcl_value_t *val = bcl_var_get(interp, vname);
+                    if (val) {
+                        lista_val = bcl_strdup(bcl_value_get(val));
+                    } else {
+                        lista_val = bcl_strdup("");
+                    }
+                } else {
+                    /* Es un literal */
+                    lista_val = bcl_strdup(lista_expr);
+                }
+
+                free(cond);
+                if (lista_expr_allocated && lista_expr != saveptr) {
+                    free((char*)lista_expr);
+                }
+
+                /* Dividir lista por espacios o newlines */
+                char *item = strtok_r(lista_val, " \t\n", &saveptr);
+
+                while (item != NULL) {
+                    /* Establecer variable de iteración */
+                    bcl_var_set(interp, var_copy, item);
+
+                    /* Ejecutar cuerpo del loop */
+                    bcl_result_t res = exec_block_items(interp, block);
+
+                    if (res == BCL_BREAK) {
+                        free(var_copy);
+                        free(lista_val);
+                        return BCL_OK;
+                    } else if (res == BCL_CONTINUE) {
+                        item = strtok_r(NULL, " \t\n", &saveptr);
+                        continue;
+                    } else if (res != BCL_OK) {
+                        free(var_copy);
+                        free(lista_val);
+                        return res;
+                    }
+
+                    /* Siguiente item */
+                    item = strtok_r(NULL, " \t\n", &saveptr);
+                }
+
+                free(var_copy);
+                free(lista_val);
+            }
+            break;
 
         case BLOCK_PROC:
             /* PROC nombre WITH param1 param2 ... DO ... END */

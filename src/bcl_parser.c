@@ -332,6 +332,45 @@ char *bcl_expand_subcommands(bcl_interp_t *interp, const char *str) {
     size_t len = strlen(str);
 
     while (i < len) {
+        /* Saltar comillas dobles - NO expandir dentro de ellas */
+        if (str[i] == '"') {
+            bcl_string_append_char(result, str[i]);
+            i++;
+            while (i < len && str[i] != '"') {
+                if (str[i] == '\\' && i + 1 < len) {
+                    bcl_string_append_char(result, str[i]);
+                    i++;
+                    if (i < len) {
+                        bcl_string_append_char(result, str[i]);
+                        i++;
+                    }
+                } else {
+                    bcl_string_append_char(result, str[i]);
+                    i++;
+                }
+            }
+            if (i < len && str[i] == '"') {
+                bcl_string_append_char(result, str[i]);
+                i++;
+            }
+            continue;
+        }
+
+        /* Saltar comillas simples - NO expandir dentro de ellas */
+        if (str[i] == '\'') {
+            bcl_string_append_char(result, str[i]);
+            i++;
+            while (i < len && str[i] != '\'') {
+                bcl_string_append_char(result, str[i]);
+                i++;
+            }
+            if (i < len && str[i] == '\'') {
+                bcl_string_append_char(result, str[i]);
+                i++;
+            }
+            continue;
+        }
+
         /* Buscar inicio de subcomando */
         if (str[i] == '[') {
             /* Encontrar el ] correspondiente, manejando anidamiento */

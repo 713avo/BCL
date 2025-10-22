@@ -1,0 +1,78 @@
+#!/usr/bin/env bcl
+################################################################################
+# dashboard.bcl - Simple Status Dashboard using ANSI Library
+################################################################################
+# Description: Creates a simple status dashboard with colors
+# Usage: ./bin/bcl examples/dashboard.bcl
+################################################################################
+
+SOURCE "lib/ANSI.BLB"
+
+# Initialize screen
+ANSI_INIT
+
+# Draw header
+ANSI_BANNER "BCL System Monitor"
+
+PUTS ""
+ANSI_PRINT_BOLD "System Status"
+PUTS ""
+
+# CPU Status
+ANSI_PRINT_COLOR $ANSI_FG_CYAN "CPU Usage:"
+ANSI_SET_FG $ANSI_FG_GREEN
+PUTS "  Load: 45%"
+ANSI_RESET
+PUTS ""
+
+# Memory Status
+ANSI_PRINT_COLOR $ANSI_FG_CYAN "Memory:"
+ANSI_SET_FG $ANSI_FG_YELLOW
+PUTS "  Used: 8.2 / 16.0 GB (51%)"
+ANSI_RESET
+PUTS ""
+
+# Disk Status
+ANSI_PRINT_COLOR $ANSI_FG_CYAN "Disk:"
+ANSI_SET_FG $ANSI_FG_GREEN
+PUTS "  Used: 335 / 500 GB (67%)"
+ANSI_RESET
+PUTS ""
+
+# Network Status
+ANSI_PRINT_COLOR $ANSI_FG_CYAN "Network:"
+ANSI_SET_FG $ANSI_FG_GREEN
+PUTS "  Status: Connected"
+PUTS "  Latency: 12ms"
+ANSI_RESET
+PUTS ""
+
+# System Logs
+ANSI_PRINT_BOLD "Recent Activity"
+PUTS ""
+
+ANSI_PRINT_COLOR $ANSI_FG_GREEN "✓ Service started successfully"
+ANSI_PRINT_COLOR $ANSI_FG_BLUE "ℹ Backup completed: 1.2 GB"
+ANSI_PRINT_COLOR $ANSI_FG_YELLOW "⚠ High memory usage detected"
+ANSI_PRINT_COLOR $ANSI_FG_GREEN "✓ System update completed"
+
+PUTS ""
+PUTS ""
+
+# Footer
+ANSI_SET_COLOR $ANSI_FG_BLACK $ANSI_BG_CYAN
+PUTS " Press Ctrl+C to exit "
+ANSI_RESET
+
+PUTS ""
+
+# Wait a bit
+AFTER 3000
+
+# Cleanup
+ANSI_CLEANUP
+ANSI_CLEAR
+ANSI_CURSOR_HOME
+
+ANSI_PRINT_COLOR $ANSI_FG_GREEN "Dashboard closed."
+PUTS ""

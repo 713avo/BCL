@@ -1,0 +1,41 @@
+#!/usr/bin/env bcl
+################################################################################
+# fileman_simple.bcl - Simple File Browser
+################################################################################
+
+SOURCE "lib/WINDOW.BLB"
+
+WIN_INIT
+
+# Create window
+WIN_CREATE 0 2 2 76 18 "BCL File Browser"
+WIN_SET_COLOR 0 $ANSI_FG_CYAN $ANSI_BG_BLUE
+WIN_DRAW 0
+
+# Show current directory
+SET curdir [PWD]
+WIN_PRINT 0 1 " Current directory:"
+WIN_PRINT 0 2 " $curdir"
+WIN_PRINT 0 3 ""
+WIN_PRINT 0 4 " Files and directories:"
+WIN_PRINT 0 5 " ====================="
+
+# Use GLOB to list files
+SET pattern "$curdir/*"
+SET result [GLOB $pattern]
+
+# Show result (GLOB returns space-separated list)
+WIN_PRINT 0 7 " $result"
+
+# Additional info
+WIN_PRINT 0 15 " Note: This is a simple demo showing GLOB output"
+
+WIN_STATUS "Press ENTER to exit"
+
+# Wait
+ANSI_CURSOR_GOTO 23 1
+ANSI_CURSOR_SHOW
+GETS
+
+WIN_CLEANUP
+PUTS "File browser closed."

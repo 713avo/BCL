@@ -1,0 +1,217 @@
+#!/usr/bin/env bcl
+################################################################################
+# window_demo.bcl - Interactive Window Management System
+################################################################################
+# Description: Demonstrates WINDOW.BLB library with REPL command system
+# Usage: ./bin/bcl examples/window_demo.bcl
+################################################################################
+
+SOURCE "lib/WINDOW.BLB"
+
+# ==============================================================================
+# GLOBAL VARIABLES
+# ==============================================================================
+
+SET GARGC 0
+SET GARGV ""
+
+# ==============================================================================
+# COMMAND HANDLERS
+# ==============================================================================
+
+# CMD_HELP - Show help
+PROC CMD_HELP DO
+    WIN_PRINT_STATUS "Commands: new | hide <id> | show <id> | hideall | showall | shadow | clear | exit"
+END
+
+# CMD_EXIT - Exit program
+PROC CMD_EXIT DO
+    GLOBAL REPL_RUNNING
+    SET REPL_RUNNING 0
+END
+
+# CMD_NEW - Create new window
+PROC CMD_NEW DO
+    GLOBAL WIN_COUNT
+    SET id $WIN_COUNT
+
+    # Calculate position
+    SET row [EXPR 2 + [EXPR $id % 4] * 3]
+    SET col [EXPR 2 + [EXPR $id % 5] * 15]
+
+    WIN_CREATE $id $row $col 30 6 "Window $id"
+    WIN_PRINT $id 1 "  Window number $id"
+    WIN_PRINT $id 2 ""
+    WIN_PRINT $id 3 "  hide $id | show $id"
+    WIN_DRAW $id
+    WIN_PRINT_STATUS "Window $id created at ($row,$col)"
+END
+
+# CMD_HIDE - Hide a window
+PROC CMD_HIDE DO
+    GLOBAL GARGC
+    GLOBAL GARGV
+
+    IF [EXPR $GARGC < 1] THEN
+        WIN_PRINT_STATUS "Usage: hide <id>"
+        RETURN
+    END
+
+    SET id [LINDEX $GARGV 0]
+    WIN_HIDE $id
+    WIN_REDRAW_ALL
+    WIN_PRINT_STATUS "Window $id hidden"
+END
+
+# CMD_SHOW - Show a window
+PROC CMD_SHOW DO
+    GLOBAL GARGC
+    GLOBAL GARGV
+
+    IF [EXPR $GARGC < 1] THEN
+        WIN_PRINT_STATUS "Usage: show <id>"
+        RETURN
+    END
+
+    SET id [LINDEX $GARGV 0]
+    WIN_SHOW $id
+    WIN_PRINT_STATUS "Window $id shown"
+END
+
+# CMD_HIDEALL - Hide all windows
+PROC CMD_HIDEALL DO
+    GLOBAL WIN_COUNT
+    SET i 0
+    WHILE [EXPR $i < $WIN_COUNT] DO
+        WIN_HIDE $i
+        INCR i
+    END
+    WIN_REDRAW_ALL
+    WIN_PRINT_STATUS "All windows hidden"
+END
+
+# CMD_SHOWALL - Show all windows
+PROC CMD_SHOWALL DO
+    GLOBAL WIN_COUNT
+    SET i 0
+    WHILE [EXPR $i < $WIN_COUNT] DO
+        WIN_SHOW $i
+        INCR i
+    END
+    WIN_REDRAW_ALL
+    WIN_PRINT_STATUS "All windows shown"
+END
+
+# CMD_SHADOW - Toggle shadows
+PROC CMD_SHADOW DO
+    GLOBAL WIN_SHADOW_ENABLED
+    WIN_TOGGLE_SHADOW
+    WIN_REDRAW_ALL
+    IF [EXPR $WIN_SHADOW_ENABLED == 1] THEN
+        WIN_PRINT_STATUS "Shadows enabled"
+    ELSE
+        WIN_PRINT_STATUS "Shadows disabled"
+    END
+END
+
+# CMD_CLEAR - Clear and redraw
+PROC CMD_CLEAR DO
+    WIN_REDRAW_ALL
+    WIN_PRINT_STATUS "Screen redrawn"
+END
+
+# ==============================================================================
+# COMMAND PARSER
+# ==============================================================================
+
+PROC PARSE_COMMAND WITH cmdline DO
+    GLOBAL GARGC
+    GLOBAL GARGV
+
+    SET parts [SPLIT $cmdline " "]
+    SET cmd [LINDEX $parts 0]
+
+    # Extract arguments
+    SET GARGV [LRANGE $parts 1 end]
+    SET GARGC [LLENGTH $GARGV]
+
+    IF [STRING EQUAL $cmd "new"] THEN
+        CMD_NEW
+    ELSEIF [STRING EQUAL $cmd "hide"] THEN
+        CMD_HIDE
+    ELSEIF [STRING EQUAL $cmd "show"] THEN
+        CMD_SHOW
+    ELSEIF [STRING EQUAL $cmd "hideall"] THEN
+        CMD_HIDEALL
+    ELSEIF [STRING EQUAL $cmd "showall"] THEN
+        CMD_SHOWALL
+    ELSEIF [STRING EQUAL $cmd "shadow"] THEN
+        CMD_SHADOW
+    ELSEIF [STRING EQUAL $cmd "clear"] THEN
+        CMD_CLEAR
+    ELSEIF [STRING EQUAL $cmd "help"] THEN
+        CMD_HELP
+    ELSEIF [STRING EQUAL $cmd "exit"] THEN
+        CMD_EXIT
+    ELSEIF [EXPR [STRING LENGTH $cmd] > 0] THEN
+        WIN_PRINT_STATUS "Unknown command: $cmd (type 'help' for list)"
+    END
+END
+
+# ==============================================================================
+# MAIN PROGRAM
+# ==============================================================================
+
+# Initialize window system
+WIN_INIT
+
+# Create welcome window
+WIN_CREATE 0 2 10 60 17 "BCL Window Manager v1.0"
+WIN_PRINT 0 2 "  Welcome to BCL Window Management System!"
+WIN_PRINT 0 3 "  ========================================="
+WIN_PRINT 0 4 ""
+WIN_PRINT 0 5 "  AVAILABLE COMMANDS:"
+WIN_PRINT 0 6 ""
+WIN_PRINT 0 7 "    new           Create a new window"
+WIN_PRINT 0 8 "    hide <id>     Hide window by ID number"
+WIN_PRINT 0 9 "    show <id>     Show window by ID number"
+WIN_PRINT 0 10 "    hideall       Hide all windows"
+WIN_PRINT 0 11 "    showall       Show all windows"
+WIN_PRINT 0 12 "    shadow        Toggle shadow effects"
+WIN_PRINT 0 13 "    clear         Redraw screen"
+WIN_PRINT 0 14 "    help          Show this help"
+WIN_PRINT 0 15 "    exit          Exit program"
+WIN_DRAW 0
+
+# Show initial help
+WIN_PRINT_STATUS "Type 'new' to create windows, 'help' for commands, 'exit' to quit"
+
+# Draw REPL line
+WIN_DRAW_REPL
+
+# Main REPL loop
+SET REPL_RUNNING 1
+
+WHILE [EXPR $REPL_RUNNING == 1] DO
+    # Position cursor at REPL prompt
+    ANSI_CURSOR_GOTO 24 [EXPR [STRING LENGTH $REPL_PROMPT] + 1]
+    ANSI_CURSOR_SHOW
+
+    # Read command
+    SET cmdline [GETS]
+
+    # Hide cursor while processing
+    ANSI_CURSOR_HIDE
+
+    # Parse and execute command
+    PARSE_COMMAND $cmdline
+
+    # Redraw REPL line
+    WIN_DRAW_REPL
+END
+
+# Cleanup and exit
+WIN_CLEANUP
+
+ANSI_PRINT_COLOR $ANSI_FG_GREEN "Window Manager closed. Goodbye!"
+PUTS ""

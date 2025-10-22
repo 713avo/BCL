@@ -1,0 +1,223 @@
+################################################################################
+# ANSI.BLB - ANSI Escape Sequences Library for BCL
+################################################################################
+# Version: 1.1.0
+# Date: 2025-10-22
+# Description: Pure BCL library for terminal control using ANSI escape sequences
+#              Works around BCL limitations by using direct string literals
+# Usage: SOURCE "lib/ANSI.BLB"
+################################################################################
+
+# ==============================================================================
+# Helper procedure to output ANSI ESC character
+# ==============================================================================
+
+PROC ANSI_ESC DO
+    # ESC = ASCII 27, output using BINARY FORMAT
+    SET e [BINARY FORMAT c "27"]
+    PUTSN $e
+END
+
+PROC ANSI_CSI DO
+    # CSI = ESC + "["
+    ANSI_ESC
+    PUTSN "["
+END
+
+# ==============================================================================
+# COLOR CODES - CONSTANTS
+# ==============================================================================
+
+SET ANSI_FG_BLACK "30"
+SET ANSI_FG_RED "31"
+SET ANSI_FG_GREEN "32"
+SET ANSI_FG_YELLOW "33"
+SET ANSI_FG_BLUE "34"
+SET ANSI_FG_MAGENTA "35"
+SET ANSI_FG_CYAN "36"
+SET ANSI_FG_WHITE "37"
+
+SET ANSI_FG_BRIGHT_BLACK "90"
+SET ANSI_FG_BRIGHT_RED "91"
+SET ANSI_FG_BRIGHT_GREEN "92"
+SET ANSI_FG_BRIGHT_YELLOW "93"
+SET ANSI_FG_BRIGHT_BLUE "94"
+SET ANSI_FG_BRIGHT_MAGENTA "95"
+SET ANSI_FG_BRIGHT_CYAN "96"
+SET ANSI_FG_BRIGHT_WHITE "97"
+
+SET ANSI_BG_BLACK "40"
+SET ANSI_BG_RED "41"
+SET ANSI_BG_GREEN "42"
+SET ANSI_BG_YELLOW "43"
+SET ANSI_BG_BLUE "44"
+SET ANSI_BG_MAGENTA "45"
+SET ANSI_BG_CYAN "46"
+SET ANSI_BG_WHITE "47"
+
+SET ANSI_BG_BRIGHT_BLACK "100"
+SET ANSI_BG_BRIGHT_RED "101"
+SET ANSI_BG_BRIGHT_GREEN "102"
+SET ANSI_BG_BRIGHT_YELLOW "103"
+SET ANSI_BG_BRIGHT_BLUE "104"
+SET ANSI_BG_BRIGHT_MAGENTA "105"
+SET ANSI_BG_BRIGHT_CYAN "106"
+SET ANSI_BG_BRIGHT_WHITE "107"
+
+SET ANSI_RESET "0"
+SET ANSI_BOLD "1"
+SET ANSI_DIM "2"
+SET ANSI_ITALIC "3"
+SET ANSI_UNDERLINE "4"
+SET ANSI_BLINK "5"
+SET ANSI_REVERSE "7"
+SET ANSI_HIDDEN "8"
+
+# ==============================================================================
+# SCREEN CONTROL
+# ==============================================================================
+
+PROC ANSI_CLEAR DO
+    ANSI_ESC
+    PUTSN "["
+    PUTSN "2J"
+END
+
+PROC ANSI_CLEAR_LINE DO
+    ANSI_ESC
+    PUTSN "["
+    PUTSN "2K"
+END
+
+# ==============================================================================
+# CURSOR CONTROL
+# ==============================================================================
+
+PROC ANSI_CURSOR_HOME DO
+    ANSI_ESC
+    PUTSN "["
+    PUTSN "H"
+END
+
+PROC ANSI_CURSOR_GOTO WITH row col DO
+    ANSI_ESC
+    PUTSN "["
+    PUTSN "$row"
+    PUTSN ";"
+    PUTSN "$col"
+    PUTSN "H"
+END
+
+PROC ANSI_CURSOR_HIDE DO
+    ANSI_ESC
+    PUTSN "["
+    PUTSN "?25l"
+END
+
+PROC ANSI_CURSOR_SHOW DO
+    ANSI_ESC
+    PUTSN "["
+    PUTSN "?25h"
+END
+
+# ==============================================================================
+# COLOR AND STYLE
+# ==============================================================================
+
+PROC ANSI_RESET DO
+    ANSI_ESC
+    PUTSN "["
+    PUTSN "0m"
+END
+
+PROC ANSI_SET_FG WITH color DO
+    ANSI_ESC
+    PUTSN "["
+    PUTSN "$color"
+    PUTSN "m"
+END
+
+PROC ANSI_SET_BG WITH color DO
+    ANSI_ESC
+    PUTSN "["
+    PUTSN "$color"
+    PUTSN "m"
+END
+
+PROC ANSI_SET_STYLE WITH style DO
+    ANSI_ESC
+    PUTSN "["
+    PUTSN "$style"
+    PUTSN "m"
+END
+
+PROC ANSI_SET_COLOR WITH fg bg DO
+    ANSI_ESC
+    PUTSN "["
+    PUTSN "$fg"
+    PUTSN ";"
+    PUTSN "$bg"
+    PUTSN "m"
+END
+
+# ==============================================================================
+# HIGH-LEVEL FUNCTIONS
+# ==============================================================================
+
+PROC ANSI_PRINT_COLOR WITH color text DO
+    ANSI_SET_FG $color
+    PUTS $text
+    ANSI_RESET
+END
+
+PROC ANSI_PRINT_COLORED WITH fg bg text DO
+    ANSI_SET_COLOR $fg $bg
+    PUTS $text
+    ANSI_RESET
+END
+
+PROC ANSI_PRINT_BOLD WITH text DO
+    ANSI_SET_STYLE $ANSI_BOLD
+    PUTS $text
+    ANSI_RESET
+END
+
+PROC ANSI_PRINT_UNDERLINE WITH text DO
+    ANSI_SET_STYLE $ANSI_UNDERLINE
+    PUTS $text
+    ANSI_RESET
+END
+
+PROC ANSI_BANNER WITH text DO
+    SET len [STRING LENGTH $text]
+    SET padding [EXPR (80 - $len) / 2]
+
+    PUTS ""
+    ANSI_SET_STYLE $ANSI_BOLD
+    ANSI_SET_FG $ANSI_FG_CYAN
+
+    SET i 0
+    WHILE [EXPR $i < $padding] DO
+        PUTSN " "
+        INCR i
+    END
+
+    PUTS $text
+    ANSI_RESET
+    PUTS ""
+END
+
+PROC ANSI_INIT DO
+    ANSI_CLEAR
+    ANSI_CURSOR_HOME
+    ANSI_CURSOR_HIDE
+END
+
+PROC ANSI_CLEANUP DO
+    ANSI_RESET
+    ANSI_CURSOR_SHOW
+END
+
+################################################################################
+# END OF ANSI.BLB
+################################################################################

@@ -168,10 +168,12 @@ bcl_result_t bcl_cmd_puts(bcl_interp_t *interp, int argc, char **argv,
 
     /* Sin handle: escribir todo a stdout */
     for (int i = 0; i < argc; i++) {
-        if (i > 0) printf(" ");
-        printf("%s", argv[i]);
+        if (i > 0) fwrite(" ", 1, 1, stdout);
+        /* Usar fwrite para soportar bytes binarios (secuencias ANSI) */
+        size_t len = strlen(argv[i]);
+        fwrite(argv[i], 1, len, stdout);
     }
-    printf("\n");
+    fwrite("\n", 1, 1, stdout);
     fflush(stdout);
 
     *result = bcl_value_create("");
@@ -202,8 +204,10 @@ bcl_result_t bcl_cmd_putsn(bcl_interp_t *interp, int argc, char **argv,
 
     /* Sin handle: escribir todo a stdout */
     for (int i = 0; i < argc; i++) {
-        if (i > 0) printf(" ");
-        printf("%s", argv[i]);
+        if (i > 0) fwrite(" ", 1, 1, stdout);
+        /* Usar fwrite para soportar bytes binarios (secuencias ANSI) */
+        size_t len = strlen(argv[i]);
+        fwrite(argv[i], 1, len, stdout);
     }
     fflush(stdout);
 

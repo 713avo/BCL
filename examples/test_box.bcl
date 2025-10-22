@@ -1,0 +1,132 @@
+#!/usr/bin/env bcl
+################################################################################
+# test_box.bcl - Sequential Window Demo with Unicode
+################################################################################
+
+SOURCE "lib/ANSI.BLB"
+
+# Procedure to draw a box
+PROC DRAW_BOX WITH row col width height DO
+    # Top border
+    ANSI_CURSOR_GOTO $row $col
+    PUTSN "╔"
+    SET i 1
+    WHILE [EXPR $i < $width - 1] DO
+        PUTSN "═"
+        INCR i
+    END
+    PUTSN "╗"
+
+    # Sides
+    SET r [EXPR $row + 1]
+    SET end_row [EXPR $row + $height - 1]
+    WHILE [EXPR $r < $end_row] DO
+        ANSI_CURSOR_GOTO $r $col
+        PUTSN "║"
+        SET i 1
+        WHILE [EXPR $i < $width - 1] DO
+            PUTSN " "
+            INCR i
+        END
+        PUTSN "║"
+        INCR r
+    END
+
+    # Bottom border
+    ANSI_CURSOR_GOTO $end_row $col
+    PUTSN "╚"
+    SET i 1
+    WHILE [EXPR $i < $width - 1] DO
+        PUTSN "═"
+        INCR i
+    END
+    PUTSN "╝"
+END
+
+# Procedure to clear a box area
+PROC CLEAR_BOX WITH row col width height DO
+    SET r $row
+    SET end_row [EXPR $row + $height]
+    WHILE [EXPR $r < $end_row] DO
+        ANSI_CURSOR_GOTO $r $col
+        SET i 0
+        WHILE [EXPR $i < $width] DO
+            PUTSN " "
+            INCR i
+        END
+        INCR r
+    END
+END
+
+# ==============================================================================
+# MAIN PROGRAM
+# ==============================================================================
+
+# Initialize
+ANSI_INIT
+ANSI_CLEAR
+
+# WINDOW 1: "HOLA" box (20x10)
+ANSI_SET_COLOR $ANSI_FG_WHITE $ANSI_BG_BLUE
+DRAW_BOX 5 30 20 10
+
+ANSI_CURSOR_GOTO 9 37
+ANSI_SET_STYLE $ANSI_BOLD
+ANSI_SET_FG $ANSI_FG_YELLOW
+PUTS "HOLA"
+ANSI_RESET
+
+# Wait 3 seconds
+AFTER 3000
+
+# WINDOW 2: Cyrillic alphabet (40x15)
+ANSI_SET_COLOR $ANSI_FG_WHITE $ANSI_BG_GREEN
+DRAW_BOX 3 20 40 15
+
+# Write Cyrillic alphabet
+ANSI_SET_FG $ANSI_FG_YELLOW
+ANSI_CURSOR_GOTO 5 23
+PUTS "Alfabeto Cirílico:"
+ANSI_SET_FG $ANSI_FG_WHITE
+ANSI_CURSOR_GOTO 7 23
+PUTS "А Б В Г Д Е Ё Ж З И Й К Л М Н"
+ANSI_CURSOR_GOTO 8 23
+PUTS "О П Р С Т У Ф Х Ц Ч Ш Щ Ъ Ы Ь"
+ANSI_CURSOR_GOTO 9 23
+PUTS "Э Ю Я"
+ANSI_CURSOR_GOTO 11 23
+PUTS "а б в г д е ё ж з и й к л м н"
+ANSI_CURSOR_GOTO 12 23
+PUTS "о п р с т у ф х ц ч ш щ ъ ы ь"
+ANSI_CURSOR_GOTO 13 23
+PUTS "э ю я"
+ANSI_RESET
+
+# Wait 3 seconds
+AFTER 3000
+
+# Clear cyrillic window
+CLEAR_BOX 3 20 40 15
+
+# Wait 2 seconds
+AFTER 2000
+
+# Clear HOLA window
+CLEAR_BOX 5 30 20 10
+
+# WINDOW 3: "ADIÓS" box (25x8)
+ANSI_SET_COLOR $ANSI_FG_WHITE $ANSI_BG_RED
+DRAW_BOX 8 28 25 8
+
+ANSI_CURSOR_GOTO 11 35
+ANSI_SET_STYLE $ANSI_BOLD
+ANSI_SET_FG $ANSI_FG_YELLOW
+PUTS "ADIÓS"
+ANSI_RESET
+
+# Wait 2 seconds
+AFTER 2000
+
+# Cleanup and exit
+ANSI_CLEAR
+ANSI_CURSOR_HOME

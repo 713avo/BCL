@@ -1,0 +1,112 @@
+#!/usr/bin/env bcl
+################################################################################
+# color_demo.bcl - ANSI Color and Style Demonstration
+################################################################################
+# Description: Demonstrates colors and text styles available in ANSI.BLB
+# Usage: ./bin/bcl examples/color_demo.bcl
+################################################################################
+
+SOURCE "lib/ANSI.BLB"
+
+# Clear screen and show header
+ANSI_CLEAR
+ANSI_BANNER "BCL ANSI Library - Color Demo"
+
+PUTS ""
+ANSI_PRINT_BOLD "=== FOREGROUND COLORS ==="
+PUTS ""
+
+ANSI_PRINT_COLOR $ANSI_FG_BLACK "■ Black text"
+ANSI_PRINT_COLOR $ANSI_FG_RED "■ Red text"
+ANSI_PRINT_COLOR $ANSI_FG_GREEN "■ Green text"
+ANSI_PRINT_COLOR $ANSI_FG_YELLOW "■ Yellow text"
+ANSI_PRINT_COLOR $ANSI_FG_BLUE "■ Blue text"
+ANSI_PRINT_COLOR $ANSI_FG_MAGENTA "■ Magenta text"
+ANSI_PRINT_COLOR $ANSI_FG_CYAN "■ Cyan text"
+ANSI_PRINT_COLOR $ANSI_FG_WHITE "■ White text"
+
+PUTS ""
+ANSI_PRINT_BOLD "=== BRIGHT FOREGROUND COLORS ==="
+PUTS ""
+
+ANSI_PRINT_COLOR $ANSI_FG_BRIGHT_BLACK "■ Bright Black (Gray)"
+ANSI_PRINT_COLOR $ANSI_FG_BRIGHT_RED "■ Bright Red"
+ANSI_PRINT_COLOR $ANSI_FG_BRIGHT_GREEN "■ Bright Green"
+ANSI_PRINT_COLOR $ANSI_FG_BRIGHT_YELLOW "■ Bright Yellow"
+ANSI_PRINT_COLOR $ANSI_FG_BRIGHT_BLUE "■ Bright Blue"
+ANSI_PRINT_COLOR $ANSI_FG_BRIGHT_MAGENTA "■ Bright Magenta"
+ANSI_PRINT_COLOR $ANSI_FG_BRIGHT_CYAN "■ Bright Cyan"
+ANSI_PRINT_COLOR $ANSI_FG_BRIGHT_WHITE "■ Bright White"
+
+PUTS ""
+ANSI_PRINT_BOLD "=== BACKGROUND COLORS ==="
+PUTS ""
+
+ANSI_PRINT_COLORED $ANSI_FG_WHITE $ANSI_BG_BLACK "  Black background  "
+ANSI_PRINT_COLORED $ANSI_FG_WHITE $ANSI_BG_RED "  Red background    "
+ANSI_PRINT_COLORED $ANSI_FG_BLACK $ANSI_BG_GREEN "  Green background  "
+ANSI_PRINT_COLORED $ANSI_FG_BLACK $ANSI_BG_YELLOW "  Yellow background "
+ANSI_PRINT_COLORED $ANSI_FG_WHITE $ANSI_BG_BLUE "  Blue background   "
+ANSI_PRINT_COLORED $ANSI_FG_WHITE $ANSI_BG_MAGENTA "  Magenta background"
+ANSI_PRINT_COLORED $ANSI_FG_BLACK $ANSI_BG_CYAN "  Cyan background   "
+ANSI_PRINT_COLORED $ANSI_FG_BLACK $ANSI_BG_WHITE "  White background  "
+
+PUTS ""
+ANSI_PRINT_BOLD "=== TEXT STYLES ==="
+PUTS ""
+
+ANSI_SET_STYLE $ANSI_BOLD
+PUTS "Bold text"
+ANSI_RESET
+
+ANSI_SET_STYLE $ANSI_DIM
+PUTS "Dim text"
+ANSI_RESET
+
+ANSI_SET_STYLE $ANSI_ITALIC
+PUTS "Italic text"
+ANSI_RESET
+
+ANSI_PRINT_UNDERLINE "Underlined text"
+
+ANSI_SET_STYLE $ANSI_REVERSE
+PUTS "Reverse video"
+ANSI_RESET
+
+PUTS ""
+ANSI_PRINT_BOLD "=== COMBINED STYLES ==="
+PUTS ""
+
+ANSI_SET_STYLE $ANSI_BOLD
+ANSI_SET_FG $ANSI_FG_RED
+PUTS "Bold Red Text"
+ANSI_RESET
+
+ANSI_SET_STYLE $ANSI_UNDERLINE
+ANSI_SET_FG $ANSI_FG_BLUE
+PUTS "Underlined Blue Text"
+ANSI_RESET
+
+ANSI_SET_COLOR $ANSI_FG_YELLOW $ANSI_BG_BLUE
+ANSI_SET_STYLE $ANSI_BOLD
+PUTS "Bold Yellow on Blue"
+ANSI_RESET
+
+PUTS ""
+ANSI_PRINT_BOLD "=== STATUS MESSAGES ==="
+PUTS ""
+
+ANSI_PRINT_COLOR $ANSI_FG_GREEN "✓ Success: Operation completed successfully"
+ANSI_PRINT_COLOR $ANSI_FG_BLUE "ℹ Info: Processing 1234 items"
+ANSI_PRINT_COLOR $ANSI_FG_YELLOW "⚠ Warning: Disk space is low"
+ANSI_PRINT_COLOR $ANSI_FG_RED "✗ Error: Failed to connect to server"
+
+PUTS ""
+PUTS ""
+
+# Footer
+ANSI_SET_FG $ANSI_FG_CYAN
+PUTS "Demo completed!"
+ANSI_RESET
+
+ANSI_CLEANUP

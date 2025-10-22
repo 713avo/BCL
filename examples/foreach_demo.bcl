@@ -1,0 +1,100 @@
+#!/usr/bin/env bcl
+################################################################################
+# FOREACH Demonstration - BCL Interpreter
+################################################################################
+
+PUTS "═══════════════════════════════════════════════════════════════"
+PUTS "FOREACH Command Demonstration"
+PUTS "═══════════════════════════════════════════════════════════════\n"
+
+# 1. Basic iteration with literal list
+PUTS "1. Literal list iteration:"
+FOREACH color IN red green blue yellow DO
+    PUTS "   Color: $color"
+END
+
+# 2. Iteration with variable
+PUTS "\n2. Variable list iteration:"
+SET fruits "apple banana cherry date elderberry"
+FOREACH fruit IN $fruits DO
+    PUTS "   Fruit: $fruit"
+END
+
+# 3. Numeric iteration
+PUTS "\n3. Numeric list:"
+SET numbers "10 20 30 40 50"
+SET sum 0
+FOREACH num IN $numbers DO
+    SET sum [EXPR $sum + $num]
+END
+PUTS "   Numbers: $numbers"
+PUTS "   Sum: $sum"
+
+# 4. BREAK statement
+PUTS "\n4. Using BREAK (stop at 'stop'):"
+FOREACH word IN start continue stop end final DO
+    IF [STRING EQUAL $word "stop"] THEN
+        PUTS "   Found 'stop', breaking loop"
+        BREAK
+    END
+    PUTS "   Processing: $word"
+END
+
+# 5. CONTINUE statement
+PUTS "\n5. Using CONTINUE (skip vowels):"
+FOREACH letter IN a b c d e f g h i j DO
+    IF [STRING EQUAL $letter "a"] THEN CONTINUE END
+    IF [STRING EQUAL $letter "e"] THEN CONTINUE END
+    IF [STRING EQUAL $letter "i"] THEN CONTINUE END
+    PUTS "   Letter: $letter"
+END
+
+# 6. File listing with FOREACH
+PUTS "\n6. File listing example:"
+SET pattern "/tmp/*.bcl"
+SET filelist [GLOB $pattern]
+SET files [SPLIT $filelist " "]
+SET count 0
+FOREACH file IN $files DO
+    INCR count
+    IF [EXPR $count > 5] THEN
+        BREAK
+    END
+    PUTS "   File $count: $file"
+END
+PUTS "   (showing first 5 files only)"
+
+# 7. Nested FOREACH
+PUTS "\n7. Nested FOREACH loops:"
+SET row_list "1 2 3"
+FOREACH row IN $row_list DO
+    SET col_list "A B C"
+    PUTSN "   Row $row: "
+    FOREACH col IN $col_list DO
+        PUTSN "$col$row "
+    END
+    PUTS ""
+END
+
+# 8. Using LIST command
+PUTS "\n8. FOREACH with LIST command:"
+SET colors [LIST red green blue yellow]
+FOREACH color IN $colors DO
+    PUTS "   Color: $color"
+END
+
+# 9. Processing scores
+PUTS "\n9. Calculate average:"
+SET scores [LIST 85 92 78 95 88]
+SET total 0
+SET count 0
+FOREACH score IN $scores DO
+    SET total [EXPR $total + $score]
+    INCR count
+END
+SET average [EXPR $total / $count]
+PUTS [FORMAT "   Average score: %.2f" $average]
+
+PUTS "\n═══════════════════════════════════════════════════════════════"
+PUTS "FOREACH demonstration complete!"
+PUTS "═══════════════════════════════════════════════════════════════"

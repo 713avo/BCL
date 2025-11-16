@@ -1,0 +1,522 @@
+#!/usr/bin/env bcl
+################################################################################
+# test_events_comprehensive.bcl - Batería exhaustiva de tests del sistema EVENT
+################################################################################
+# Este archivo prueba completamente el sistema de eventos de BCL v2.0
+################################################################################
+
+SOURCE "lib/ANSI.BLB"
+
+GLOBAL test_count pass_count fail_count
+SET test_count 0
+SET pass_count 0
+SET fail_count 0
+
+# ==============================================================================
+# HELPER PROCEDURES
+# ==============================================================================
+
+PROC TEST_START WITH name DO
+    GLOBAL test_count
+    INCR test_count
+    ANSI_SET_FG $ANSI_FG_CYAN
+    PUTS ""
+    PUTS "Test $test_count: $name"
+    ANSI_RESET
+END
+
+PROC TEST_PASS WITH msg DO
+    GLOBAL pass_count
+    INCR pass_count
+    ANSI_SET_FG $ANSI_FG_GREEN
+    PUTS "  ✓ PASS: $msg"
+    ANSI_RESET
+END
+
+PROC TEST_FAIL WITH msg DO
+    GLOBAL fail_count
+    INCR fail_count
+    ANSI_SET_FG $ANSI_FG_RED
+    PUTS "  ✗ FAIL: $msg"
+    ANSI_RESET
+END
+
+PROC TEST_ASSERT WITH condition msg DO
+    IF [EXPR $condition] THEN
+        TEST_PASS $msg
+    ELSE
+        TEST_FAIL $msg
+    END
+END
+
+# ==============================================================================
+# TEST 1: EVENT INFO sin eventos
+# ==============================================================================
+
+TEST_START "EVENT INFO sin eventos registrados"
+
+SET info [EVENT INFO]
+TEST_ASSERT [EXPR [STRING LENGTH $info] == 0] "INFO vacío sin eventos"
+
+# ==============================================================================
+# TEST 2: Timer simple (one-shot)
+# ==============================================================================
+
+TEST_START "Timer one-shot básico"
+
+GLOBAL timer_fired
+SET timer_fired 0
+
+PROC ON_TIMER_BASIC DO
+    GLOBAL timer_fired
+    SET timer_fired 1
+END
+
+EVENT TIMER 500 ON_TIMER_BASIC
+AFTER 100  # Esperar antes de procesar
+SET result [EVENT PROCESS 1000]
+
+TEST_ASSERT [EXPR $timer_fired == 1] "Timer se disparó"
+TEST_ASSERT [EXPR $result == 1] "EVENT PROCESS retornó 1 (evento procesado)"
+
+# ==============================================================================
+# TEST 3: Timer con timeout insuficiente
+# ==============================================================================
+
+TEST_START "Timer con timeout insuficiente"
+
+GLOBAL timer_late
+SET timer_late 0
+
+PROC ON_TIMER_LATE DO
+    GLOBAL timer_late
+    SET timer_late 1
+END
+
+EVENT TIMER 2000 ON_TIMER_LATE
+SET result [EVENT PROCESS 500]  # Solo 500ms, timer necesita 2000ms
+
+TEST_ASSERT [EXPR $timer_late == 0] "Timer no se disparó (timeout insuficiente)"
+TEST_ASSERT [EXPR $result == 0] "EVENT PROCESS retornó 0 (timeout)"
+
+# Limpiar el timer pendiente procesándolo
+EVENT PROCESS 2000
+
+# ==============================================================================
+# TEST 4: Múltiples timers
+# ==============================================================================
+
+TEST_START "Múltiples timers con diferentes intervalos"
+
+GLOBAL timer_a timer_b timer_c
+SET timer_a 0
+SET timer_b 0
+SET timer_c 0
+
+PROC ON_TIMER_A DO
+    GLOBAL timer_a
+    SET timer_a 1
+END
+
+PROC ON_TIMER_B DO
+    GLOBAL timer_b
+    SET timer_b 1
+END
+
+PROC ON_TIMER_C DO
+    GLOBAL timer_c
+    SET timer_c 1
+END
+
+EVENT TIMER 300 ON_TIMER_A
+EVENT TIMER 600 ON_TIMER_B
+EVENT TIMER 900 ON_TIMER_C
+
+# Procesar en 3 rondas
+AFTER 350
+EVENT PROCESS 100
+TEST_ASSERT [EXPR $timer_a == 1] "Timer A (300ms) disparado"
+TEST_ASSERT [EXPR $timer_b == 0] "Timer B (600ms) aún no"
+
+AFTER 300
+EVENT PROCESS 100
+TEST_ASSERT [EXPR $timer_b == 1] "Timer B (600ms) disparado"
+TEST_ASSERT [EXPR $timer_c == 0] "Timer C (900ms) aún no"
+
+AFTER 350
+EVENT PROCESS 100
+TEST_ASSERT [EXPR $timer_c == 1] "Timer C (900ms) disparado"
+
+# ==============================================================================
+# TEST 5: Timer repetitivo (re-programación)
+# ==============================================================================
+
+TEST_START "Timer repetitivo mediante re-programación"
+
+GLOBAL repeat_count
+SET repeat_count 0
+
+PROC ON_TIMER_REPEAT DO
+    GLOBAL repeat_count
+    INCR repeat_count
+
+    IF [EXPR $repeat_count < 3] THEN
+        EVENT TIMER 200 ON_TIMER_REPEAT  # Re-programar
+    END
+END
+
+EVENT TIMER 200 ON_TIMER_REPEAT
+
+# Procesar 3 veces
+FOR 1 TO 3 DO
+    AFTER 250
+    EVENT PROCESS 100
+END
+
+TEST_ASSERT [EXPR $repeat_count == 3] "Timer se repitió 3 veces"
+
+# ==============================================================================
+# TEST 6: EVENT INFO con eventos registrados
+# ==============================================================================
+
+TEST_START "EVENT INFO muestra eventos registrados"
+
+GLOBAL dummy_var
+SET dummy_var 0
+
+PROC DUMMY_CALLBACK DO
+    GLOBAL dummy_var
+    SET dummy_var 1
+END
+
+EVENT TIMER 5000 DUMMY_CALLBACK
+SET info [EVENT INFO]
+
+TEST_ASSERT [EXPR [STRING LENGTH $info] > 0] "INFO no vacío con evento registrado"
+
+# Buscar "TIMER" y "DUMMY_CALLBACK" en la info
+SET has_timer [STRING FIRST "TIMER" $info]
+SET has_callback [STRING FIRST "DUMMY_CALLBACK" $info]
+
+TEST_ASSERT [EXPR $has_timer >= 0] "INFO contiene 'TIMER'"
+TEST_ASSERT [EXPR $has_callback >= 0] "INFO contiene nombre del callback"
+
+# Limpiar evento pendiente
+EVENT PROCESS 6000
+
+# ==============================================================================
+# TEST 7: Callback recibe parámetros (simulado con variable)
+# ==============================================================================
+
+TEST_START "Callbacks pueden acceder a parámetros"
+
+GLOBAL callback_received_param
+SET callback_received_param 0
+
+# Nota: Este test simula parámetros porque timers no reciben parámetros
+# Los eventos I/O sí los reciben (ver tests de FD más adelante)
+PROC CALLBACK_WITH_CONTEXT DO
+    GLOBAL callback_received_param test_context
+    SET callback_received_param $test_context
+END
+
+GLOBAL test_context
+SET test_context 42
+
+EVENT TIMER 100 CALLBACK_WITH_CONTEXT
+EVENT PROCESS 500
+
+TEST_ASSERT [EXPR $callback_received_param == 42] "Callback accedió a variable global"
+
+# ==============================================================================
+# TEST 8: EVENT PROCESS timeout preciso
+# ==============================================================================
+
+TEST_START "EVENT PROCESS timeout es preciso"
+
+# Sin eventos registrados, debe retornar inmediatamente
+SET start_time [CLOCK MILLISECONDS]
+SET result [EVENT PROCESS 0]  # Timeout 0 = no bloquear
+SET end_time [CLOCK MILLISECONDS]
+SET elapsed [EXPR $end_time - $start_time]
+
+TEST_ASSERT [EXPR $result == 0] "Sin eventos, retorna 0"
+TEST_ASSERT [EXPR $elapsed < 100] "Timeout 0 retorna rápido (< 100ms)"
+
+# ==============================================================================
+# TEST 9: Orden de ejecución de timers
+# ==============================================================================
+
+TEST_START "Timers se ejecutan en orden cronológico"
+
+GLOBAL exec_order
+SET exec_order ""
+
+PROC TIMER_FIRST DO
+    GLOBAL exec_order
+    APPEND exec_order "A"
+END
+
+PROC TIMER_SECOND DO
+    GLOBAL exec_order
+    APPEND exec_order "B"
+END
+
+PROC TIMER_THIRD DO
+    GLOBAL exec_order
+    APPEND exec_order "C"
+END
+
+EVENT TIMER 100 TIMER_FIRST
+EVENT TIMER 200 TIMER_SECOND
+EVENT TIMER 300 TIMER_THIRD
+
+# Procesar todos
+EVENT PROCESS 500
+
+TEST_ASSERT [STRING EQUAL $exec_order "ABC"] "Timers ejecutados en orden A-B-C"
+
+# ==============================================================================
+# TEST 10: Precisión de timers
+# ==============================================================================
+
+TEST_START "Precisión de timers (±10% tolerancia)"
+
+GLOBAL timer_start timer_end
+SET timer_start [CLOCK MILLISECONDS]
+
+PROC TIMER_PRECISION DO
+    GLOBAL timer_end
+    SET timer_end [CLOCK MILLISECONDS]
+END
+
+EVENT TIMER 1000 TIMER_PRECISION
+EVENT PROCESS 1500
+
+SET actual_time [EXPR $timer_end - $timer_start]
+SET error [EXPR abs($actual_time - 1000.0)]
+SET percent_error [EXPR ($error / 1000.0) * 100.0]
+
+TEST_ASSERT [EXPR $percent_error < 10.0] "Timer preciso dentro del 10% (actual: $actual_time ms)"
+
+# ==============================================================================
+# TEST 11: Callbacks pueden llamar a EVENT STOP
+# ==============================================================================
+
+TEST_START "Callbacks pueden detener el event loop"
+
+GLOBAL stop_called
+SET stop_called 0
+
+PROC TIMER_STOPPER DO
+    GLOBAL stop_called
+    SET stop_called 1
+    EVENT STOP
+END
+
+# Esto no funcionará en el test porque EVENT LOOP bloquearía
+# En su lugar, verificamos que EVENT STOP no causa error
+EVENT TIMER 100 TIMER_STOPPER
+EVENT PROCESS 500
+
+TEST_ASSERT [EXPR $stop_called == 1] "Callback que llama EVENT STOP ejecutado OK"
+
+# ==============================================================================
+# TEST 12: Múltiples EVENT PROCESS consecutivos
+# ==============================================================================
+
+TEST_START "Múltiples llamadas a EVENT PROCESS"
+
+GLOBAL process_count
+SET process_count 0
+
+PROC COUNT_PROCESS DO
+    GLOBAL process_count
+    INCR process_count
+    IF [EXPR $process_count < 3] THEN
+        EVENT TIMER 100 COUNT_PROCESS
+    END
+END
+
+EVENT TIMER 100 COUNT_PROCESS
+
+FOR 1 TO 3 DO
+    AFTER 150
+    EVENT PROCESS 200
+END
+
+TEST_ASSERT [EXPR $process_count == 3] "EVENT PROCESS llamado 3 veces consecutivas"
+
+# ==============================================================================
+# TEST 13: Timer inmediato (0ms)
+# ==============================================================================
+
+TEST_START "Timer con 0 millisegundos (inmediato)"
+
+GLOBAL immediate_fired
+SET immediate_fired 0
+
+PROC ON_IMMEDIATE DO
+    GLOBAL immediate_fired
+    SET immediate_fired 1
+END
+
+EVENT TIMER 0 ON_IMMEDIATE
+EVENT PROCESS 100
+
+TEST_ASSERT [EXPR $immediate_fired == 1] "Timer de 0ms se dispara inmediatamente"
+
+# ==============================================================================
+# TEST 14: Timer muy largo
+# ==============================================================================
+
+TEST_START "Timer largo (5 segundos)"
+
+ANSI_SET_FG $ANSI_FG_YELLOW
+PUTS "  (Este test toma 5 segundos...)"
+ANSI_RESET
+
+GLOBAL long_timer_fired
+SET long_timer_fired 0
+
+PROC ON_LONG_TIMER DO
+    GLOBAL long_timer_fired
+    SET long_timer_fired 1
+END
+
+EVENT TIMER 5000 ON_LONG_TIMER
+SET start [CLOCK MILLISECONDS]
+EVENT PROCESS 6000
+SET elapsed [EXPR [CLOCK MILLISECONDS] - $start]
+
+TEST_ASSERT [EXPR $long_timer_fired == 1] "Timer largo se disparó"
+TEST_ASSERT [EXPR $elapsed >= 4900 && $elapsed <= 5500] "Tiempo correcto (~5000ms, actual: $elapsed ms)"
+
+# ==============================================================================
+# TEST 15: Callback que genera excepción
+# ==============================================================================
+
+TEST_START "Callback con error no rompe el event loop"
+
+GLOBAL error_survived
+SET error_survived 0
+
+PROC BAD_CALLBACK DO
+    # Esto causará error (variable inexistente)
+    PUTS $nonexistent_variable
+END
+
+PROC GOOD_CALLBACK DO
+    GLOBAL error_survived
+    SET error_survived 1
+END
+
+EVENT TIMER 100 BAD_CALLBACK
+EVENT TIMER 200 GOOD_CALLBACK
+
+# Procesar ambos (el primero fallará, el segundo debe ejecutarse)
+EVENT PROCESS 500
+
+TEST_ASSERT [EXPR $error_survived == 1] "Callback bueno ejecutado después de callback con error"
+
+# ==============================================================================
+# TEST 16: Variables compartidas entre callbacks
+# ==============================================================================
+
+TEST_START "Variables compartidas entre múltiples callbacks"
+
+GLOBAL shared_value
+SET shared_value 0
+
+PROC INCREMENT_SHARED DO
+    GLOBAL shared_value
+    INCR shared_value
+END
+
+PROC DOUBLE_SHARED DO
+    GLOBAL shared_value
+    SET shared_value [EXPR $shared_value * 2]
+END
+
+EVENT TIMER 100 INCREMENT_SHARED
+EVENT TIMER 200 INCREMENT_SHARED
+EVENT TIMER 300 DOUBLE_SHARED
+
+EVENT PROCESS 500
+
+TEST_ASSERT [EXPR $shared_value == 4] "Shared variable: 0 -> 1 -> 2 -> 4 (correcto)"
+
+# ==============================================================================
+# TEST 17: EVENT INFO formato
+# ==============================================================================
+
+TEST_START "Formato de EVENT INFO"
+
+GLOBAL info_test
+SET info_test 0
+
+PROC INFO_CALLBACK DO
+    GLOBAL info_test
+    SET info_test 1
+END
+
+EVENT TIMER 10000 INFO_CALLBACK  # Timer largo para poder ver INFO
+SET info [EVENT INFO]
+
+# Verificar que contiene información útil
+SET has_ms [STRING FIRST "ms" $info]
+SET has_arrow [STRING FIRST "->" $info]
+
+TEST_ASSERT [EXPR $has_ms >= 0] "INFO contiene tiempo en ms"
+TEST_ASSERT [EXPR $has_arrow >= 0] "INFO contiene '->' separador"
+
+# Limpiar
+EVENT PROCESS 11000
+
+# ==============================================================================
+# RESUMEN
+# ==============================================================================
+
+PUTS ""
+PUTS "════════════════════════════════════════════════════════════"
+ANSI_SET_STYLE $ANSI_BOLD
+PUTS "                    RESUMEN DE TESTS"
+ANSI_RESET
+PUTS "════════════════════════════════════════════════════════════"
+
+PUTS "Total de tests:    $test_count"
+ANSI_SET_FG $ANSI_FG_GREEN
+PUTS "Tests pasados:     $pass_count"
+ANSI_RESET
+IF [EXPR $fail_count > 0] THEN
+    ANSI_SET_FG $ANSI_FG_RED
+    PUTS "Tests fallidos:    $fail_count"
+    ANSI_RESET
+ELSE
+    ANSI_SET_FG $ANSI_FG_GREEN
+    PUTS "Tests fallidos:    0"
+    ANSI_RESET
+END
+
+SET percent [EXPR ($pass_count * 100.0) / ($pass_count + $fail_count)]
+PUTS "Porcentaje éxito:  [FORMAT "%.1f" $percent]%"
+
+PUTS "════════════════════════════════════════════════════════════"
+
+IF [EXPR $fail_count == 0] THEN
+    ANSI_SET_FG $ANSI_FG_GREEN
+    ANSI_SET_STYLE $ANSI_BOLD
+    PUTS ""
+    PUTS "✓ TODOS LOS TESTS PASARON"
+    PUTS ""
+    ANSI_RESET
+    EXIT 0
+ELSE
+    ANSI_SET_FG $ANSI_FG_RED
+    ANSI_SET_STYLE $ANSI_BOLD
+    PUTS ""
+    PUTS "✗ ALGUNOS TESTS FALLARON"
+    PUTS ""
+    ANSI_RESET
+    EXIT 1
+END

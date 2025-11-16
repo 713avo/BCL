@@ -14,19 +14,24 @@
 📊 **MATRIX Library** - New MATLAB-style matrix operations library with 21 functions
 🖼️ **Enhanced WINDOW Library** - Complete rewrite with Unicode borders, menus, progress bars, and scrolling
 ✨ **Enhanced ANSI Library** - 60+ Unicode character constants for terminal graphics
+⚡ **Event System** - Asynchronous I/O and timers with TCL-style fileevent support
+🔌 **Dynamic Extensions** - Load binary modules at runtime with LOAD command
+🌐 **SOCKET Extension** - TCP client/server networking (loadable extension)
 
 ## Features
 
 ✅ **Simple & Readable** - BASIC-like syntax, easy to learn
 ✅ **Standalone** - No external dependencies, fully self-contained
 ✅ **Portable** - Pure C99 POSIX-compatible code
-✅ **Complete** - 62 built-in commands covering all basic needs
+✅ **Complete** - 64+ built-in commands covering all basic needs
 ✅ **Interactive REPL** - Command history and multi-line editing
 ✅ **Case-Insensitive** - Commands work in any case
 ✅ **Dynamic** - Everything is a string, evaluated dynamically
 ✅ **Unicode Support** - Full UTF-8 with escape sequences for symbols and box drawing (v2.0+)
 ✅ **Array Global System** - Arrays persist correctly across procedure boundaries (v2.0+)
-✅ **Standard Libraries** - MATRIX, WINDOW, and ANSI libraries for advanced functionality (v2.0+)
+✅ **Event-Driven** - Asynchronous I/O, timers, and event loop (v2.0+)
+✅ **Extensible** - Dynamic module loading with stable API (v2.0+)
+✅ **Standard Libraries** - MATRIX, WINDOW, ANSI, and CALCULUS libraries (v2.0+)
 ✅ **Documentation** - Complete manuals, man pages, and LLM-optimized reference
 
 ## Quick Start
@@ -207,6 +212,16 @@ PUTS "Byte1: $byte1, Byte2: $byte2, Hex: $hex"
 - `EVAL` - Dynamic code evaluation
 - `SOURCE` - Load external scripts
 - `AFTER` - Millisecond delays
+- `LOAD` - Load dynamic extensions (.so files)
+
+### Event System
+- `EVENT CREATE` - Register I/O events (READABLE, WRITABLE, EXCEPTION)
+- `EVENT DELETE` - Unregister events
+- `EVENT TIMER` - Create timer events (millisecond precision)
+- `EVENT PROCESS` - Process events once (with timeout)
+- `EVENT LOOP` - Run event loop indefinitely
+- `EVENT STOP` - Stop event loop
+- `EVENT INFO` - List registered events
 
 ### Introspection
 - `INFO EXISTS`, `COMMANDS`, `PROCS`, `VARS`, `LOCALS`, `GLOBALS`, `BODY`
@@ -215,8 +230,10 @@ PUTS "Byte1: $byte1, Byte2: $byte2, Hex: $hex"
 
 ```
 BCL/
-├── src/                    # Source code (25 .c files)
+├── src/                    # Source code (26 .c files)
 │   ├── main.c             # Main entry point
+│   ├── bcl_event.c        # Event system implementation (v2.0)
+│   ├── bcl_extensions.c   # Dynamic extension loader (v2.0)
 │   ├── bcl_*.c            # Core implementation modules
 │   └── *.o, *.d           # Build artifacts (generated)
 ├── include/                # Header files
@@ -227,22 +244,32 @@ BCL/
 ├── lib/                    # Standard libraries (v2.0+)
 │   ├── ANSI.BLB           # Terminal control & Unicode graphics
 │   ├── WINDOW.BLB         # Window management system
-│   └── MATRIX.BLB         # MATLAB-style matrix operations
+│   ├── MATRIX.BLB         # MATLAB-style matrix operations
+│   └── CALCULUS.BLB       # Numerical calculus library
+├── extensions/             # Dynamic extensions (v2.0+)
+│   ├── socket.c           # SOCKET extension source
+│   ├── socket.so          # Compiled extension (generated)
+│   └── Makefile           # Extension build system
 ├── docs/                   # Documentation
 │   ├── manual-eng/        # English manual (131 pages)
 │   ├── manual-es/         # Spanish manual (132 pages)
 │   ├── man_llm.md         # LLM-optimized reference (v2.0)
-│   ├── PROPUESTA_*.md     # Array system proposals
+│   ├── EVENT_SYSTEM.md    # Event system guide (v2.0)
+│   ├── extensions/        # Extension system guide
+│   ├── PROPOSAL_*.md      # Design proposals
 │   └── LICENSE.txt        # License information
 ├── man/                    # Unix manual pages (v1.6+)
 │   ├── bcl.1              # Main manual page
 │   └── bcl-*.1            # Command category pages
 ├── tests/                  # Test suite
 │   ├── test_*.bcl         # Unit tests
+│   ├── test_events*.bcl   # Event system tests (v2.0)
 │   └── run_tests.sh       # Test runner
 ├── examples/               # Example BCL scripts
 │   ├── matrix_demo.bcl    # MATRIX library demo (v2.0)
 │   ├── window_demo_v2.bcl # WINDOW library demo (v2.0)
+│   ├── socket_server.bcl  # TCP server example (v2.0)
+│   ├── socket_client.bcl  # TCP client example (v2.0)
 │   └── *.bcl              # Other examples
 ├── Makefile               # Build system
 ├── ChangeLog.txt          # Version history
@@ -320,14 +347,15 @@ make test
 
 ## Performance & Statistics
 
-- **Lines of code**: ~12,700
-- **Source files**: 25 (.c files)
-- **Commands**: 62
+- **Lines of code**: ~13,500
+- **Source files**: 26 (.c files)
+- **Commands**: 64+ (core) + extensible
 - **Math functions**: 30+
-- **Binary size**: ~180 KB (optimized)
+- **Binary size**: ~200 KB (optimized)
 - **Dependencies**: Zero external libraries
 - **Startup time**: Instant
 - **Memory footprint**: Minimal
+- **Extensions**: Dynamic loading via LOAD
 
 ## Differences from Tcl
 
@@ -356,6 +384,9 @@ make test
 ✅ Educational purposes (simple syntax)
 ✅ Embedded systems (no dependencies)
 ✅ Advanced calculator with scripting
+✅ Event-driven network servers
+✅ Real-time data processing
+✅ System monitoring and logging
 
 ### Not Recommended For
 ❌ High-performance applications
@@ -365,7 +396,7 @@ make test
 
 ## Version History
 
-- **v2.0.0** (2025-11-16) - Array global system, Unicode support, MATRIX/WINDOW/ANSI libraries
+- **v2.0.0** (2025-11-16) - Event system, dynamic extensions, LOAD command, SOCKET extension, CALCULUS library, array global system, Unicode support, MATRIX/WINDOW/ANSI libraries
 - **v1.5.1** (2025-10-22) - ARRAY and BINARY commands, dual-language manuals
 - **v1.6.0** (2025-10-21) - REGEXP/REGSUB standalone, Complete manual
 - **v1.5.0** (2025-10-21) - REPL rewrite, system commands
@@ -441,16 +472,126 @@ Features:
 - Window show/hide, move
 - Message boxes and dialogs
 
+### CALCULUS.BLB - Numerical Calculus
+Complete numerical analysis library:
+```bcl
+SOURCE "lib/CALCULUS.BLB"
+
+# Derivatives
+CALC_DERIV_CENTRAL "$x * $x" 3.0 0.001 deriv  # d/dx(x²) at x=3
+
+# Integration
+CALC_INTEGRATE_SIMPSON "$x * $x" 0 1 100 area  # ∫x²dx from 0 to 1
+
+# Root finding
+CALC_NEWTON "$x*$x - 2" "2*$x" 1.0 1e-6 100 root  # Find √2
+
+# Differential equations
+CALC_RK4 "$y" 0 1 0.1 10  # Solve dy/dx=y with RK4
+```
+
+## Event System (v2.0+)
+
+BCL v2.0 introduces a complete event-driven programming system similar to TCL's fileevent:
+
+```bcl
+# Load SOCKET extension
+LOAD "extensions/socket.so"
+
+GLOBAL clients
+SET clients 0
+
+# Define callback WITH parameter (receives server FD)
+PROC ON_ACCEPT WITH server_fd DO
+    GLOBAL clients
+    SET client [SOCKET ACCEPT $server_fd]
+    INCR clients
+    PUTS "Client connected: $client"
+
+    # Register callback for client data
+    EVENT CREATE $client READABLE ON_CLIENT_DATA
+END
+
+# Callback receives client FD as parameter
+PROC ON_CLIENT_DATA WITH client_fd DO
+    SET data [SOCKET RECV $client_fd 1024]
+
+    IF [EXPR [STRING LENGTH $data] == 0] THEN
+        SOCKET CLOSE $client_fd
+        EVENT DELETE $client_fd
+        PUTS "Client disconnected"
+    ELSE
+        PUTS "Received: $data"
+        SOCKET SEND $client_fd "Echo: $data"
+    END
+END
+
+# Create server and register accept event
+SET server [SOCKET SERVER 9999]
+EVENT CREATE $server READABLE ON_ACCEPT
+
+PUTS "Server listening on port 9999"
+EVENT LOOP  # Run until EVENT STOP
+```
+
+### Event System Features
+
+- **Asynchronous I/O**: Non-blocking event-driven architecture
+- **Timer Events**: Millisecond-precision timers with callbacks
+- **POSIX select()**: Portable implementation (Linux, macOS, BSD)
+- **Callbacks with Parameters**: Event handlers receive FD/handle
+- **Extensible**: Backends for epoll, kqueue, GPIO via extensions
+
+See [docs/EVENT_SYSTEM.md](docs/EVENT_SYSTEM.md) for complete documentation.
+
+## Dynamic Extensions (v2.0+)
+
+BCL supports loading compiled extensions at runtime:
+
+```bcl
+# Load socket extension
+LOAD "extensions/socket.so"
+
+# Now SOCKET commands are available
+SET server [SOCKET SERVER 8080]
+SET client [SOCKET CLIENT "localhost" 8080]
+SET data [SOCKET RECV $client 1024]
+SOCKET SEND $client "Hello"
+SOCKET CLOSE $client
+```
+
+### Available Extensions
+
+- **socket.so** - TCP networking (client/server, send/recv)
+
+### Creating Extensions
+
+Extensions use a stable C API:
+
+```c
+#include "bcl.h"
+
+int bcl_extension_init(bcl_extension_api_t *api) {
+    // Register commands
+    api->register_command(interp, "MYCMD", my_command_func);
+    return 0;
+}
+```
+
+See [docs/extensions/main.pdf](docs/extensions/main.pdf) for extension development guide.
+
 ## Future Plans
 
 Potential features for future versions:
 - Full PCRE2 regex support
 - Complete timezone support (IANA database)
-- Network module (sockets)
+- ~~Network module (sockets)~~ ✅ DONE (v2.0 - SOCKET extension)
 - JSON/XML serialization
 - Native dictionaries
 - Exception handling (try/catch)
-- More standard libraries (HTTP, JSON, etc.)
+- More extensions (HTTP, SQLite, JSON, GPIO for embedded)
+- epoll/kqueue backends for high-performance event loops
+- WebSocket support
 
 ## Contributing
 

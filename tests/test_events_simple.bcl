@@ -1,0 +1,264 @@
+#!/usr/bin/env bcl
+################################################################################
+# test_events_simple.bcl - Tests básicos del sistema EVENT
+################################################################################
+
+GLOBAL test_count pass_count fail_count
+SET test_count 0
+SET pass_count 0
+SET fail_count 0
+
+PROC TEST_START WITH name DO
+    GLOBAL test_count
+    INCR test_count
+    PUTS ""
+    PUTS "Test $test_count: $name"
+END
+
+PROC TEST_PASS WITH msg DO
+    GLOBAL pass_count
+    INCR pass_count
+    PUTS "  ✓ PASS: $msg"
+END
+
+PROC TEST_FAIL WITH msg DO
+    GLOBAL fail_count
+    INCR fail_count
+    PUTS "  ✗ FAIL: $msg"
+END
+
+# ==============================================================================
+# TEST 1: Timer básico
+# ==============================================================================
+
+TEST_START "Timer one-shot básico"
+
+GLOBAL timer1_fired
+SET timer1_fired 0
+
+PROC ON_TIMER1 DO
+    GLOBAL timer1_fired
+    SET timer1_fired 1
+    PUTS "  → Timer 1 disparado"
+END
+
+EVENT TIMER 500 ON_TIMER1
+PUTS "  → Timer registrado, esperando..."
+EVENT PROCESS 1000
+
+IF [EXPR $timer1_fired == 1] THEN
+    TEST_PASS "Timer se disparó correctamente"
+ELSE
+    TEST_FAIL "Timer no se disparó"
+END
+
+# ==============================================================================
+# TEST 2: Múltiples timers
+# ==============================================================================
+
+TEST_START "Dos timers con diferentes intervalos"
+
+GLOBAL timer_a timer_b
+SET timer_a 0
+SET timer_b 0
+
+PROC ON_TIMER_A DO
+    GLOBAL timer_a
+    SET timer_a 1
+    PUTS "  → Timer A (300ms) disparado"
+END
+
+PROC ON_TIMER_B DO
+    GLOBAL timer_b
+    SET timer_b 1
+    PUTS "  → Timer B (600ms) disparado"
+END
+
+EVENT TIMER 300 ON_TIMER_A
+EVENT TIMER 600 ON_TIMER_B
+
+PUTS "  → Procesando primer timer (300ms)..."
+AFTER 350
+EVENT PROCESS 100
+
+IF [EXPR $timer_a == 1] THEN
+    TEST_PASS "Timer A (300ms) disparado"
+ELSE
+    TEST_FAIL "Timer A no se disparó"
+END
+
+IF [EXPR $timer_b == 0] THEN
+    TEST_PASS "Timer B (600ms) aún no disparado"
+ELSE
+    TEST_FAIL "Timer B se disparó prematuramente"
+END
+
+PUTS "  → Procesando segundo timer (600ms)..."
+AFTER 300
+EVENT PROCESS 100
+
+IF [EXPR $timer_b == 1] THEN
+    TEST_PASS "Timer B (600ms) disparado"
+ELSE
+    TEST_FAIL "Timer B no se disparó"
+END
+
+# ==============================================================================
+# TEST 3: Timer repetitivo
+# ==============================================================================
+
+TEST_START "Timer que se re-programa a sí mismo"
+
+GLOBAL repeat_count
+SET repeat_count 0
+
+PROC ON_TIMER_REPEAT DO
+    GLOBAL repeat_count
+    INCR repeat_count
+    PUTS "  → Repetición #$repeat_count"
+
+    IF [EXPR $repeat_count < 3] THEN
+        EVENT TIMER 200 ON_TIMER_REPEAT
+    END
+END
+
+EVENT TIMER 200 ON_TIMER_REPEAT
+
+FOR 1 TO 3 DO
+    AFTER 250
+    EVENT PROCESS 100
+END
+
+IF [EXPR $repeat_count == 3] THEN
+    TEST_PASS "Timer se repitió 3 veces"
+ELSE
+    TEST_FAIL "Timer solo se repitió $repeat_count veces"
+END
+
+# ==============================================================================
+# TEST 4: EVENT INFO
+# ==============================================================================
+
+TEST_START "EVENT INFO muestra eventos"
+
+GLOBAL info_test
+SET info_test 0
+
+PROC INFO_CALLBACK DO
+    GLOBAL info_test
+    SET info_test 1
+END
+
+EVENT TIMER 10000 INFO_CALLBACK
+PUTS "  → Ejecutando EVENT INFO..."
+EVENT INFO
+TEST_PASS "EVENT INFO ejecutado sin errores"
+
+# Limpiar timer pendiente
+EVENT PROCESS 11000
+
+# ==============================================================================
+# TEST 5: Timeout sin eventos
+# ==============================================================================
+
+TEST_START "EVENT PROCESS con timeout sin eventos"
+
+SET start_time [CLOCK MILLISECONDS]
+EVENT PROCESS 0
+SET end_time [CLOCK MILLISECONDS]
+SET elapsed [EXPR $end_time - $start_time]
+
+IF [EXPR $elapsed < 100] THEN
+    TEST_PASS "Timeout 0 retorna rápido ($elapsed ms)"
+ELSE
+    TEST_FAIL "Timeout demasiado largo ($elapsed ms)"
+END
+
+# ==============================================================================
+# TEST 6: Variables globales en callbacks
+# ==============================================================================
+
+TEST_START "Callbacks acceden a variables globales"
+
+GLOBAL shared_counter
+SET shared_counter 0
+
+PROC INC_COUNTER DO
+    GLOBAL shared_counter
+    INCR shared_counter
+    PUTS "  → Counter: $shared_counter"
+END
+
+EVENT TIMER 100 INC_COUNTER
+EVENT TIMER 200 INC_COUNTER
+EVENT TIMER 300 INC_COUNTER
+
+EVENT PROCESS 500
+
+IF [EXPR $shared_counter == 3] THEN
+    TEST_PASS "Contador incrementado 3 veces (valor: $shared_counter)"
+ELSE
+    TEST_FAIL "Contador incorrecto (esperado 3, actual: $shared_counter)"
+END
+
+# ==============================================================================
+# TEST 7: Precisión de timer
+# ==============================================================================
+
+TEST_START "Precisión de timer de 1 segundo"
+
+GLOBAL timer_start timer_end
+SET timer_start [CLOCK MILLISECONDS]
+
+PROC MEASURE_TIMER DO
+    GLOBAL timer_end
+    SET timer_end [CLOCK MILLISECONDS]
+END
+
+EVENT TIMER 1000 MEASURE_TIMER
+EVENT PROCESS 1500
+
+SET actual_time [EXPR $timer_end - $timer_start]
+SET error [EXPR abs($actual_time - 1000.0)]
+SET percent_error [EXPR ($error / 1000.0) * 100.0]
+
+PUTS "  → Tiempo esperado: 1000ms"
+PUTS "  → Tiempo actual:   $actual_time ms"
+PUTS "  → Error:           [FORMAT "%.1f" $error] ms ([FORMAT "%.1f" $percent_error]%)"
+
+IF [EXPR $percent_error < 15.0] THEN
+    TEST_PASS "Timer preciso (error < 15%)"
+ELSE
+    TEST_FAIL "Timer impreciso (error = [FORMAT "%.1f" $percent_error]%)"
+END
+
+# ==============================================================================
+# RESUMEN
+# ==============================================================================
+
+PUTS ""
+PUTS "════════════════════════════════════════════════════════════"
+PUTS "                    RESUMEN DE TESTS"
+PUTS "════════════════════════════════════════════════════════════"
+
+PUTS "Total de tests:    $test_count"
+PUTS "Tests pasados:     $pass_count"
+PUTS "Tests fallidos:    $fail_count"
+
+SET total_assertions [EXPR $pass_count + $fail_count]
+SET percent [EXPR ($pass_count * 100.0) / $total_assertions]
+PUTS "Porcentaje éxito:  [FORMAT "%.1f" $percent]%"
+
+PUTS "════════════════════════════════════════════════════════════"
+
+IF [EXPR $fail_count == 0] THEN
+    PUTS ""
+    PUTS "✓ TODOS LOS TESTS PASARON"
+    PUTS ""
+    EXIT 0
+ELSE
+    PUTS ""
+    PUTS "✗ ALGUNOS TESTS FALLARON"
+    PUTS ""
+    EXIT 1
+END

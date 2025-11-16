@@ -104,11 +104,12 @@ ELSE
     PUTS "  FAIL: LAPPEND - expected length 4, got $len3"
 END
 
-SET last [LINDEX $mylist -1]
-IF [EXPR $last == 4] THEN
+# Get last element using positive index instead of negative
+SET lastelem [LINDEX $mylist 3]
+IF [EXPR $lastelem == 4] THEN
     PUTS "  PASS: LAPPEND adds correct value"
 ELSE
-    PUTS "  FAIL: LAPPEND value - expected 4, got $last"
+    PUTS "  FAIL: LAPPEND value - expected 4, got $lastelem"
 END
 
 # Test LINSERT

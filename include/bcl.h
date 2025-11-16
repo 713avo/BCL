@@ -169,13 +169,100 @@ typedef struct {
 #endif
 
 /* ========================================================================== */
+/* EXTENSIONES DINÁMICAS                                                     */
+/* ========================================================================== */
+
+/**
+ * @brief Tipo de función para comandos de extensión
+ */
+typedef bcl_result_t (*bcl_extension_cmd_func_t)(
+    struct bcl_interp *interp,
+    int argc,
+    char **argv,
+    bcl_value_t **result
+);
+
+/**
+ * @brief Estructura de inicialización de extensión
+ *
+ * Cada extensión (.so) debe exportar una función:
+ *   int bcl_extension_init(bcl_extension_api_t *api)
+ *
+ * Esta función debe:
+ *   1. Verificar api->version es compatible
+ *   2. Registrar comandos vía api->register_command()
+ *   3. Retornar 0 si éxito, -1 si error
+ */
+typedef struct {
+    int version;                        /**< Versión de la API (debe ser BCL_EXTENSION_API_VERSION) */
+    void *interp;                       /**< Puntero al intérprete (opaco para extensiones) */
+
+    /**
+     * @brief Registra un nuevo comando desde la extensión
+     * @param interp Intérprete (usar el de api->interp)
+     * @param name Nombre del comando (case-insensitive)
+     * @param func Función que implementa el comando
+     * @return 0 si éxito, -1 si error
+     */
+    int (*register_command)(struct bcl_interp *interp, const char *name,
+                           bcl_extension_cmd_func_t func);
+
+    /**
+     * @brief Establece mensaje de error
+     */
+    void (*set_error)(struct bcl_interp *interp, const char *fmt, ...);
+
+    /**
+     * @brief Crea un valor BCL
+     */
+    bcl_value_t *(*value_create)(const char *str);
+
+    /**
+     * @brief Destruye un valor BCL
+     */
+    void (*value_destroy)(bcl_value_t *val);
+
+    /**
+     * @brief Obtiene string de un valor
+     */
+    const char *(*value_get)(bcl_value_t *val);
+
+    /**
+     * @brief Establece variable
+     */
+    bcl_result_t (*var_set)(struct bcl_interp *interp, const char *name, const char *value);
+
+    /**
+     * @brief Obtiene variable
+     */
+    bcl_value_t *(*var_get)(struct bcl_interp *interp, const char *name);
+} bcl_extension_api_t;
+
+#define BCL_EXTENSION_API_VERSION 1
+
+/**
+ * @brief Tipo de función de inicialización de extensión
+ */
+typedef int (*bcl_extension_init_func_t)(bcl_extension_api_t *api);
+
+/**
+ * @brief Handle de extensión cargada
+ */
+typedef struct bcl_extension {
+    void *dl_handle;                    /**< Handle de dlopen() */
+    char *path;                         /**< Ruta del archivo .so */
+    char *name;                         /**< Nombre de la extensión */
+    struct bcl_extension *next;         /**< Siguiente en lista enlazada */
+} bcl_extension_t;
+
+/* ========================================================================== */
 /* INTÉRPRETE PRINCIPAL                                                      */
 /* ========================================================================== */
 
 /**
  * @brief Estado del intérprete BCL
  */
-typedef struct {
+typedef struct bcl_interp {
     /* Variables y procedimientos */
     bcl_hash_table_t *global_vars;      /**< Variables globales */
     bcl_hash_table_t *procedures;       /**< Procedimientos definidos */
@@ -189,6 +276,10 @@ typedef struct {
     bcl_hash_table_t *file_handles;     /**< Handles de archivos abiertos */
     size_t next_handle_id;              /**< ID para próximo handle */
 #endif
+
+    /* Extensiones dinámicas */
+    bcl_extension_t *extensions;        /**< Lista de extensiones cargadas */
+    bcl_hash_table_t *extension_cmds;   /**< Comandos registrados por extensiones */
 
     /* Estado de control de flujo */
     bcl_result_t flow_result;           /**< Resultado de flujo (BREAK, etc.) */

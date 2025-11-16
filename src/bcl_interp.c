@@ -9,6 +9,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* Forward declarations for extension system */
+void bcl_extensions_init(bcl_interp_t *interp);
+void bcl_extensions_cleanup(bcl_interp_t *interp);
+
 /* ========================================================================== */
 /* INTÉRPRETE - CREACIÓN Y DESTRUCCIÓN                                       */
 /* ========================================================================== */
@@ -67,11 +71,17 @@ bcl_interp_t *bcl_interp_create(void) {
     /* Sin error inicial */
     interp->error_msg[0] = '\0';
 
+    /* Inicializar sistema de extensiones */
+    bcl_extensions_init(interp);
+
     return interp;
 }
 
 void bcl_interp_destroy(bcl_interp_t *interp) {
     if (!interp) return;
+
+    /* Limpiar sistema de extensiones */
+    bcl_extensions_cleanup(interp);
 
     bcl_hash_destroy(interp->global_vars);
     bcl_hash_destroy(interp->procedures);

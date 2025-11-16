@@ -9,6 +9,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+/* Forward declarations for extension system */
+bool bcl_is_extension_command(bcl_interp_t *interp, const char *name);
+bcl_result_t bcl_call_extension_command(bcl_interp_t *interp, const char *name,
+                                       int argc, char **argv, bcl_value_t **result);
+
 /* ========================================================================== */
 /* TABLA DE COMANDOS                                                         */
 /* ========================================================================== */
@@ -93,6 +98,7 @@ static const bcl_command_entry_t command_table[] = {
     /* Sistema */
     {"EVAL",     bcl_cmd_eval},
     {"SOURCE",   bcl_cmd_source},
+    {"LOAD",     bcl_cmd_load},
     {"ENV",      bcl_cmd_env},
     {"ARGV",     bcl_cmd_argv},
     {"EXEC",     bcl_cmd_exec},
@@ -153,6 +159,11 @@ bcl_result_t bcl_dispatch_command(bcl_interp_t *interp, const char *name,
         }
 
         return res;
+    }
+
+    /* Buscar comando de extensión */
+    if (bcl_is_extension_command(interp, name)) {
+        return bcl_call_extension_command(interp, name, argc, argv, result);
     }
 
     /* Comando no encontrado */

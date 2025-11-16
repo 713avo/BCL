@@ -381,6 +381,13 @@ bcl_result_t bcl_cmd_source(bcl_interp_t *interp, int argc, char **argv,
                             bcl_value_t **result);
 
 /**
+ * LOAD ruta_extension
+ * Carga una extensión dinámica (.so)
+ */
+bcl_result_t bcl_cmd_load(bcl_interp_t *interp, int argc, char **argv,
+                          bcl_value_t **result);
+
+/**
  * AFTER milisegundos
  */
 bcl_result_t bcl_cmd_after(bcl_interp_t *interp, int argc, char **argv,

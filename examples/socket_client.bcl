@@ -1,0 +1,109 @@
+#!/usr/bin/env bcl
+################################################################################
+# SOCKET Extension Demo - TCP Client
+# Demonstrates TCP client functionality with the SOCKET extension
+################################################################################
+
+SOURCE "lib/ANSI.BLB"
+
+ANSI_CLEAR
+ANSI_CURSOR_HOME
+
+# Header
+ANSI_SET_STYLE $ANSI_BOLD
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_GREEN $ANSI_BG_BLACK
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+PUTS "                    BCL SOCKET Extension - TCP Client"
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+ANSI_RESET
+PUTS ""
+
+# Load SOCKET extension
+ANSI_SET_COLOR $ANSI_FG_YELLOW $ANSI_BG_BLACK
+PUTS "Loading SOCKET extension..."
+ANSI_RESET
+
+LOAD "extensions/socket.so"
+
+ANSI_SET_COLOR $ANSI_FG_GREEN $ANSI_BG_BLACK
+PUTS "✓ SOCKET extension loaded successfully"
+ANSI_RESET
+PUTS ""
+
+# Connect to server
+SET host "localhost"
+SET port 9999
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_MAGENTA $ANSI_BG_BLACK
+PUTS "Connecting to $host:$port..."
+ANSI_RESET
+
+SET client [SOCKET CLIENT $host $port]
+
+ANSI_SET_COLOR $ANSI_FG_GREEN $ANSI_BG_BLACK
+PUTS "✓ Connected: $client"
+ANSI_RESET
+PUTS ""
+
+# Send test messages
+ANSI_SET_COLOR $ANSI_FG_CYAN $ANSI_BG_BLACK
+PUTS "Sending test messages..."
+ANSI_RESET
+PUTS ""
+
+PROC SEND_AND_RECEIVE WITH message DO
+    GLOBAL client
+
+    # Send message
+    ANSI_SET_COLOR $ANSI_FG_WHITE $ANSI_BG_BLACK
+    PUTS -NONEWLINE "Sending: "
+    ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
+    PUTS "$message"
+    ANSI_RESET
+
+    SET bytes [SOCKET SEND $client "$message"]
+    ANSI_SET_COLOR $ANSI_FG_GREEN $ANSI_BG_BLACK
+    PUTS "  → Sent $bytes bytes"
+    ANSI_RESET
+
+    # Receive echo
+    SET response [SOCKET RECV $client 1024]
+    ANSI_SET_COLOR $ANSI_FG_YELLOW $ANSI_BG_BLACK
+    PUTS -NONEWLINE "  ← Received: "
+    ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+    PUTS "$response"
+    ANSI_RESET
+    PUTS ""
+END
+
+# Test messages
+SEND_AND_RECEIVE "Hello, BCL Server!"
+SEND_AND_RECEIVE "Testing SOCKET extension..."
+SEND_AND_RECEIVE "This is message number 3"
+SEND_AND_RECEIVE "Final test message"
+
+# Wait a bit
+ANSI_SET_COLOR $ANSI_FG_CYAN $ANSI_BG_BLACK
+PUTS "Waiting before disconnect..."
+ANSI_RESET
+AFTER 1000
+
+# Cleanup
+PUTS ""
+ANSI_SET_COLOR $ANSI_FG_YELLOW $ANSI_BG_BLACK
+PUTS "Disconnecting..."
+ANSI_RESET
+
+SOCKET CLOSE $client
+
+ANSI_SET_COLOR $ANSI_FG_GREEN $ANSI_BG_BLACK
+PUTS "✓ Socket closed"
+ANSI_RESET
+PUTS ""
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_GREEN $ANSI_BG_BLACK
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+PUTS "                         Client Complete"
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+ANSI_RESET
+PUTS ""

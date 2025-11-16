@@ -1,0 +1,583 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{tcolorbox}
+
+% Geometry
+\geometry{
+    a4paper,
+    left=2.5cm,
+    right=2.5cm,
+    top=3cm,
+    bottom=3cm
+}
+
+% Hyperref configuration
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdftitle={BCL Extensions System},
+    pdfauthor={BCL Development Team}
+}
+
+% Listings configuration
+\definecolor{bclkeyword}{RGB}{0,0,255}
+\definecolor{bclstring}{RGB}{163,21,21}
+\definecolor{bclcomment}{RGB}{0,128,0}
+\definecolor{bclbackground}{RGB}{248,248,248}
+
+\lstdefinelanguage{BCL}{
+    keywords={PROC, END, WITH, DO, SET, GLOBAL, IF, THEN, ELSE,
+              WHILE, FOR, FOREACH, SWITCH, CASE, RETURN, LOAD,
+              SOCKET, SERVER, CLIENT, ACCEPT, SEND, RECV, CLOSE,
+              PUTS, GETS, SOURCE},
+    sensitive=false,
+    morecomment=[l]{\#},
+    morestring=[b]",
+}
+
+\lstset{
+    language=BCL,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{bclkeyword}\bfseries,
+    stringstyle=\color{bclstring},
+    commentstyle=\color{bclcomment}\itshape,
+    numbers=left,
+    stepnumber=1,
+    numbersep=8pt,
+    backgroundcolor=\color{bclbackground},
+    showspaces=false,
+    showstringspaces=false,
+    frame=single,
+    breaklines=true,
+    xleftmargin=17pt,
+    xrightmargin=5pt,
+}
+
+% Custom boxes
+\newtcolorbox{notebox}{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    title=Nota
+}
+
+\newtcolorbox{warningbox}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    title=Advertencia
+}
+
+\newtcolorbox{examplebox}{
+    colback=green!5!white,
+    colframe=green!45!black,
+    title=Ejemplo
+}
+
+\begin{document}
+
+% Title page
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Huge\bfseries BCL\\[0.5cm]}
+    {\LARGE Sistema de Extensiones\\[0.3cm]}
+    {\Large Referencia para Desarrolladores}
+
+    \vspace{2cm}
+
+    {\large Versión 2.0.0}
+
+    \vfill
+
+    {\large\itshape BCL Development Team}
+
+    \vfill
+
+    {\large Noviembre 2025}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ========================================================================== %
+% INTRODUCCIÓN
+% ========================================================================== %
+
+\section{Introducción}
+
+BCL v2.0 introduce un sistema de extensiones dinámicas que permite añadir nuevos comandos al lenguaje sin modificar el intérprete. Las extensiones son bibliotecas compartidas (\texttt{.so}) que se cargan en tiempo de ejecución mediante el comando \texttt{LOAD}.
+
+\subsection{Características}
+
+\begin{itemize}
+    \item \textbf{Carga dinámica}: Módulos se cargan con \texttt{dlopen()}
+    \item \textbf{API estable}: Interfaz versionada para compatibilidad
+    \item \textbf{Sin recompilación}: Añadir comandos sin recompilar BCL
+    \item \textbf{Acceso completo}: API para variables, valores, y errores
+    \item \textbf{Portabilidad}: Funciona en Linux, macOS, *BSD
+\end{itemize}
+
+\subsection{Requisitos}
+
+\begin{itemize}
+    \item BCL 2.0.0 o superior
+    \item Compilador C (gcc, clang)
+    \item Soporte para bibliotecas compartidas (\texttt{-ldl})
+\end{itemize}
+
+% ========================================================================== %
+% COMANDO LOAD
+% ========================================================================== %
+
+\section{Comando LOAD}
+
+\subsection{Sintaxis}
+
+\begin{lstlisting}
+LOAD ruta_extension
+\end{lstlisting}
+
+\subsection{Descripción}
+
+Carga una extensión dinámica desde la ruta especificada. La extensión debe ser un archivo \texttt{.so} que exporte la función \texttt{bcl\_extension\_init}.
+
+\subsection{Ejemplo}
+
+\begin{lstlisting}
+#!/usr/bin/env bcl
+
+# Cargar extensión SOCKET
+LOAD "extensions/socket.so"
+
+# Ahora el comando SOCKET está disponible
+SET server [SOCKET SERVER 8080]
+PUTS "Servidor escuchando en puerto 8080"
+\end{lstlisting}
+
+\subsection{Manejo de Errores}
+
+\begin{itemize}
+    \item Si la extensión no existe, retorna error
+    \item Si no exporta \texttt{bcl\_extension\_init}, retorna error
+    \item Si la inicialización falla, retorna error
+    \item Si ya está cargada, retorna error
+\end{itemize}
+
+% ========================================================================== %
+% API DE EXTENSIONES
+% ========================================================================== %
+
+\section{API de Extensiones}
+
+\subsection{Estructura bcl\_extension\_api\_t}
+
+Cada extensión recibe un puntero a esta estructura en su función de inicialización:
+
+\begin{lstlisting}[language=C]
+typedef struct {
+    int version;  /* Debe ser BCL_EXTENSION_API_VERSION */
+
+    /* Registrar nuevo comando */
+    int (*register_command)(bcl_interp_t *interp,
+                           const char *name,
+                           bcl_extension_cmd_func_t func);
+
+    /* Establecer mensaje de error */
+    void (*set_error)(bcl_interp_t *interp,
+                     const char *fmt, ...);
+
+    /* Crear/destruir valores */
+    bcl_value_t *(*value_create)(const char *str);
+    void (*value_destroy)(bcl_value_t *val);
+    const char *(*value_get)(bcl_value_t *val);
+
+    /* Manipular variables */
+    bcl_result_t (*var_set)(bcl_interp_t *interp,
+                           const char *name,
+                           const char *value);
+    bcl_value_t *(*var_get)(bcl_interp_t *interp,
+                           const char *name);
+} bcl_extension_api_t;
+\end{lstlisting}
+
+\subsection{Función de Inicialización}
+
+Toda extensión debe exportar:
+
+\begin{lstlisting}[language=C]
+int bcl_extension_init(bcl_extension_api_t *api);
+\end{lstlisting}
+
+Esta función debe:
+
+\begin{enumerate}
+    \item Verificar \texttt{api->version == BCL\_EXTENSION\_API\_VERSION}
+    \item Guardar punteros a funciones de la API
+    \item Registrar comandos usando \texttt{api->register\_command()}
+    \item Retornar 0 si éxito, -1 si error
+\end{enumerate}
+
+\subsection{Función de Comando}
+
+Los comandos registrados tienen esta firma:
+
+\begin{lstlisting}[language=C]
+bcl_result_t mi_comando(bcl_interp_t *interp,
+                        int argc,
+                        char **argv,
+                        bcl_value_t **result);
+\end{lstlisting}
+
+Donde:
+\begin{itemize}
+    \item \texttt{interp}: Intérprete BCL
+    \item \texttt{argc}: Número de argumentos (sin contar el nombre del comando)
+    \item \texttt{argv}: Array de argumentos como strings
+    \item \texttt{result}: Puntero donde guardar el resultado
+\end{itemize}
+
+Debe retornar \texttt{BCL\_OK} (0) si éxito, \texttt{BCL\_ERROR} (1) si error.
+
+% ========================================================================== %
+% EXTENSIÓN SOCKET
+% ========================================================================== %
+
+\section{Extensión SOCKET}
+
+\subsection{Descripción}
+
+La extensión SOCKET implementa comunicación TCP similar a TCL. Permite crear servidores y clientes TCP, aceptar conexiones, enviar y recibir datos.
+
+\subsection{Compilación}
+
+\begin{lstlisting}[language=bash]
+cd extensions
+make socket.so
+\end{lstlisting}
+
+\subsection{Subcomandos}
+
+\subsubsection{SOCKET SERVER}
+
+\textbf{Sintaxis:}
+\begin{lstlisting}
+SOCKET SERVER puerto
+\end{lstlisting}
+
+\textbf{Descripción:} Crea un servidor TCP escuchando en el puerto especificado.
+
+\textbf{Retorna:} Handle del socket (ej: \texttt{sock0})
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+SET server [SOCKET SERVER 8080]
+PUTS "Servidor: $server"
+\end{lstlisting}
+
+\subsubsection{SOCKET CLIENT}
+
+\textbf{Sintaxis:}
+\begin{lstlisting}
+SOCKET CLIENT host puerto
+\end{lstlisting}
+
+\textbf{Descripción:} Conecta a un servidor TCP.
+
+\textbf{Retorna:} Handle del socket
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+SET client [SOCKET CLIENT "localhost" 8080]
+PUTS "Conectado: $client"
+\end{lstlisting}
+
+\subsubsection{SOCKET ACCEPT}
+
+\textbf{Sintaxis:}
+\begin{lstlisting}
+SOCKET ACCEPT handle_servidor
+\end{lstlisting}
+
+\textbf{Descripción:} Acepta una conexión entrante (bloquea hasta que llegue un cliente).
+
+\textbf{Retorna:} Handle del cliente conectado
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+SET client [SOCKET ACCEPT $server]
+PUTS "Cliente conectado: $client"
+\end{lstlisting}
+
+\subsubsection{SOCKET SEND}
+
+\textbf{Sintaxis:}
+\begin{lstlisting}
+SOCKET SEND handle datos
+\end{lstlisting}
+
+\textbf{Descripción:} Envía datos a través del socket.
+
+\textbf{Retorna:} Número de bytes enviados
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+SET bytes [SOCKET SEND $client "Hello, World!\n"]
+PUTS "Enviados $bytes bytes"
+\end{lstlisting}
+
+\subsubsection{SOCKET RECV}
+
+\textbf{Sintaxis:}
+\begin{lstlisting}
+SOCKET RECV handle [max_bytes]
+\end{lstlisting}
+
+\textbf{Descripción:} Recibe datos del socket.
+
+\textbf{Retorna:} Datos recibidos como string
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+SET data [SOCKET RECV $client 1024]
+PUTS "Recibido: $data"
+\end{lstlisting}
+
+\subsubsection{SOCKET CLOSE}
+
+\textbf{Sintaxis:}
+\begin{lstlisting}
+SOCKET CLOSE handle
+\end{lstlisting}
+
+\textbf{Descripción:} Cierra el socket.
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+SOCKET CLOSE $client
+SOCKET CLOSE $server
+\end{lstlisting}
+
+% ========================================================================== %
+% EJEMPLOS COMPLETOS
+% ========================================================================== %
+
+\section{Ejemplos Completos}
+
+\subsection{Servidor Echo Simple}
+
+\begin{lstlisting}
+#!/usr/bin/env bcl
+
+LOAD "extensions/socket.so"
+
+# Crear servidor en puerto 9999
+SET server [SOCKET SERVER 9999]
+PUTS "Servidor echo escuchando en puerto 9999"
+
+# Aceptar cliente (bloquea)
+PUTS "Esperando cliente..."
+SET client [SOCKET ACCEPT $server]
+PUTS "Cliente conectado!"
+
+# Echo loop
+WHILE 1 DO
+    SET data [SOCKET RECV $client 1024]
+
+    IF [EXPR [STRING LENGTH $data] == 0] THEN
+        PUTS "Cliente desconectado"
+        BREAK
+    END
+
+    PUTS "Recibido: $data"
+    SOCKET SEND $client $data
+END
+
+# Cleanup
+SOCKET CLOSE $client
+SOCKET CLOSE $server
+\end{lstlisting}
+
+\subsection{Cliente TCP}
+
+\begin{lstlisting}
+#!/usr/bin/env bcl
+
+LOAD "extensions/socket.so"
+
+# Conectar al servidor
+SET client [SOCKET CLIENT "localhost" 9999]
+PUTS "Conectado al servidor"
+
+# Enviar mensaje
+SOCKET SEND $client "Hola desde BCL!\n"
+
+# Recibir respuesta
+SET response [SOCKET RECV $client 1024]
+PUTS "Respuesta: $response"
+
+# Cerrar
+SOCKET CLOSE $client
+\end{lstlisting}
+
+\subsection{Servidor Multi-Cliente (Simple)}
+
+\begin{lstlisting}
+#!/usr/bin/env bcl
+
+LOAD "extensions/socket.so"
+
+PROC HANDLE_CLIENT WITH client DO
+    PUTS "Nuevo cliente conectado"
+
+    WHILE 1 DO
+        SET data [SOCKET RECV $client 1024]
+
+        IF [EXPR [STRING LENGTH $data] == 0] THEN
+            BREAK
+        END
+
+        PUTS "Cliente dice: $data"
+        SOCKET SEND $client "Echo: $data"
+    END
+
+    SOCKET CLOSE $client
+    PUTS "Cliente desconectado"
+END
+
+# Servidor principal
+SET server [SOCKET SERVER 8080]
+PUTS "Servidor multi-cliente en puerto 8080"
+
+WHILE 1 DO
+    PUTS "Esperando cliente..."
+    SET client [SOCKET ACCEPT $server]
+
+    # En producción, usar fork o hilos
+    # Aquí manejamos uno a la vez
+    HANDLE_CLIENT $client
+END
+\end{lstlisting}
+
+% ========================================================================== %
+% CREAR TU PROPIA EXTENSIÓN
+% ========================================================================== %
+
+\section{Crear Tu Propia Extensión}
+
+\subsection{Plantilla Básica}
+
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <string.h>
+
+/* API de BCL */
+static struct {
+    int version;
+    int (*register_command)(void *interp,
+                           const char *name,
+                           void *func);
+    void (*set_error)(void *interp,
+                     const char *fmt, ...);
+    void *(*value_create)(const char *str);
+    void (*value_destroy)(void *val);
+    const char *(*value_get)(void *val);
+} bcl_api;
+
+/* Tu comando */
+static int mi_comando(void *interp, int argc,
+                     char **argv, void **result) {
+    if (argc != 1) {
+        bcl_api.set_error(interp,
+            "wrong # args: should be \"MICMD arg\"");
+        return 1; /* BCL_ERROR */
+    }
+
+    /* Procesar... */
+    *result = bcl_api.value_create("OK");
+    return 0; /* BCL_OK */
+}
+
+/* Inicialización */
+int bcl_extension_init(void *api_ptr) {
+    /* Copiar API */
+    memcpy(&bcl_api, api_ptr, sizeof(bcl_api));
+
+    /* Verificar versión */
+    if (bcl_api.version != 1) return -1;
+
+    /* Registrar comando */
+    if (bcl_api.register_command(NULL, "MICMD",
+                                 mi_comando) != 0) {
+        return -1;
+    }
+
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Compilación}
+
+\begin{lstlisting}[language=bash]
+gcc -Wall -Wextra -fPIC -shared \
+    -o mi_extension.so mi_extension.c
+\end{lstlisting}
+
+\subsection{Uso}
+
+\begin{lstlisting}
+LOAD "mi_extension.so"
+MICMD "argumento"
+\end{lstlisting}
+
+% ========================================================================== %
+% APÉNDICE
+% ========================================================================== %
+
+\section{Referencia Rápida}
+
+\subsection{Comandos del Sistema}
+
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Comando} & \textbf{Descripción} \\
+\hline
+\texttt{LOAD path} & Carga extensión dinámica \\
+\hline
+\end{tabular}
+
+\subsection{Extensión SOCKET}
+
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Comando} & \textbf{Descripción} \\
+\hline
+\texttt{SOCKET SERVER port} & Crea servidor TCP \\
+\texttt{SOCKET CLIENT host port} & Conecta a servidor \\
+\texttt{SOCKET ACCEPT handle} & Acepta conexión \\
+\texttt{SOCKET SEND handle data} & Envía datos \\
+\texttt{SOCKET RECV handle [max]} & Recibe datos \\
+\texttt{SOCKET CLOSE handle} & Cierra socket \\
+\hline
+\end{tabular}
+
+\vspace{2cm}
+
+\begin{center}
+\textbf{BCL Extensions System v2.0}
+
+\vspace{1cm}
+
+Para más información, visite:\\
+\url{https://github.com/yourusername/bcl}
+\end{center}
+
+\end{document}

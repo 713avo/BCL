@@ -16,7 +16,7 @@ EXAMPLE_DIR = examples
 CC = gcc
 CFLAGS = -std=c99 -Wall -Wextra -I$(INC_DIR)
 CFLAGS += -D_POSIX_C_SOURCE=200112L
-LDFLAGS = -lm
+LDFLAGS = -lm -ldl
 
 # Flags de optimización (por defecto)
 OPT_FLAGS = -O2

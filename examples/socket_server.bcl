@@ -1,0 +1,127 @@
+#!/usr/bin/env bcl
+################################################################################
+# SOCKET Extension Demo - Echo Server
+# Demonstrates TCP server functionality with the SOCKET extension
+################################################################################
+
+SOURCE "lib/ANSI.BLB"
+
+ANSI_CLEAR
+ANSI_CURSOR_HOME
+
+# Header
+ANSI_SET_STYLE $ANSI_BOLD
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_CYAN $ANSI_BG_BLACK
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+PUTS "                    BCL SOCKET Extension - Echo Server"
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+ANSI_RESET
+PUTS ""
+
+# Load SOCKET extension
+ANSI_SET_COLOR $ANSI_FG_YELLOW $ANSI_BG_BLACK
+PUTS "Loading SOCKET extension..."
+ANSI_RESET
+
+LOAD "extensions/socket.so"
+
+ANSI_SET_COLOR $ANSI_FG_GREEN $ANSI_BG_BLACK
+PUTS "✓ SOCKET extension loaded successfully"
+ANSI_RESET
+PUTS ""
+
+# Create server
+SET port 9999
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_MAGENTA $ANSI_BG_BLACK
+PUTS "Creating TCP server on port $port..."
+ANSI_RESET
+
+SET server [SOCKET SERVER $port]
+
+ANSI_SET_COLOR $ANSI_FG_GREEN $ANSI_BG_BLACK
+PUTS "✓ Server created: $server"
+PUTS "✓ Listening on port $port"
+ANSI_RESET
+PUTS ""
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "Waiting for client connection..."
+PUTS "(Connect with: bcl examples/socket_client.bcl)"
+ANSI_RESET
+PUTS ""
+
+# Accept client (blocks until connection)
+SET client [SOCKET ACCEPT $server]
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_GREEN $ANSI_BG_BLACK
+PUTS "✓ Client connected: $client"
+ANSI_RESET
+PUTS ""
+
+# Echo loop
+ANSI_SET_COLOR $ANSI_FG_CYAN $ANSI_BG_BLACK
+PUTS "Starting echo loop (Ctrl+C to stop)..."
+ANSI_RESET
+PUTS ""
+
+PROC ECHO_LOOP DO
+    GLOBAL client message_count
+
+    SET message_count 0
+
+    WHILE 1 DO
+        # Receive data
+        SET data [SOCKET RECV $client 1024]
+
+        # Check for disconnect
+        SET len [STRING LENGTH $data]
+        IF [EXPR $len == 0] THEN
+            ANSI_SET_COLOR $ANSI_FG_RED $ANSI_BG_BLACK
+            PUTS "Client disconnected"
+            ANSI_RESET
+            BREAK
+        END
+
+        # Increment counter
+        INCR message_count
+
+        # Display received message
+        ANSI_SET_COLOR $ANSI_FG_WHITE $ANSI_BG_BLACK
+        PUTS -NONEWLINE "[$message_count] Received: "
+        ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
+        PUTS "$data"
+        ANSI_RESET
+
+        # Echo back
+        SOCKET SEND $client $data
+
+        ANSI_SET_COLOR $ANSI_FG_GREEN $ANSI_BG_BLACK
+        PUTS "        Echoed back to client"
+        ANSI_RESET
+        PUTS ""
+    END
+END
+
+ECHO_LOOP
+
+# Cleanup
+PUTS ""
+ANSI_SET_COLOR $ANSI_FG_YELLOW $ANSI_BG_BLACK
+PUTS "Cleaning up..."
+ANSI_RESET
+
+SOCKET CLOSE $client
+SOCKET CLOSE $server
+
+ANSI_SET_COLOR $ANSI_FG_GREEN $ANSI_BG_BLACK
+PUTS "✓ Sockets closed"
+ANSI_RESET
+PUTS ""
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_CYAN $ANSI_BG_BLACK
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+PUTS "                         Server Terminated"
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+ANSI_RESET
+PUTS ""

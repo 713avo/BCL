@@ -258,11 +258,15 @@ bcl_result_t bcl_cmd_lindex(bcl_interp_t *interp, int argc, char **argv,
 bcl_result_t bcl_cmd_lappend(bcl_interp_t *interp, int argc, char **argv,
                              bcl_value_t **result) {
     if (argc < 2) {
-        bcl_set_error(interp, "LAPPEND: wrong # args: should be \"LAPPEND list element ?element...?\"");
+        bcl_set_error(interp, "LAPPEND: wrong # args: should be \"LAPPEND varName element ?element...?\"");
         return BCL_ERROR;
     }
 
-    const char *list = argv[0];
+    const char *varname = argv[0];
+
+    /* Obtener valor actual de la variable */
+    bcl_value_t *var_val = bcl_var_get(interp, varname);
+    const char *list = var_val ? bcl_value_get(var_val) : "";
 
     /* Contar elementos actuales de la lista */
     int old_count = list_count_elements(list);
@@ -305,6 +309,9 @@ bcl_result_t bcl_cmd_lappend(bcl_interp_t *interp, int argc, char **argv,
         bcl_set_error(interp, "LAPPEND: out of memory");
         return BCL_ERROR;
     }
+
+    /* Actualizar la variable con la nueva lista */
+    bcl_var_set(interp, varname, new_list);
 
     *result = bcl_value_create(new_list);
     free(new_list);

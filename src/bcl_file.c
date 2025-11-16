@@ -429,14 +429,14 @@ bcl_result_t bcl_cmd_seek(bcl_interp_t *interp, int argc, char **argv,
 
     /* Parsear whence */
     int whence;
-    if (bcl_strcasecmp(whence_str, "SET") == 0) {
+    if (bcl_strcasecmp(whence_str, "SET") == 0 || bcl_strcasecmp(whence_str, "START") == 0) {
         whence = SEEK_SET;
-    } else if (bcl_strcasecmp(whence_str, "CUR") == 0) {
+    } else if (bcl_strcasecmp(whence_str, "CUR") == 0 || bcl_strcasecmp(whence_str, "CURRENT") == 0) {
         whence = SEEK_CUR;
     } else if (bcl_strcasecmp(whence_str, "END") == 0) {
         whence = SEEK_END;
     } else {
-        bcl_set_error(interp, "invalid whence \"%s\": should be SET, CUR, or END", whence_str);
+        bcl_set_error(interp, "invalid whence \"%s\": should be START/SET, CUR/CURRENT, or END", whence_str);
         return BCL_ERROR;
     }
 

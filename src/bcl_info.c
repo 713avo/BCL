@@ -204,6 +204,38 @@ static bcl_result_t info_args(bcl_interp_t *interp, int argc, char **argv,
 }
 
 /* ========================================================================== */
+/* INFO BODY - Retorna el cuerpo de un procedimiento                         */
+/* ========================================================================== */
+
+static bcl_result_t info_body(bcl_interp_t *interp, int argc, char **argv,
+                              bcl_value_t **result) {
+    if (argc < 1) {
+        bcl_set_error(interp, "INFO BODY: wrong # args: should be \"INFO BODY procname\"");
+        return BCL_ERROR;
+    }
+
+    const char *procname = argv[0];
+
+    /* Buscar procedimiento */
+    if (!bcl_proc_exists(interp, procname)) {
+        bcl_set_error(interp, "INFO BODY: \"%s\" isn't a procedure", procname);
+        return BCL_ERROR;
+    }
+
+    /* Obtener procedimiento */
+    bcl_value_t *proc_val = bcl_hash_get(interp->procedures, procname);
+    if (!proc_val) {
+        bcl_set_error(interp, "INFO BODY: procedure \"%s\" not found", procname);
+        return BCL_ERROR;
+    }
+
+    /* El cuerpo del procedimiento está almacenado como un bloque pre-parseado
+     * Por ahora, retornamos un placeholder indicando que el cuerpo existe */
+    *result = bcl_value_create("[procedure body]");
+    return BCL_OK;
+}
+
+/* ========================================================================== */
 /* INFO BCLVERSION - Versión del intérprete                                  */
 /* ========================================================================== */
 
@@ -252,11 +284,14 @@ bcl_result_t bcl_cmd_info(bcl_interp_t *interp, int argc, char **argv,
     else if (bcl_strcasecmp(subcmd, "VARS") == 0) {
         return info_vars(interp, argc - 1, argv + 1, result);
     }
+    else if (bcl_strcasecmp(subcmd, "BODY") == 0) {
+        return info_body(interp, argc - 1, argv + 1, result);
+    }
     else if (bcl_strcasecmp(subcmd, "BCLVERSION") == 0) {
         return info_bclversion(interp, argc - 1, argv + 1, result);
     }
     else {
-        bcl_set_error(interp, "INFO: unknown subcommand \"%s\": must be EXISTS, ARGS, COMMANDS, GLOBALS, LOCALS, PROCS, VARS, or BCLVERSION", subcmd);
+        bcl_set_error(interp, "INFO: unknown subcommand \"%s\": must be EXISTS, ARGS, BODY, COMMANDS, GLOBALS, LOCALS, PROCS, VARS, or BCLVERSION", subcmd);
         return BCL_ERROR;
     }
 }

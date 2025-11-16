@@ -116,13 +116,9 @@ bcl_result_t bcl_cmd_env(bcl_interp_t *interp, int argc, char **argv,
     const char *varname = argv[0];
     const char *value = getenv(varname);
 
-    if (!value) {
-        bcl_set_error(interp, "environment variable \"%s\" not found", varname);
-        return BCL_ERROR;
-    }
-
+    /* Si la variable no existe, retornar cadena vacía en lugar de error */
     if (result) {
-        *result = bcl_value_create(value);
+        *result = bcl_value_create(value ? value : "");
     }
 
     return BCL_OK;

@@ -167,10 +167,11 @@ bcl_result_t bcl_cmd_format(bcl_interp_t *interp, int argc, char **argv,
 
 /**
  * @brief Extrae un valor según especificador de formato
+ * @param next_char El siguiente carácter después del especificador en el template (o '\0' si es el último)
  */
 static int scan_specifier(const char *text, const char *spec, char *output,
                           size_t output_size, size_t *text_consumed,
-                          size_t *spec_consumed) {
+                          size_t *spec_consumed, char next_char) {
     const char *p = spec + 1; /* Saltar % */
     const char *spec_start = spec;
     int width = -1;
@@ -305,15 +306,32 @@ static int scan_specifier(const char *text, const char *spec, char *output,
         }
 
         case 's': {
-            /* String (hasta espacio) */
+            /* String - comportamiento depende del contexto */
             int i = 0;
 
-            while (*t && !isspace((unsigned char)*t) && (width < 0 || i < width)) {
-                if (i < (int)output_size - 1) {
-                    output[i++] = *t;
+            /* Si estamos al final del template (next_char == '\0'),
+             * capturar todo lo que queda (incluyendo espacios) */
+            bool capture_all = (next_char == '\0');
+
+            if (capture_all) {
+                /* Capturar todo hasta el final */
+                while (*t && (width < 0 || i < width)) {
+                    if (i < (int)output_size - 1) {
+                        output[i++] = *t;
+                    }
+                    t++;
+                    consumed++;
                 }
-                t++;
-                consumed++;
+            } else {
+                /* Comportamiento estándar: hasta espacio o next_char */
+                while (*t && !isspace((unsigned char)*t) && *t != next_char &&
+                       (width < 0 || i < width)) {
+                    if (i < (int)output_size - 1) {
+                        output[i++] = *t;
+                    }
+                    t++;
+                    consumed++;
+                }
             }
 
             output[i] = '\0';
@@ -407,7 +425,18 @@ bcl_result_t bcl_cmd_scan(bcl_interp_t *interp, int argc, char **argv,
             char value[1024];
             size_t text_consumed, spec_consumed;
 
-            int matched = scan_specifier(t, p, value, sizeof(value), &text_consumed, &spec_consumed);
+            /* Determinar el siguiente carácter en el template después del especificador */
+            const char *spec_end = p + 1;
+            while (*spec_end && *spec_end != '%' && !isspace((unsigned char)*spec_end) &&
+                   strchr("diouxXeEfFgGsc[", *spec_end) == NULL) {
+                spec_end++;
+            }
+            if (*spec_end && strchr("diouxXeEfFgGsc[", *spec_end)) {
+                spec_end++; /* Avanzar past el tipo */
+            }
+            char next_char = *spec_end;
+
+            int matched = scan_specifier(t, p, value, sizeof(value), &text_consumed, &spec_consumed, next_char);
 
             if (matched) {
                 /* Asignar a variable */

@@ -53,7 +53,7 @@ END
 # Test FORMAT with width specifier
 PUTS "\n[TEST] FORMAT - width specifier"
 SET result [FORMAT "%5d" 42]
-IF [STRING LENGTH $result >= 5] THEN
+IF [EXPR [STRING LENGTH $result] >= 5] THEN
     PUTS "  PASS: FORMAT with width specifier"
 ELSE
     PUTS "  FAIL: FORMAT width - got '$result'"

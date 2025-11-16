@@ -25,7 +25,7 @@ PUTS "\n[TEST] INFO VARS"
 SET testvar1 "a"
 SET testvar2 "b"
 SET allvars [INFO VARS]
-IF [LSEARCH $allvars "testvar1" >= 0] THEN
+IF [EXPR [LSEARCH $allvars "testvar1"] >= 0] THEN
     PUTS "  PASS: INFO VARS lists variables"
 ELSE
     PUTS "  FAIL: INFO VARS should list testvar1"
@@ -34,7 +34,7 @@ END
 # Test INFO COMMANDS
 PUTS "\n[TEST] INFO COMMANDS"
 SET commands [INFO COMMANDS]
-IF [LSEARCH $commands "PUTS" >= 0] THEN
+IF [EXPR [LSEARCH $commands "PUTS"] >= 0] THEN
     PUTS "  PASS: INFO COMMANDS lists built-in commands"
 ELSE
     PUTS "  FAIL: INFO COMMANDS should list PUTS"
@@ -47,7 +47,7 @@ PROC testproc WITH DO
 END
 
 SET procs [INFO PROCS]
-IF [LSEARCH $procs "testproc" >= 0] THEN
+IF [EXPR [LSEARCH $procs "testproc"] >= 0] THEN
     PUTS "  PASS: INFO PROCS lists user procedures"
 ELSE
     PUTS "  FAIL: INFO PROCS should list testproc"
@@ -60,7 +60,7 @@ PROC myfunc WITH x DO
 END
 
 SET body [INFO BODY myfunc]
-IF [STRING LENGTH $body > 0] THEN
+IF [EXPR [STRING LENGTH $body] > 0] THEN
     PUTS "  PASS: INFO BODY returns procedure body"
 ELSE
     PUTS "  FAIL: INFO BODY returned empty"
@@ -70,7 +70,7 @@ END
 PUTS "\n[TEST] INFO GLOBALS"
 SET globalVar1 "test"
 SET globals [INFO GLOBALS]
-IF [LSEARCH $globals "globalVar1" >= 0] THEN
+IF [EXPR [LSEARCH $globals "globalVar1"] >= 0] THEN
     PUTS "  PASS: INFO GLOBALS lists global variables"
 ELSE
     PUTS "  FAIL: INFO GLOBALS should list globalVar1"
@@ -81,7 +81,7 @@ PUTS "\n[TEST] INFO LOCALS"
 PROC testLocals WITH DO
     SET localVar "local"
     SET locals [INFO LOCALS]
-    IF [LSEARCH $locals "localVar" >= 0] THEN
+    IF [EXPR [LSEARCH $locals "localVar"] >= 0] THEN
         RETURN "pass"
     ELSE
         RETURN "fail"
@@ -130,7 +130,7 @@ END
 PUTS "\n[TEST] CLOCK FORMAT"
 SET timestamp [CLOCK SECONDS]
 SET formatted [CLOCK FORMAT $timestamp "%Y-%m-%d"]
-IF [STRING LENGTH $formatted == 10] THEN
+IF [EXPR [STRING LENGTH $formatted] == 10] THEN
     PUTS "  PASS: CLOCK FORMAT formats timestamp"
 ELSE
     PUTS "  FAIL: CLOCK FORMAT - expected 10 chars, got [STRING LENGTH $formatted]"
@@ -138,7 +138,7 @@ END
 
 # Test CLOCK FORMAT with different format
 SET formatted2 [CLOCK FORMAT $timestamp "%H:%M:%S"]
-IF [STRING LENGTH $formatted2 == 8] THEN
+IF [EXPR [STRING LENGTH $formatted2] == 8] THEN
     PUTS "  PASS: CLOCK FORMAT with time format"
 ELSE
     PUTS "  FAIL: CLOCK FORMAT time - got '$formatted2'"

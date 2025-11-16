@@ -146,9 +146,44 @@ static bcl_result_t info_locals(bcl_interp_t *interp, int argc, char **argv,
     BCL_UNUSED(argc);
     BCL_UNUSED(argv);
 
-    /* TODO: Cuando implementemos scopes, listar variables del scope actual */
-    /* Por ahora, retornar vacío */
-    *result = bcl_value_create("");
+    /* Si no estamos en un scope local, retornar vacío */
+    if (interp->scope_depth == 0) {
+        *result = bcl_value_create("");
+        return BCL_OK;
+    }
+
+    /* Obtener scope actual */
+    bcl_scope_t *scope = interp->scope_stack[interp->scope_depth - 1];
+    if (!scope || !scope->vars) {
+        *result = bcl_value_create("");
+        return BCL_OK;
+    }
+
+    /* Obtener variables locales */
+    size_t count;
+    char **keys = bcl_hash_keys(scope->vars, &count);
+
+    if (!keys || count == 0) {
+        *result = bcl_value_create("");
+        return BCL_OK;
+    }
+
+    /* Construir lista */
+    bcl_string_t *output = bcl_string_create("");
+    for (size_t i = 0; i < count; i++) {
+        if (i > 0) bcl_string_append(output, " ");
+        bcl_string_append(output, keys[i]);
+    }
+
+    /* Liberar keys */
+    for (size_t i = 0; i < count; i++) {
+        free(keys[i]);
+    }
+    free(keys);
+
+    *result = bcl_value_create(bcl_string_cstr(output));
+    bcl_string_destroy(output);
+
     return BCL_OK;
 }
 

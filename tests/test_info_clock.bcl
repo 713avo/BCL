@@ -147,7 +147,7 @@ END
 # Test CLOCK ADD
 PUTS "\n[TEST] CLOCK ADD"
 SET now [CLOCK SECONDS]
-SET future [CLOCK ADD $now 3600]
+SET future [CLOCK ADD $now 3600 seconds]
 SET diff [EXPR $future - $now]
 IF [EXPR $diff == 3600] THEN
     PUTS "  PASS: CLOCK ADD adds seconds"

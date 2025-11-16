@@ -89,8 +89,15 @@ static bcl_result_t clock_format(bcl_interp_t *interp, int argc, char **argv,
     /* Buscar parámetro FORMAT */
     const char *format = "%a %b %d %H:%M:%S %Z %Y";  /* Default Tcl-style */
     bool use_gmt = false;
+    bool format_specified = false;
 
-    for (int i = 1; i < argc; i++) {
+    /* Si hay un segundo argumento y NO es una palabra clave, asumirlo como formato */
+    if (argc >= 2 && argv[1][0] == '%') {
+        format = argv[1];
+        format_specified = true;
+    }
+
+    for (int i = (format_specified ? 2 : 1); i < argc; i++) {
         if (bcl_strcasecmp(argv[i], "FORMAT") == 0 && i + 1 < argc) {
             format = argv[i + 1];
             i++;

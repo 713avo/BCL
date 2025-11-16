@@ -1,0 +1,326 @@
+.TH BCL-PROC 1 "November 2025" "BCL 1.5.1" "BCL Procedure Definition"
+.SH NAME
+bcl-proc \- BCL procedure (function) definition and invocation
+.SH SYNOPSIS
+.B PROC
+.I name
+.B WITH
+.RI [ param1
+.RI [ param2
+.IR ... ]]
+.B DO
+.RS
+.I commands
+.RE
+.B END
+.SH DESCRIPTION
+The
+.B PROC
+command defines named procedures (functions) that can be called with arguments. Procedures support local variables, parameters, return values, and recursion.
+.SH SYNTAX
+.SS Basic Procedure
+.in +4n
+.EX
+PROC name WITH DO
+    commands
+END
+.EE
+.in
+.SS Procedure with Parameters
+.in +4n
+.EX
+PROC name WITH param1 param2 DO
+    commands
+END
+.EE
+.in
+.SS Procedure with Return Value
+.in +4n
+.EX
+PROC name WITH params DO
+    commands
+    RETURN value
+END
+.EE
+.in
+.SH FEATURES
+.SS Local Variables
+Variables created inside a procedure are local by default and don't affect global scope:
+.PP
+.in +4n
+.EX
+PROC test WITH DO
+    SET local "local value"
+END
+
+test
+# Variable 'local' doesn't exist here
+.EE
+.in
+.SS Parameters
+Parameters are passed by value and become local variables:
+.PP
+.in +4n
+.EX
+PROC greet WITH name DO
+    PUTS "Hello, $name!"
+END
+
+greet "Alice"              # Prints: Hello, Alice!
+.EE
+.in
+.SS Return Values
+Use
+.B RETURN
+to return a value from a procedure:
+.PP
+.in +4n
+.EX
+PROC add WITH a b DO
+    SET sum [EXPR $a + $b]
+    RETURN $sum
+END
+
+SET result [add 5 3]       # result = 8
+.EE
+.in
+.SS Global Access
+Use
+.B GLOBAL
+to access global variables from within a procedure:
+.PP
+.in +4n
+.EX
+SET counter 0
+
+PROC incrementCounter WITH DO
+    GLOBAL counter
+    INCR counter
+END
+
+incrementCounter
+PUTS $counter              # Prints: 1
+.EE
+.in
+.SS Recursion
+Procedures can call themselves recursively:
+.PP
+.in +4n
+.EX
+PROC factorial WITH n DO
+    IF [EXPR $n <= 1] THEN
+        RETURN 1
+    ELSE
+        SET prev [factorial [EXPR $n - 1]]
+        RETURN [EXPR $n * $prev]
+    END
+END
+
+SET result [factorial 5]   # result = 120
+.EE
+.in
+.SH EXAMPLES
+.SS Simple Procedure
+.in +4n
+.EX
+PROC sayHello WITH DO
+    PUTS "Hello, World!"
+END
+
+sayHello
+.EE
+.in
+.SS Procedure with Single Parameter
+.in +4n
+.EX
+PROC square WITH x DO
+    RETURN [EXPR $x * $x]
+END
+
+SET sq [square 7]          # sq = 49
+.EE
+.in
+.SS Procedure with Multiple Parameters
+.in +4n
+.EX
+PROC multiply WITH a b DO
+    RETURN [EXPR $a * $b]
+END
+
+SET product [multiply 6 7]  # product = 42
+.EE
+.in
+.SS Procedure with Variable Arguments
+.in +4n
+.EX
+# Note: BCL passes all arguments, access via parameters
+PROC sum WITH args DO
+    SET total 0
+    FOREACH num IN $args DO
+        INCR total $num
+    END
+    RETURN $total
+END
+
+SET s [sum 1 2 3 4 5]      # s = 15
+.EE
+.in
+.SS Recursive Fibonacci
+.in +4n
+.EX
+PROC fibonacci WITH n DO
+    IF [EXPR $n <= 1] THEN
+        RETURN $n
+    ELSE
+        SET f1 [fibonacci [EXPR $n - 1]]
+        SET f2 [fibonacci [EXPR $n - 2]]
+        RETURN [EXPR $f1 + $f2]
+    END
+END
+
+SET fib10 [fibonacci 10]   # fib10 = 55
+.EE
+.in
+.SS Procedure with Early Return
+.in +4n
+.EX
+PROC divide WITH a b DO
+    IF [EXPR $b == 0] THEN
+        PUTS "Error: Division by zero"
+        RETURN "ERROR"
+    END
+    RETURN [EXPR $a / $b]
+END
+
+SET result [divide 10 2]
+IF [STRING EQUAL $result "ERROR"] THEN
+    PUTS "Division failed"
+ELSE
+    PUTS "Result: $result"
+END
+.EE
+.in
+.SS Procedure Modifying Global State
+.in +4n
+.EX
+SET logfile "app.log"
+SET logcount 0
+
+PROC log WITH message DO
+    GLOBAL logfile logcount
+    SET fh [OPEN $logfile "a"]
+    SET timestamp [CLOCK SECONDS]
+    PUTS $fh "[$timestamp] $message"
+    CLOSE $fh
+    INCR logcount
+END
+
+log "Application started"
+log "Processing data"
+PUTS "Logged $logcount messages"
+.EE
+.in
+.SS Helper Procedures
+.in +4n
+.EX
+PROC isEven WITH n DO
+    RETURN [EXPR $n % 2 == 0]
+END
+
+PROC isOdd WITH n DO
+    RETURN [EXPR ![isEven $n]]
+END
+
+IF [isEven 42] THEN
+    PUTS "42 is even"
+END
+.EE
+.in
+.SS Procedure Library Pattern
+.in +4n
+.EX
+# math_lib.bcl
+PROC abs WITH x DO
+    IF [EXPR $x < 0] THEN
+        RETURN [EXPR -$x]
+    ELSE
+        RETURN $x
+    END
+END
+
+PROC max WITH a b DO
+    IF [EXPR $a > $b] THEN
+        RETURN $a
+    ELSE
+        RETURN $b
+    END
+END
+
+# main.bcl
+SOURCE "math_lib.bcl"
+SET largest [max 10 20]
+.EE
+.in
+.SS Data Validation
+.in +4n
+.EX
+PROC validateEmail WITH email DO
+    IF [REGEXP "^\\w+@\\w+\\.\\w+$" $email] THEN
+        RETURN 1
+    ELSE
+        RETURN 0
+    END
+END
+
+PROC validateAge WITH age DO
+    IF ![REGEXP "^\\d+$" $age] THEN
+        RETURN 0
+    END
+    IF [EXPR $age < 0 || $age > 150] THEN
+        RETURN 0
+    END
+    RETURN 1
+END
+
+IF [validateEmail "user@example.com"] THEN
+    PUTS "Valid email"
+END
+.EE
+.in
+.SH PROCEDURE NAMING
+Procedure names follow the same rules as variables:
+.IP \(bu 2
+Can contain letters, digits, underscores
+.IP \(bu 2
+Must start with letter or underscore
+.IP \(bu 2
+Case-insensitive (myProc, MYPROC, MyProc are the same)
+.SH SCOPE RULES
+.TP
+.B Parameters
+Are local variables initialized with passed arguments
+.TP
+.B Local Variables
+Created with SET inside procedure, not visible outside
+.TP
+.B Global Variables
+Must be declared with GLOBAL to access/modify
+.TP
+.B Nested Procedures
+Inner procedures can't access outer procedure's locals (only globals)
+.SH RETURN VALUE
+If
+.B RETURN
+is not explicitly called, procedure returns empty string.
+.SH PERFORMANCE NOTES
+.IP \(bu 2
+Procedures have minimal overhead
+.IP \(bu 2
+Recursion depth limited by stack (typically ~1000-10000 calls)
+.IP \(bu 2
+Parameters passed by value (strings copied)
+.SH SEE ALSO
+.BR bcl (1),
+.BR bcl-control (1),
+.BR bcl-variables (1),
+.BR bcl-info (1)

@@ -1,0 +1,390 @@
+.TH BCL-INFO 1 "November 2025" "BCL 1.5.1" "BCL Introspection Commands"
+.SH NAME
+bcl-info \- BCL introspection and information commands
+.SH SYNOPSIS
+.B INFO EXISTS
+.I varname
+.br
+.B INFO VARS
+.RI [ pattern ]
+.br
+.B INFO GLOBALS
+.RI [ pattern ]
+.br
+.B INFO LOCALS
+.RI [ pattern ]
+.br
+.B INFO PROCS
+.RI [ pattern ]
+.br
+.B INFO COMMANDS
+.br
+.B INFO BODY
+.I procname
+.SH DESCRIPTION
+The INFO command provides introspection capabilities for querying the state of the BCL interpreter, including variables, procedures, and commands.
+.SH SUBCOMMANDS
+.SS INFO EXISTS
+Tests if variable exists in current scope. Returns 1 if exists, 0 otherwise.
+.PP
+.in +4n
+.EX
+SET myvar 123
+IF [INFO EXISTS myvar] THEN
+    PUTS "myvar exists"
+END
+
+IF ![INFO EXISTS notdefined] THEN
+    PUTS "Variable not defined"
+END
+
+# Check array element
+SET arr(key) "value"
+IF [INFO EXISTS arr(key)] THEN
+    PUTS "Array element exists"
+END
+.EE
+.in
+.SS INFO VARS
+Returns list of all visible variables. Optional pattern filters by glob-style pattern.
+.PP
+.in +4n
+.EX
+# All variables
+SET allvars [INFO VARS]
+PUTS "Variables: $allvars"
+
+# Variables starting with 't'
+SET tvars [INFO VARS "t*"]
+FOREACH var IN $tvars DO
+    PUTS "$var = [SET $var]"
+END
+.EE
+.in
+.SS INFO GLOBALS
+Returns list of global variables. Optional pattern filters.
+.PP
+.in +4n
+.EX
+SET globals [INFO GLOBALS]
+FOREACH var IN $globals DO
+    PUTS "Global: $var = [SET $var]"
+END
+
+# Globals starting with 'config'
+SET configs [INFO GLOBALS "config*"]
+.EE
+.in
+.SS INFO LOCALS
+Returns list of local variables (inside procedure). Optional pattern filters.
+.PP
+.in +4n
+.EX
+PROC showLocals WITH a b DO
+    SET local1 10
+    SET local2 20
+
+    SET locals [INFO LOCALS]
+    PUTS "Local variables: $locals"
+    # Prints: a b local1 local2
+END
+
+showLocals 1 2
+
+# Outside procedure, returns empty
+SET locals [INFO LOCALS]                      # Empty
+.EE
+.in
+.SS INFO PROCS
+Returns list of all defined procedures. Optional pattern filters.
+.PP
+.in +4n
+.EX
+# All procedures
+SET procs [INFO PROCS]
+PUTS "Procedures: $procs"
+
+# Procedures starting with 'test'
+SET testprocs [INFO PROCS "test*"]
+FOREACH proc IN $testprocs DO
+    PUTS "Test procedure: $proc"
+END
+.EE
+.in
+.SS INFO COMMANDS
+Returns list of all built-in commands.
+.PP
+.in +4n
+.EX
+SET commands [INFO COMMANDS]
+PUTS "Available commands: $commands"
+
+# Check if command exists
+IF [EXPR [LSEARCH $commands "REGEXP"] >= 0] THEN
+    PUTS "REGEXP command available"
+END
+.EE
+.in
+.SS INFO BODY
+Returns the body (source code) of a procedure.
+.PP
+.in +4n
+.EX
+PROC myProc WITH x DO
+    SET result [EXPR $x * 2]
+    RETURN $result
+END
+
+SET body [INFO BODY myProc]
+PUTS "Procedure body:"
+PUTS $body
+.EE
+.in
+.SH EXAMPLES
+.SS Check Before Use
+.in +4n
+.EX
+PROC getValue WITH varname DO
+    IF [INFO EXISTS $varname] THEN
+        RETURN [SET $varname]
+    ELSE
+        RETURN "undefined"
+    END
+END
+
+SET result [getValue "myvar"]
+.EE
+.in
+.SS List All Variables
+.in +4n
+.EX
+PROC listVariables WITH DO
+    SET vars [INFO VARS]
+    PUTS "Current variables:"
+
+    FOREACH var IN $vars DO
+        SET value [SET $var]
+        PUTS "  $var = $value"
+    END
+END
+
+SET x 10
+SET y 20
+listVariables
+.EE
+.in
+.SS Debug Information
+.in +4n
+.EX
+PROC debugInfo WITH DO
+    PUTS "=== Debug Information ==="
+    PUTS "Procedures: [INFO PROCS]"
+    PUTS "Global variables: [INFO GLOBALS]"
+    PUTS "Local variables: [INFO LOCALS]"
+    PUTS "========================="
+END
+
+PROC test WITH a b DO
+    SET local_var 42
+    debugInfo
+END
+
+test 1 2
+.EE
+.in
+.SS Conditional Initialization
+.in +4n
+.EX
+# Initialize if not exists
+IF ![INFO EXISTS config] THEN
+    SET config(host) "localhost"
+    SET config(port) 8080
+END
+
+# Set default value
+IF ![INFO EXISTS verbose] THEN
+    SET verbose 0
+END
+.EE
+.in
+.SS Procedure Existence Check
+.in +4n
+.EX
+PROC callIfExists WITH procname args DO
+    SET procs [INFO PROCS]
+    IF [EXPR [LSEARCH $procs $procname] >= 0] THEN
+        EVAL "$procname $args"
+        RETURN 1
+    ELSE
+        PUTS "Procedure $procname not found"
+        RETURN 0
+    END
+END
+
+callIfExists "myFunction" "arg1 arg2"
+.EE
+.in
+.SS Variable Dumper
+.in +4n
+.EX
+PROC dumpVars WITH pattern DO
+    SET vars [INFO VARS $pattern]
+
+    IF [EXPR [LLENGTH $vars] == 0] THEN
+        PUTS "No variables match pattern: $pattern"
+        RETURN
+    END
+
+    FOREACH var IN $vars DO
+        SET value [SET $var]
+        SET len [STRING LENGTH $value]
+        PUTS "$var ($len chars) = $value"
+    END
+END
+
+SET config_host "localhost"
+SET config_port 8080
+SET config_timeout 30
+
+dumpVars "config*"
+.EE
+.in
+.SS Namespace Simulation
+.in +4n
+.EX
+# Simulate namespaces with prefixes
+PROC getNamespaceVars WITH prefix DO
+    SET pattern "$prefix*"
+    RETURN [INFO GLOBALS $pattern]
+END
+
+SET app_name "MyApp"
+SET app_version "1.0"
+SET db_host "localhost"
+SET db_port 3306
+
+SET app_vars [getNamespaceVars "app"]
+PUTS "App variables: $app_vars"
+
+SET db_vars [getNamespaceVars "db"]
+PUTS "DB variables: $db_vars"
+.EE
+.in
+.SS List Procedures with Bodies
+.in +4n
+.EX
+PROC listProcsWithBodies WITH DO
+    SET procs [INFO PROCS]
+
+    FOREACH proc IN $procs DO
+        PUTS "=== $proc ==="
+        SET body [INFO BODY $proc]
+        PUTS $body
+        PUTS ""
+    END
+END
+
+PROC test1 WITH DO
+    PUTS "Test 1"
+END
+
+PROC test2 WITH x DO
+    RETURN [EXPR $x * 2]
+END
+
+listProcsWithBodies
+.EE
+.in
+.SS Safe Variable Access
+.in +4n
+.EX
+PROC getVar WITH varname default DO
+    IF [INFO EXISTS $varname] THEN
+        RETURN [SET $varname]
+    ELSE
+        RETURN $default
+    END
+END
+
+SET timeout [getVar "timeout" 30]
+SET debug [getVar "debug" 0]
+
+PUTS "Timeout: $timeout"
+PUTS "Debug: $debug"
+.EE
+.in
+.SS Verify Command Availability
+.in +4n
+.EX
+PROC hasCommand WITH cmdname DO
+    SET commands [INFO COMMANDS]
+    SET idx [LSEARCH $commands $cmdname]
+    RETURN [EXPR $idx >= 0]
+END
+
+IF [hasCommand "REGEXP"] THEN
+    PUTS "Regular expressions available"
+ELSE
+    PUTS "No regex support"
+END
+.EE
+.in
+.SS Environment Snapshot
+.in +4n
+.EX
+PROC saveEnvironment WITH filename DO
+    SET fh [OPEN $filename "w"]
+
+    # Save all variables
+    SET vars [INFO GLOBALS]
+    FOREACH var IN $vars DO
+        SET value [SET $var]
+        PUTS $fh "SET $var \\"$value\\""
+    END
+
+    CLOSE $fh
+    PUTS "Environment saved to $filename"
+END
+
+SET x 10
+SET y 20
+saveEnvironment "env.bcl"
+
+# Later: SOURCE "env.bcl" to restore
+.EE
+.in
+.SH PATTERN MATCHING
+Patterns use glob-style wildcards:
+.TP
+.B *
+Matches any characters
+.TP
+.B ?
+Matches one character
+.TP
+.B [abc]
+Matches one character from set
+.PP
+.B Examples:
+.in +4n
+.EX
+INFO VARS "test*"         # All vars starting with 'test'
+INFO PROCS "*_helper"     # All procs ending with '_helper'
+INFO GLOBALS "config_*"   # All globals starting with 'config_'
+.EE
+.in
+.SH NOTES
+.TP
+.B Variable Scope
+INFO VARS shows both global and local variables. INFO GLOBALS and INFO LOCALS filter by scope.
+.TP
+.B Case Insensitivity
+Variable and procedure names are case-insensitive in matching.
+.TP
+.B Array Variables
+Arrays appear as individual elements (arr(key1), arr(key2)) in INFO VARS.
+.SH SEE ALSO
+.BR bcl (1),
+.BR bcl-variables (1),
+.BR bcl-proc (1),
+.BR bcl-array (1)

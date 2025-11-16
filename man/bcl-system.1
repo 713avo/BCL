@@ -1,0 +1,379 @@
+.TH BCL-SYSTEM 1 "November 2025" "BCL 1.5.1" "BCL System Commands"
+.SH NAME
+bcl-system \- BCL system interaction and evaluation commands
+.SH SYNOPSIS
+.B EXEC
+.I command
+.br
+.B ENV
+.I varname
+.br
+.B ARGV
+.br
+.B EVAL
+.I codestring
+.br
+.B SOURCE
+.I filename
+.br
+.B AFTER
+.I milliseconds
+.SH DESCRIPTION
+BCL provides commands for interacting with the operating system, executing external programs, accessing environment variables, and dynamically evaluating code.
+.SH COMMANDS
+.SS EXEC
+Executes system command and returns output.
+.PP
+.in +4n
+.EX
+# Execute command and capture output
+SET output [EXEC "ls -la"]
+PUTS $output
+
+SET hostname [EXEC "hostname"]
+PUTS "Hostname: $hostname"
+
+# Multi-line output
+SET files [EXEC "find . -name '*.txt'"]
+PUTS "Files:\\n$files"
+
+# Command with arguments
+SET count [EXEC "wc -l myfile.txt"]
+.EE
+.in
+.SS ENV
+Gets environment variable value.
+.PP
+.in +4n
+.EX
+# Get environment variables
+SET home [ENV HOME]
+PUTS "Home directory: $home"
+
+SET path [ENV PATH]
+SET user [ENV USER]
+SET shell [ENV SHELL]
+
+# Check if variable exists
+IF ![STRING EQUAL [ENV MYVAR] ""] THEN
+    PUTS "MYVAR is set"
+END
+.EE
+.in
+.SS ARGV
+Returns command-line arguments as list.
+.PP
+.in +4n
+.EX
+# Get all arguments
+SET args [ARGV]
+PUTS "Arguments: $args"
+
+# Access individual arguments
+SET argc [LLENGTH $args]
+IF [EXPR $argc > 0] THEN
+    SET firstarg [LINDEX $args 0]
+    PUTS "First argument: $firstarg"
+END
+
+# Process arguments
+FOREACH arg IN $args DO
+    PUTS "Processing: $arg"
+END
+.EE
+.in
+.PP
+.B Note:
+ARGV may fail with SET assignment in command substitution. Workaround:
+.in +4n
+.EX
+PUTS [ARGV]                             # Works
+.EE
+.in
+.SS EVAL
+Evaluates code string dynamically.
+.PP
+.in +4n
+.EX
+# Execute code from string
+EVAL "SET x 10"
+EVAL "PUTS $x"
+
+# Build command dynamically
+SET cmd "SET result [EXPR 5 + 3]"
+EVAL $cmd
+PUTS $result                            # 8
+
+# Sequential evaluation
+EVAL "SET a 5"
+EVAL "SET b 10"
+SET sum [EVAL "EXPR $a + $b"]
+PUTS "Sum: $sum"
+.EE
+.in
+.SS SOURCE
+Loads and executes external BCL script file.
+.PP
+.in +4n
+.EX
+# Load configuration
+SOURCE "config.bcl"
+
+# Load library of procedures
+SOURCE "mylib.bcl"
+myLibFunction arg1 arg2
+
+# Conditional loading
+IF [FILE EXISTS "optional.bcl"] THEN
+    SOURCE "optional.bcl"
+END
+.EE
+.in
+.SS AFTER
+Delays execution for specified milliseconds.
+.PP
+.in +4n
+.EX
+# Wait 1 second
+PUTS "Waiting..."
+AFTER 1000
+PUTS "Done"
+
+# Delay in loop
+FOR 1 TO 5 DO
+    PUTS "Tick $__FOR"
+    AFTER 500                           # 500ms delay
+END
+.EE
+.in
+.SH EXAMPLES
+.SS Execute Shell Commands
+.in +4n
+.EX
+# List files
+SET files [EXEC "ls"]
+PUTS $files
+
+# Check disk space
+SET disk [EXEC "df -h"]
+PUTS $disk
+
+# Get current date
+SET date [EXEC "date +%Y-%m-%d"]
+PUTS "Date: $date"
+.EE
+.in
+.SS Process Command Output
+.in +4n
+.EX
+SET output [EXEC "ps aux"]
+SET lines [SPLIT $output "\\n"]
+
+FOREACH line IN $lines DO
+    IF [STRING MATCH "*python*" $line] THEN
+        PUTS $line
+    END
+END
+.EE
+.in
+.SS Environment Variables
+.in +4n
+.EX
+# Get common variables
+SET home [ENV HOME]
+SET user [ENV USER]
+SET hostname [EXEC "hostname"]
+
+PUTS "User: $user"
+PUTS "Home: $home"
+PUTS "Host: $hostname"
+
+# Check for variable
+SET editor [ENV EDITOR]
+IF [STRING EQUAL $editor ""] THEN
+    SET editor "vi"                     # Default
+END
+PUTS "Editor: $editor"
+.EE
+.in
+.SS Command-Line Argument Parsing
+.in +4n
+.EX
+SET args [ARGV]
+SET verbose 0
+SET inputfile ""
+SET outputfile ""
+
+SET i 0
+WHILE [EXPR $i < [LLENGTH $args]] DO
+    SET arg [LINDEX $args $i]
+
+    IF [STRING EQUAL $arg "-v"] THEN
+        SET verbose 1
+    ELSEIF [STRING EQUAL $arg "-i"] THEN
+        INCR i
+        SET inputfile [LINDEX $args $i]
+    ELSEIF [STRING EQUAL $arg "-o"] THEN
+        INCR i
+        SET outputfile [LINDEX $args $i]
+    ELSE
+        PUTS "Unknown option: $arg"
+        EXIT 1
+    END
+
+    INCR i
+END
+
+IF [EXPR $verbose] THEN
+    PUTS "Input: $inputfile"
+    PUTS "Output: $outputfile"
+END
+.EE
+.in
+.SS Dynamic Code Generation
+.in +4n
+.EX
+# Generate procedure dynamically
+PROC generateGetter WITH varname DO
+    SET code "PROC get_$varname WITH DO\\n"
+    APPEND code "    GLOBAL $varname\\n"
+    APPEND code "    RETURN \\$$varname\\n"
+    APPEND code "END"
+    EVAL $code
+END
+
+SET username "alice"
+generateGetter "username"
+SET user [get_username]                 # Returns "alice"
+.EE
+.in
+.SS Load Configuration File
+.in +4n
+.EX
+# config.bcl
+SET config(host) "localhost"
+SET config(port) 8080
+SET config(timeout) 30
+
+# main.bcl
+IF [FILE EXISTS "config.bcl"] THEN
+    SOURCE "config.bcl"
+    PUTS "Loaded config"
+    PUTS "Host: $config(host)"
+ELSE
+    PUTS "Config file not found"
+    EXIT 1
+END
+.EE
+.in
+.SS Simple Animation
+.in +4n
+.EX
+FOR 1 TO 10 DO
+    PUTS "Loading [$__FOR/10]"
+    AFTER 200
+END
+PUTS "Complete!"
+.EE
+.in
+.SS System Information Script
+.in +4n
+.EX
+PUTS "===== System Information ====="
+PUTS "Hostname: [EXEC hostname]"
+PUTS "User: [ENV USER]"
+PUTS "Home: [ENV HOME]"
+PUTS "Shell: [ENV SHELL]"
+PUTS "Uptime: [EXEC uptime]"
+PUTS "Date: [EXEC date]"
+PUTS "=============================="
+.EE
+.in
+.SS Backup Script
+.in +4n
+.EX
+# Get timestamp for backup filename
+SET now [CLOCK SECONDS]
+SET timestamp [CLOCK FORMAT $now "%Y%m%d_%H%M%S"]
+SET backup "backup_$timestamp.tar.gz"
+
+# Create backup
+PUTS "Creating backup: $backup"
+SET output [EXEC "tar czf $backup data/"]
+
+IF [FILE EXISTS $backup] THEN
+    PUTS "Backup created successfully"
+    SET size [FILE SIZE $backup]
+    PUTS "Size: $size bytes"
+ELSE
+    PUTS "Backup failed"
+    EXIT 1
+END
+.EE
+.in
+.SS Execute with Error Checking
+.in +4n
+.EX
+PROC execWithCheck WITH cmd DO
+    PUTS "Executing: $cmd"
+    SET output [EXEC $cmd]
+
+    # Simple error detection (check output)
+    IF [STRING MATCH "*error*" [STRING TOLOWER $output]] THEN
+        PUTS "Command failed!"
+        PUTS $output
+        RETURN 0
+    END
+
+    RETURN 1
+END
+
+IF [execWithCheck "ls /nonexistent"] THEN
+    PUTS "Success"
+ELSE
+    PUTS "Failed"
+END
+.EE
+.in
+.SS Polling Loop
+.in +4n
+.EX
+PROC waitForFile WITH filename timeout_sec DO
+    SET start [CLOCK SECONDS]
+    SET end [CLOCK ADD $start $timeout_sec seconds]
+
+    WHILE [EXPR [CLOCK SECONDS] < $end] DO
+        IF [FILE EXISTS $filename] THEN
+            RETURN 1
+        END
+        AFTER 500                       # Poll every 500ms
+    END
+
+    RETURN 0                            # Timeout
+END
+
+IF [waitForFile "ready.flag" 30] THEN
+    PUTS "File appeared"
+ELSE
+    PUTS "Timeout waiting for file"
+END
+.EE
+.in
+.SH NOTES
+.TP
+.B EXEC Security
+Be careful with EXEC and user input to avoid command injection vulnerabilities.
+.TP
+.B ARGV Bug
+ARGV may fail with SET assignment; use workaround shown above.
+.TP
+.B EVAL Safety
+EVAL executes arbitrary code; validate input before evaluating.
+.TP
+.B SOURCE Path
+SOURCE uses relative or absolute paths.
+.SH SEE ALSO
+.BR bcl (1),
+.BR bcl-file (1),
+.BR bcl-clock (1),
+.BR environ (7)

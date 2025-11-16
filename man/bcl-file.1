@@ -1,0 +1,368 @@
+.TH BCL-FILE 1 "November 2025" "BCL 1.5.1" "BCL File I/O Commands"
+.SH NAME
+bcl-file \- BCL file input/output commands
+.SH SYNOPSIS
+.B OPEN
+.I filename mode
+.br
+.B CLOSE
+.I handle
+.br
+.B READ
+.I handle
+.RI [ numBytes ]
+.br
+.B GETS
+.I handle
+.br
+.B PUTS
+.RB [ \-NONEWLINE ]
+.RI [ handle ]
+.I string
+.br
+.B TELL
+.I handle
+.br
+.B SEEK
+.I handle offset
+.RI [ origin ]
+.br
+.B EOF
+.I handle
+.br
+.B FLUSH
+.I handle
+.SH DESCRIPTION
+BCL provides comprehensive file I/O capabilities for reading and writing text and binary files. Files are accessed through handles returned by the OPEN command.
+.SH COMMANDS
+.SS OPEN
+Opens a file and returns a handle.
+.PP
+.B Modes:
+.TP
+.B r
+Read (file must exist)
+.TP
+.B w
+Write (creates new or truncates existing)
+.TP
+.B a
+Append (creates new or appends to existing)
+.PP
+.B Examples:
+.in +4n
+.EX
+SET fh [OPEN "input.txt" "r"]
+SET fh [OPEN "output.txt" "w"]
+SET fh [OPEN "log.txt" "a"]
+.EE
+.in
+.SS CLOSE
+Closes an open file handle.
+.PP
+.in +4n
+.EX
+SET fh [OPEN "file.txt" "r"]
+# ... operations ...
+CLOSE $fh
+.EE
+.in
+.SS READ
+Reads from file. Without
+.I numBytes,
+reads entire file. With
+.I numBytes,
+reads that many bytes.
+.PP
+.in +4n
+.EX
+# Read entire file
+SET fh [OPEN "file.txt" "r"]
+SET content [READ $fh]
+CLOSE $fh
+
+# Read specific number of bytes
+SET fh [OPEN "binary.dat" "r"]
+SET chunk [READ $fh 1024]
+CLOSE $fh
+.EE
+.in
+.SS GETS
+Reads one line from file (without newline).
+.PP
+.in +4n
+.EX
+SET fh [OPEN "file.txt" "r"]
+SET line1 [GETS $fh]
+SET line2 [GETS $fh]
+CLOSE $fh
+
+# Read all lines
+SET fh [OPEN "file.txt" "r"]
+WHILE ![EOF $fh] DO
+    SET line [GETS $fh]
+    PUTS "Line: $line"
+END
+CLOSE $fh
+.EE
+.in
+.SS PUTS
+Writes string to file or stdout. With
+.B \-NONEWLINE,
+doesn't append newline.
+.PP
+.in +4n
+.EX
+# Write to stdout
+PUTS "Hello, World!"
+
+# Write to file
+SET fh [OPEN "output.txt" "w"]
+PUTS $fh "Line 1"
+PUTS $fh "Line 2"
+CLOSE $fh
+
+# Write without newline
+SET fh [OPEN "output.txt" "w"]
+PUTS -NONEWLINE $fh "Prompt: "
+CLOSE $fh
+.EE
+.in
+.SS TELL
+Returns current file position in bytes from start.
+.PP
+.in +4n
+.EX
+SET fh [OPEN "file.txt" "r"]
+SET line [GETS $fh]
+SET pos [TELL $fh]
+PUTS "Position after first line: $pos"
+CLOSE $fh
+.EE
+.in
+.SS SEEK
+Sets file position.
+.PP
+.B Origins:
+.TP
+.B START
+From beginning of file (default)
+.TP
+.B CURRENT
+From current position
+.TP
+.B END
+From end of file
+.PP
+.B Examples:
+.in +4n
+.EX
+SET fh [OPEN "file.txt" "r"]
+SEEK $fh 100 START        # Byte 100 from start
+SEEK $fh 10 CURRENT       # 10 bytes forward
+SEEK $fh -5 CURRENT       # 5 bytes backward
+SEEK $fh 0 END            # End of file
+CLOSE $fh
+.EE
+.in
+.SS EOF
+Tests if at end of file. Returns 1 if EOF, 0 otherwise.
+.PP
+.in +4n
+.EX
+SET fh [OPEN "file.txt" "r"]
+WHILE ![EOF $fh] DO
+    SET line [GETS $fh]
+    PUTS $line
+END
+CLOSE $fh
+.EE
+.in
+.SS FLUSH
+Flushes file buffer to disk.
+.PP
+.in +4n
+.EX
+SET fh [OPEN "important.txt" "w"]
+PUTS $fh "Critical data"
+FLUSH $fh                 # Ensure written to disk
+CLOSE $fh
+.EE
+.in
+.SH EXAMPLES
+.SS Read Entire File
+.in +4n
+.EX
+PROC readFile WITH filename DO
+    SET fh [OPEN $filename "r"]
+    SET content [READ $fh]
+    CLOSE $fh
+    RETURN $content
+END
+
+SET text [readFile "data.txt"]
+.EE
+.in
+.SS Write Lines to File
+.in +4n
+.EX
+PROC writeLines WITH filename lines DO
+    SET fh [OPEN $filename "w"]
+    FOREACH line IN $lines DO
+        PUTS $fh $line
+    END
+    CLOSE $fh
+END
+
+SET lines [LIST "Line 1" "Line 2" "Line 3"]
+writeLines "output.txt" $lines
+.EE
+.in
+.SS Process File Line by Line
+.in +4n
+.EX
+SET fh [OPEN "input.txt" "r"]
+SET linenum 0
+
+WHILE ![EOF $fh] DO
+    SET line [GETS $fh]
+    INCR linenum
+
+    # Process line
+    SET upper [STRING TOUPPER $line]
+    PUTS "$linenum: $upper"
+END
+
+CLOSE $fh
+.EE
+.in
+.SS Append to Log File
+.in +4n
+.EX
+PROC logMessage WITH msg DO
+    SET fh [OPEN "app.log" "a"]
+    SET timestamp [CLOCK SECONDS]
+    SET formatted [CLOCK FORMAT $timestamp "%Y-%m-%d %H:%M:%S"]
+    PUTS $fh "[$formatted] $msg"
+    CLOSE $fh
+END
+
+logMessage "Application started"
+logMessage "Processing data"
+.EE
+.in
+.SS Copy File
+.in +4n
+.EX
+PROC copyFile WITH source dest DO
+    SET infh [OPEN $source "r"]
+    SET content [READ $infh]
+    CLOSE $infh
+
+    SET outfh [OPEN $dest "w"]
+    PUTS -NONEWLINE $outfh $content
+    CLOSE $outfh
+END
+
+copyFile "original.txt" "copy.txt"
+.EE
+.in
+.SS Transform File
+.in +4n
+.EX
+# Read input, transform, write output
+SET infh [OPEN "input.txt" "r"]
+SET outfh [OPEN "output.txt" "w"]
+
+WHILE ![EOF $infh] DO
+    SET line [GETS $infh]
+
+    # Transform: uppercase and add prefix
+    SET transformed "[STRING TOUPPER $line]"
+    PUTS $outfh ">>> $transformed"
+END
+
+CLOSE $infh
+CLOSE $outfh
+.EE
+.in
+.SS Read Binary File
+.in +4n
+.EX
+SET fh [OPEN "binary.dat" "r"]
+SET header [READ $fh 16]              # Read 16-byte header
+BINARY SCAN $header "Ii" magic version
+PUTS "Magic: $magic, Version: $version"
+
+SET data [READ $fh]                   # Read rest of file
+CLOSE $fh
+.EE
+.in
+.SS Random Access
+.in +4n
+.EX
+SET fh [OPEN "data.bin" "r"]
+
+# Read from specific position
+SEEK $fh 1024 START
+SET chunk1 [READ $fh 256]
+
+# Jump to another position
+SEEK $fh 2048 START
+SET chunk2 [READ $fh 256]
+
+CLOSE $fh
+.EE
+.in
+.SS Count Lines in File
+.in +4n
+.EX
+PROC countLines WITH filename DO
+    SET fh [OPEN $filename "r"]
+    SET count 0
+
+    WHILE ![EOF $fh] DO
+        GETS $fh
+        INCR count
+    END
+
+    CLOSE $fh
+    RETURN $count
+END
+
+SET lines [countLines "data.txt"]
+PUTS "File has $lines lines"
+.EE
+.in
+.SH FILE HANDLE MANAGEMENT
+Always close file handles when done:
+.PP
+.in +4n
+.EX
+# Good practice
+SET fh [OPEN "file.txt" "r"]
+SET content [READ $fh]
+CLOSE $fh                 # Always close
+
+# Avoid leaving handles open
+# If script exits without CLOSE, handles are leaked
+.EE
+.in
+.SH NOTES
+.TP
+.B Text vs Binary
+BCL doesn't distinguish text and binary modes; handle with READ/PUTS.
+.TP
+.B Newline Handling
+GETS removes newline; PUTS adds newline (unless -NONEWLINE).
+.TP
+.B File Handles
+File handles are strings; don't reuse after closing.
+.TP
+.B Error Handling
+File operations fail if file doesn't exist (READ mode) or can't be created.
+.SH SEE ALSO
+.BR bcl (1),
+.BR bcl-fileops (1),
+.BR bcl-binary (1),
+.BR bcl-string (1)

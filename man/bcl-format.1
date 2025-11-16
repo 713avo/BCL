@@ -1,0 +1,354 @@
+.TH BCL-FORMAT 1 "November 2025" "BCL 1.5.1" "BCL String Formatting Commands"
+.SH NAME
+bcl-format \- BCL printf/scanf-style string formatting
+.SH SYNOPSIS
+.B FORMAT
+.I formatstring
+.RI [ value... ]
+.br
+.B SCAN
+.I string formatstring
+.RI [ varname... ]
+.SH DESCRIPTION
+FORMAT and SCAN provide printf and scanf-style formatted string operations for converting between values and formatted text.
+.SH COMMANDS
+.SS FORMAT
+Formats values into string using printf-style format specifiers.
+.PP
+.B Syntax:
+.in +4n
+.EX
+FORMAT formatstring value1 value2 ...
+.EE
+.in
+.PP
+.B Format Specifiers:
+.TP
+.B %s
+String
+.TP
+.B %d
+Decimal integer
+.TP
+.B %i
+Integer (same as %d)
+.TP
+.B %u
+Unsigned integer
+.TP
+.B %x
+Hexadecimal lowercase
+.TP
+.B %X
+Hexadecimal uppercase
+.TP
+.B %o
+Octal
+.TP
+.B %f
+Floating point
+.TP
+.B %e
+Scientific notation lowercase
+.TP
+.B %E
+Scientific notation uppercase
+.TP
+.B %g
+Shortest representation (f or e)
+.TP
+.B %c
+Character (from ASCII code)
+.TP
+.B %%
+Literal %
+.PP
+.B Width and Precision:
+.TP
+.B %10s
+Minimum width 10
+.TP
+.B %.2f
+Precision 2 decimal places
+.TP
+.B %10.2f
+Width 10, precision 2
+.TP
+.B %05d
+Pad with zeros to width 5
+.TP
+.B %-10s
+Left-align within width 10
+.PP
+.B Examples:
+.in +4n
+.EX
+# Basic formatting
+SET str [FORMAT "%s %s" "Hello" "World"]      # Hello World
+SET num [FORMAT "%d" 42]                      # 42
+SET hex [FORMAT "%x" 255]                     # ff
+
+# Width and precision
+SET padded [FORMAT "%10s" "Hi"]               #       Hi (right-aligned)
+SET left [FORMAT "%-10s" "Hi"]                # Hi        (left-aligned)
+SET zeros [FORMAT "%05d" 42]                  # 00042
+SET float [FORMAT "%.2f" 3.14159]             # 3.14
+
+# Multiple values
+SET result [FORMAT "%s: %d items, $%.2f" "Cart" 5 29.99]
+# Cart: 5 items, $29.99
+.EE
+.in
+.SS SCAN
+Parses formatted string into variables using scanf-style format specifiers.
+.PP
+.B Syntax:
+.in +4n
+.EX
+SCAN string formatstring var1 var2 ...
+.EE
+.in
+.PP
+.B Format Specifiers:
+.TP
+.B %s
+String (until whitespace)
+.TP
+.B %d
+Decimal integer
+.TP
+.B %i
+Integer
+.TP
+.B %x
+Hexadecimal
+.TP
+.B %o
+Octal
+.TP
+.B %f
+Floating point
+.TP
+.B %c
+Single character
+.PP
+.B Examples:
+.in +4n
+.EX
+# Parse string
+SCAN "Hello World" "%s %s" word1 word2
+# word1 = "Hello", word2 = "World"
+
+# Parse numbers
+SCAN "Age: 25" "Age: %d" age
+# age = "25"
+
+# Parse multiple values
+SCAN "12345 3.14 test" "%d %f %s" num flt str
+# num = "12345", flt = "3.14", str = "test"
+
+# Parse hex
+SCAN "Color: ff00aa" "Color: %x" color
+# color = "16711850" (decimal)
+.EE
+.in
+.SH EXAMPLES
+.SS Table Formatting
+.in +4n
+.EX
+PROC printTableRow WITH name age salary DO
+    SET row [FORMAT "| %-20s | %3d | $%8.2f |" $name $age $salary]
+    PUTS $row
+END
+
+PUTS "+----------------------+-----+----------+"
+PUTS "| Name                 | Age | Salary   |"
+PUTS "+----------------------+-----+----------+"
+printTableRow "Alice Smith" 30 75000.00
+printTableRow "Bob Johnson" 25 62500.50
+printTableRow "Charlie Lee" 35 85750.25
+PUTS "+----------------------+-----+----------+"
+.EE
+.in
+.SS Number Formatting
+.in +4n
+.EX
+# Currency
+SET price 1234.567
+SET formatted [FORMAT "$%.2f" $price]         # $1234.57
+
+# Percentage
+SET ratio 0.8567
+SET percent [FORMAT "%.1f%%" [EXPR $ratio * 100]]  # 85.7%
+
+# Thousands with commas (manual)
+SET value 1234567
+# Would need custom logic for comma insertion
+.EE
+.in
+.SS Hex Dump
+.in +4n
+.EX
+PROC hexDump WITH data DO
+    SET len [STRING LENGTH $data]
+
+    FOR 0 TO [EXPR $len - 1] DO
+        SET char [STRING INDEX $data $__FOR]
+        BINARY SCAN $char "C" byte
+        SET hex [FORMAT "%02x" $byte]
+        PUTS -NONEWLINE "$hex "
+
+        IF [EXPR ($__FOR + 1) % 16 == 0] THEN
+            PUTS ""
+        END
+    END
+    PUTS ""
+END
+
+SET data "Hello, World!"
+hexDump $data
+.EE
+.in
+.SS Parse CSV Line
+.in +4n
+.EX
+SET csv "Alice,30,Engineer"
+SCAN $csv "%[^,],%d,%s" name age job
+
+# Note: %[^,] not supported; use SPLIT instead
+SET parts [SPLIT $csv ","]
+SET name [LINDEX $parts 0]
+SET age [LINDEX $parts 1]
+SET job [LINDEX $parts 2]
+.EE
+.in
+.SS Format Log Messages
+.in +4n
+.EX
+PROC logFormat WITH level message DO
+    SET now [CLOCK SECONDS]
+    SET timestamp [CLOCK FORMAT $now "%Y-%m-%d %H:%M:%S"]
+    SET formatted [FORMAT "[%s] %-7s %s" $timestamp $level $message]
+    RETURN $formatted
+END
+
+PUTS [logFormat "INFO" "Application started"]
+PUTS [logFormat "WARNING" "Low memory"]
+PUTS [logFormat "ERROR" "Connection failed"]
+.EE
+.in
+.SS Parse Version String
+.in +4n
+.EX
+SET version "1.2.3"
+SCAN $version "%d.%d.%d" major minor patch
+PUTS "Major: $major, Minor: $minor, Patch: $patch"
+.EE
+.in
+.SS Format/Scan Round-Trip
+.in +4n
+.EX
+# Format data
+SET formatted [FORMAT "Data: %d, %f, %s" 42 3.14 "test"]
+PUTS "Formatted: $formatted"
+
+# Parse it back
+SCAN $formatted "Data: %d, %f, %s" num flt str
+PUTS "Num: $num, Float: $flt, String: $str"
+.EE
+.in
+.SS Binary to Hex
+.in +4n
+.EX
+# Convert byte value to hex string
+PROC byteToHex WITH byte DO
+    RETURN [FORMAT "%02x" $byte]
+END
+
+SET hex [byteToHex 255]                       # ff
+SET hex [byteToHex 16]                        # 10
+.EE
+.in
+.SS Aligned Output
+.in +4n
+.EX
+# Right-aligned numbers
+FOR 1 TO 10 DO
+    SET square [EXPR $__FOR * $__FOR]
+    SET line [FORMAT "%2d squared = %3d" $__FOR $square]
+    PUTS $line
+END
+
+# Output:
+#  1 squared =   1
+#  2 squared =   4
+#  3 squared =   9
+# ...
+.EE
+.in
+.SS Parse Coordinates
+.in +4n
+.EX
+SET coord "Point: (12.5, 34.7)"
+# Extract numbers
+IF [REGEXP "\\(([0-9.]+), ([0-9.]+)\\)" $coord full x y] THEN
+    PUTS "X: $x, Y: $y"
+END
+
+# Alternative with SCAN (if format is fixed)
+SCAN $coord "Point: (%f, %f)" x y
+PUTS "X: $x, Y: $y"
+.EE
+.in
+.SS Format Scientific Notation
+.in +4n
+.EX
+SET large 1234567890
+SET sci [FORMAT "%e" $large]                  # 1.234568e+09
+
+SET small 0.000001234
+SET sci [FORMAT "%e" $small]                  # 1.234000e-06
+.EE
+.in
+.SH FORMAT FLAGS
+.TP
+.B \-
+Left-align (default is right-align)
+.TP
+.B +
+Always show sign for numbers
+.TP
+.B 0
+Pad with zeros instead of spaces
+.TP
+.B #
+Alternate form (0x prefix for hex, etc.)
+.PP
+.B Examples:
+.in +4n
+.EX
+FORMAT "%-10d" 42         # "42        " (left-aligned)
+FORMAT "%+d" 42           # "+42"
+FORMAT "%05d" 42          # "00042"
+FORMAT "%#x" 255          # "0xff"
+.EE
+.in
+.SH NOTES
+.TP
+.B SCAN %s Behavior
+%s captures until whitespace. When %s is at end of format string, captures all remaining text including spaces.
+.TP
+.B Width and Precision
+FORMAT supports standard printf width and precision modifiers.
+.TP
+.B Limited Character Classes
+SCAN doesn't support %[...] character class syntax; use REGEXP instead.
+.TP
+.B Type Conversion
+Values are converted between string and numeric as needed.
+.SH SEE ALSO
+.BR bcl (1),
+.BR bcl-string (1),
+.BR bcl-binary (1),
+.BR printf (3),
+.BR scanf (3)

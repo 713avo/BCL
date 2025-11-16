@@ -1,0 +1,363 @@
+.TH BCL-CLOCK 1 "November 2025" "BCL 1.5.1" "BCL Time and Date Commands"
+.SH NAME
+bcl-clock \- BCL time and date manipulation
+.SH SYNOPSIS
+.B CLOCK SECONDS
+.br
+.B CLOCK MILLISECONDS
+.br
+.B CLOCK MICROSECONDS
+.br
+.B CLOCK FORMAT
+.I timestamp
+.RI [ formatstring ]
+.br
+.B CLOCK SCAN
+.I datestring formatstring
+.br
+.B CLOCK ADD
+.I timestamp value unit
+.SH DESCRIPTION
+The CLOCK command provides comprehensive time and date manipulation, including timestamps, formatting, parsing, and arithmetic.
+.SH SUBCOMMANDS
+.SS CLOCK SECONDS
+Returns current Unix timestamp (seconds since 1970-01-01 00:00:00 UTC).
+.PP
+.in +4n
+.EX
+SET now [CLOCK SECONDS]
+PUTS "Current timestamp: $now"
+.EE
+.in
+.SS CLOCK MILLISECONDS
+Returns current time in milliseconds (since epoch).
+.PP
+.in +4n
+.EX
+SET ms [CLOCK MILLISECONDS]
+PUTS "Milliseconds: $ms"
+.EE
+.in
+.SS CLOCK MICROSECONDS
+Returns current time in microseconds (since epoch).
+.PP
+.in +4n
+.EX
+SET us [CLOCK MICROSECONDS]
+PUTS "Microseconds: $us"
+.EE
+.in
+.SS CLOCK FORMAT
+Formats timestamp as human-readable string using strftime-style format.
+.PP
+.B Syntax:
+.in +4n
+.EX
+CLOCK FORMAT timestamp formatstring
+CLOCK FORMAT timestamp "%Y-%m-%d"      # Simplified syntax
+.EE
+.in
+.PP
+.B Format Specifiers:
+.TP
+.B %Y
+Year (4 digits): 2025
+.TP
+.B %y
+Year (2 digits): 25
+.TP
+.B %m
+Month (01-12)
+.TP
+.B %d
+Day of month (01-31)
+.TP
+.B %H
+Hour 24-hour (00-23)
+.TP
+.B %I
+Hour 12-hour (01-12)
+.TP
+.B %M
+Minute (00-59)
+.TP
+.B %S
+Second (00-59)
+.TP
+.B %a
+Weekday abbreviated: Mon, Tue, ...
+.TP
+.B %A
+Weekday full: Monday, Tuesday, ...
+.TP
+.B %b
+Month abbreviated: Jan, Feb, ...
+.TP
+.B %B
+Month full: January, February, ...
+.TP
+.B %p
+AM/PM
+.PP
+.B Examples:
+.in +4n
+.EX
+SET now [CLOCK SECONDS]
+SET date [CLOCK FORMAT $now "%Y-%m-%d"]
+SET time [CLOCK FORMAT $now "%H:%M:%S"]
+SET full [CLOCK FORMAT $now "%Y-%m-%d %H:%M:%S"]
+SET human [CLOCK FORMAT $now "%A, %B %d, %Y"]
+
+# ISO 8601 format
+SET iso [CLOCK FORMAT $now "%Y-%m-%dT%H:%M:%S"]
+.EE
+.in
+.SS CLOCK SCAN
+Parses date string into Unix timestamp using strptime-style format.
+.PP
+.in +4n
+.EX
+SET ts [CLOCK SCAN "2025-11-16" "%Y-%m-%d"]
+SET ts [CLOCK SCAN "11/16/2025" "%m/%d/%Y"]
+SET ts [CLOCK SCAN "2025-11-16 14:30:00" "%Y-%m-%d %H:%M:%S"]
+.EE
+.in
+.SS CLOCK ADD
+Performs time arithmetic by adding/subtracting intervals.
+.PP
+.B Syntax:
+.in +4n
+.EX
+CLOCK ADD timestamp value unit
+.EE
+.in
+.PP
+.B Units:
+.B seconds, minutes, hours, days, weeks
+.PP
+.B Examples:
+.in +4n
+.EX
+SET now [CLOCK SECONDS]
+
+# Add time
+SET future [CLOCK ADD $now 3600 seconds]      # +1 hour
+SET future [CLOCK ADD $now 60 minutes]        # +1 hour
+SET future [CLOCK ADD $now 24 hours]          # +1 day
+SET tomorrow [CLOCK ADD $now 1 days]          # +1 day
+SET nextweek [CLOCK ADD $now 1 weeks]         # +7 days
+
+# Subtract time (negative value)
+SET yesterday [CLOCK ADD $now -1 days]
+SET lasthour [CLOCK ADD $now -3600 seconds]
+.EE
+.in
+.SH EXAMPLES
+.SS Display Current Date/Time
+.in +4n
+.EX
+SET now [CLOCK SECONDS]
+SET formatted [CLOCK FORMAT $now "%Y-%m-%d %H:%M:%S"]
+PUTS "Current time: $formatted"
+.EE
+.in
+.SS Timing Code Execution
+.in +4n
+.EX
+SET start [CLOCK MICROSECONDS]
+
+# Code to time
+FOR 1 TO 1000 DO
+    SET x [EXPR $__FOR * 2]
+END
+
+SET end [CLOCK MICROSECONDS]
+SET elapsed [EXPR $end - $start]
+PUTS "Elapsed: $elapsed microseconds"
+.EE
+.in
+.SS Date Arithmetic
+.in +4n
+.EX
+# Calculate date 30 days from now
+SET now [CLOCK SECONDS]
+SET future [CLOCK ADD $now 30 days]
+SET date [CLOCK FORMAT $future "%Y-%m-%d"]
+PUTS "30 days from now: $date"
+
+# Calculate date 7 days ago
+SET past [CLOCK ADD $now -7 days]
+SET date [CLOCK FORMAT $past "%Y-%m-%d"]
+PUTS "7 days ago: $date"
+.EE
+.in
+.SS Parse and Format Dates
+.in +4n
+.EX
+# Parse European format, output US format
+SET european "16/11/2025"
+SET ts [CLOCK SCAN $european "%d/%m/%Y"]
+SET american [CLOCK FORMAT $ts "%m/%d/%Y"]
+PUTS "US format: $american"            # 11/16/2025
+.EE
+.in
+.SS Calculate Age
+.in +4n
+.EX
+PROC calculateAge WITH birthdate DO
+    # birthdate in YYYY-MM-DD format
+    SET birth_ts [CLOCK SCAN $birthdate "%Y-%m-%d"]
+    SET now [CLOCK SECONDS]
+    SET diff [EXPR $now - $birth_ts]
+    SET age [EXPR $diff / 31536000]    # Seconds in year (approx)
+    RETURN [EXPR int($age)]
+END
+
+SET age [calculateAge "1990-05-15"]
+PUTS "Age: $age years"
+.EE
+.in
+.SS Timestamp to Human-Readable
+.in +4n
+.EX
+SET timestamp 1700140800
+SET date [CLOCK FORMAT $timestamp "%A, %B %d, %Y at %I:%M %p"]
+PUTS $date
+.EE
+.in
+.SS Log File with Timestamps
+.in +4n
+.EX
+PROC log WITH message DO
+    SET now [CLOCK SECONDS]
+    SET timestamp [CLOCK FORMAT $now "%Y-%m-%d %H:%M:%S"]
+    SET fh [OPEN "app.log" "a"]
+    PUTS $fh "[$timestamp] $message"
+    CLOSE $fh
+END
+
+log "Application started"
+log "Processing data"
+log "Application finished"
+.EE
+.in
+.SS Time Until Event
+.in +4n
+.EX
+# Calculate time until specific date
+SET event_date "2025-12-25"
+SET event_ts [CLOCK SCAN $event_date "%Y-%m-%d"]
+SET now [CLOCK SECONDS]
+SET diff [EXPR $event_ts - $now]
+SET days [EXPR $diff / 86400]
+
+PUTS "$days days until $event_date"
+.EE
+.in
+.SS Performance Measurement
+.in +4n
+.EX
+PROC benchmark WITH iterations DO
+    SET start [CLOCK MILLISECONDS]
+
+    FOR 1 TO $iterations DO
+        # Operation to benchmark
+        SET x [EXPR $__FOR ** 2]
+    END
+
+    SET end [CLOCK MILLISECONDS]
+    SET elapsed [EXPR $end - $start]
+
+    PUTS "$iterations iterations: $elapsed ms"
+    SET rate [EXPR $iterations / ($elapsed / 1000.0)]
+    PUTS "Rate: $rate ops/sec"
+END
+
+benchmark 10000
+.EE
+.in
+.SS Timeout Implementation
+.in +4n
+.EX
+PROC waitWithTimeout WITH timeout_seconds DO
+    SET start [CLOCK SECONDS]
+    SET timeout_ts [CLOCK ADD $start $timeout_seconds seconds]
+
+    WHILE [EXPR [CLOCK SECONDS] < $timeout_ts] DO
+        # Check condition
+        IF [EXPR $condition_met] THEN
+            RETURN 1
+        END
+        AFTER 100                       # Small delay
+    END
+
+    RETURN 0                            # Timeout
+END
+.EE
+.in
+.SS Date Range Check
+.in +4n
+.EX
+PROC isDateInRange WITH date start end DO
+    SET date_ts [CLOCK SCAN $date "%Y-%m-%d"]
+    SET start_ts [CLOCK SCAN $start "%Y-%m-%d"]
+    SET end_ts [CLOCK SCAN $end "%Y-%m-%d"]
+
+    IF [EXPR $date_ts >= $start_ts && $date_ts <= $end_ts] THEN
+        RETURN 1
+    ELSE
+        RETURN 0
+    END
+END
+
+IF [isDateInRange "2025-11-16" "2025-11-01" "2025-11-30"] THEN
+    PUTS "Date is in November 2025"
+END
+.EE
+.in
+.SS Convert Time Zones (Basic)
+.in +4n
+.EX
+# Add/subtract hours for timezone conversion
+SET utc [CLOCK SECONDS]
+
+# UTC to EST (UTC-5)
+SET est [CLOCK ADD $utc -5 hours]
+SET est_formatted [CLOCK FORMAT $est "%Y-%m-%d %H:%M:%S"]
+PUTS "EST: $est_formatted"
+
+# UTC to JST (UTC+9)
+SET jst [CLOCK ADD $utc 9 hours]
+SET jst_formatted [CLOCK FORMAT $jst "%Y-%m-%d %H:%M:%S"]
+PUTS "JST: $jst_formatted"
+.EE
+.in
+.SH UNIX TIMESTAMP
+Unix timestamps represent seconds since 1970-01-01 00:00:00 UTC (the epoch).
+.PP
+.in +4n
+.EX
+0          = 1970-01-01 00:00:00 UTC
+1000000000 = 2001-09-09 01:46:40 UTC
+1700000000 = 2023-11-14 22:13:20 UTC
+2000000000 = 2033-05-18 03:33:20 UTC
+.EE
+.in
+.SH NOTES
+.TP
+.B Precision
+SECONDS provides second precision, MILLISECONDS millisecond, MICROSECONDS microsecond.
+.TP
+.B Timezone
+All times are in local timezone unless explicitly converted.
+.TP
+.B Leap Seconds
+Not accounted for in simple arithmetic.
+.TP
+.B Year 2038 Problem
+32-bit systems may have issues after 2038-01-19.
+.SH SEE ALSO
+.BR bcl (1),
+.BR bcl-system (1),
+.BR strftime (3),
+.BR strptime (3)

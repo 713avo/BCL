@@ -1,0 +1,309 @@
+.TH BCL-EXPR 1 "November 2025" "BCL 1.5.1" "BCL Expression Evaluation"
+.SH NAME
+bcl-expr \- BCL mathematical expression evaluation
+.SH SYNOPSIS
+.B EXPR
+.I expression
+.SH DESCRIPTION
+The
+.B EXPR
+command evaluates mathematical and logical expressions, supporting arithmetic operators, comparisons, logical operations, and over 30 mathematical functions.
+.SH OPERATORS
+.SS Arithmetic Operators
+.TP
+.B +
+Addition
+.TP
+.B \-
+Subtraction
+.TP
+.B *
+Multiplication
+.TP
+.B /
+Division
+.TP
+.B %
+Modulo (remainder)
+.TP
+.B **
+Exponentiation (power)
+.SS Comparison Operators
+.TP
+.B ==
+Equal to
+.TP
+.B !=
+Not equal to
+.TP
+.B <
+Less than
+.TP
+.B >
+Greater than
+.TP
+.B <=
+Less than or equal to
+.TP
+.B >=
+Greater than or equal to
+.SS Logical Operators
+.TP
+.B &&
+Logical AND
+.TP
+.B ||
+Logical OR
+.TP
+.B !
+Logical NOT
+.SH OPERATOR PRECEDENCE
+From highest to lowest:
+.IP 1. 4
+Parentheses
+.B ()
+.IP 2. 4
+Functions
+.IP 3. 4
+Unary minus, logical NOT
+.B "\-, !"
+.IP 4. 4
+Exponentiation
+.B **
+.IP 5. 4
+Multiplication, division, modulo
+.B "*, /, %"
+.IP 6. 4
+Addition, subtraction
+.B "+, \-"
+.IP 7. 4
+Comparisons
+.B "<, >, <=, >=, ==, !="
+.IP 8. 4
+Logical AND
+.B &&
+.IP 9. 4
+Logical OR
+.B ||
+.SH MATHEMATICAL FUNCTIONS
+.SS Trigonometric Functions
+.TP
+.B sin(x)
+Sine of x (radians)
+.TP
+.B cos(x)
+Cosine of x (radians)
+.TP
+.B tan(x)
+Tangent of x (radians)
+.TP
+.B asin(x)
+Arcsine of x (returns radians)
+.TP
+.B acos(x)
+Arccosine of x (returns radians)
+.TP
+.B atan(x)
+Arctangent of x (returns radians)
+.TP
+.B atan2(y, x)
+Arctangent of y/x (returns radians)
+.SS Hyperbolic Functions
+.TP
+.B sinh(x)
+Hyperbolic sine
+.TP
+.B cosh(x)
+Hyperbolic cosine
+.TP
+.B tanh(x)
+Hyperbolic tangent
+.SS Exponential and Logarithmic
+.TP
+.B exp(x)
+Exponential function (e^x)
+.TP
+.B log(x)
+Natural logarithm (ln x)
+.TP
+.B log10(x)
+Base-10 logarithm
+.TP
+.B pow(x, y)
+Power function (x^y)
+.SS Rounding Functions
+.TP
+.B abs(x)
+Absolute value
+.TP
+.B floor(x)
+Round down to integer
+.TP
+.B ceil(x)
+Round up to integer
+.TP
+.B round(x)
+Round to nearest integer
+.SS Square Root
+.TP
+.B sqrt(x)
+Square root
+.SS Min/Max Functions
+.TP
+.B min(x1, x2, ...)
+Minimum of arguments (variadic)
+.TP
+.B max(x1, x2, ...)
+Maximum of arguments (variadic)
+.SS Random Number
+.TP
+.B rand()
+Random float between 0.0 and 1.0
+.SS Type Conversion
+.TP
+.B int(x)
+Convert to integer (truncate)
+.TP
+.B double(x)
+Convert to floating-point
+.SH EXAMPLES
+.SS Basic Arithmetic
+.in +4n
+.EX
+SET sum [EXPR 5 + 3]                    # 8
+SET diff [EXPR 10 - 4]                  # 6
+SET product [EXPR 6 * 7]                # 42
+SET quotient [EXPR 20 / 4]              # 5
+SET remainder [EXPR 17 % 5]             # 2
+SET power [EXPR 2 ** 8]                 # 256
+.EE
+.in
+.SS Operator Precedence
+.in +4n
+.EX
+SET result [EXPR 10 + 5 * 2]            # 20 (not 30)
+SET result [EXPR (10 + 5) * 2]          # 30 (parentheses)
+SET result [EXPR 2 ** 3 ** 2]           # 512 (right associative)
+.EE
+.in
+.SS Comparisons
+.in +4n
+.EX
+IF [EXPR 10 > 5] THEN
+    PUTS "10 is greater than 5"
+END
+
+IF [EXPR $x == $y] THEN
+    PUTS "Equal"
+END
+
+IF [EXPR $age >= 18] THEN
+    PUTS "Adult"
+END
+.EE
+.in
+.SS Logical Operations
+.in +4n
+.EX
+IF [EXPR $a > 0 && $b > 0] THEN
+    PUTS "Both positive"
+END
+
+IF [EXPR $value < 0 || $value > 100] THEN
+    PUTS "Out of range"
+END
+
+IF [EXPR !$flag] THEN
+    PUTS "Flag is false"
+END
+.EE
+.in
+.SS Trigonometric Functions
+.in +4n
+.EX
+SET pi 3.14159265359
+SET angle [EXPR $pi / 4]                # 45 degrees in radians
+SET sine [EXPR sin($angle)]             # ~0.707
+SET cosine [EXPR cos($angle)]           # ~0.707
+SET tangent [EXPR tan($angle)]          # ~1.0
+.EE
+.in
+.SS Exponential and Logarithmic
+.in +4n
+.EX
+SET e_squared [EXPR exp(2)]             # e^2 ≈ 7.389
+SET ln_10 [EXPR log(10)]                # ln(10) ≈ 2.303
+SET log_100 [EXPR log10(100)]           # log₁₀(100) = 2.0
+.EE
+.in
+.SS Rounding Functions
+.in +4n
+.EX
+SET absolute [EXPR abs(-42)]            # 42
+SET floored [EXPR floor(3.7)]           # 3
+SET ceiled [EXPR ceil(3.2)]             # 4
+SET rounded [EXPR round(3.6)]           # 4
+.EE
+.in
+.SS Min/Max Functions
+.in +4n
+.EX
+SET minimum [EXPR min(5, 3, 9, 1)]      # 1
+SET maximum [EXPR max(5, 3, 9, 1)]      # 9
+SET min2 [EXPR min($a, $b)]             # Minimum of two values
+.EE
+.in
+.SS Random Numbers
+.in +4n
+.EX
+SET random [EXPR rand()]                # Random 0.0 to 1.0
+SET dice [EXPR int(rand() * 6) + 1]    # Random 1 to 6
+SET rand100 [EXPR int(rand() * 100)]   # Random 0 to 99
+.EE
+.in
+.SS Complex Expressions
+.in +4n
+.EX
+# Quadratic formula: (-b ± sqrt(b² - 4ac)) / 2a
+SET a 1
+SET b -5
+SET c 6
+SET discriminant [EXPR $b * $b - 4 * $a * $c]
+SET x1 [EXPR (-$b + sqrt($discriminant)) / (2 * $a)]
+SET x2 [EXPR (-$b - sqrt($discriminant)) / (2 * $a)]
+PUTS "x1 = $x1, x2 = $x2"
+.EE
+.in
+.SS Distance Between Points
+.in +4n
+.EX
+SET x1 0
+SET y1 0
+SET x2 3
+SET y2 4
+SET dx [EXPR $x2 - $x1]
+SET dy [EXPR $y2 - $y1]
+SET distance [EXPR sqrt($dx * $dx + $dy * $dy)]
+PUTS "Distance: $distance"              # 5.0
+.EE
+.in
+.SH RETURN VALUE
+Returns the result of evaluating the expression as a string. Numeric results are converted to string representation.
+.SH NOTES
+.TP
+.B Floating-Point Precision
+All arithmetic is performed using C double-precision floating-point (typically 64-bit IEEE 754).
+.TP
+.B Integer Division
+Division of integers produces floating-point results. Use
+.B int()
+to truncate.
+.TP
+.B Variables in Expressions
+Variables must be prefixed with
+.B $
+when used in expressions.
+.SH SEE ALSO
+.BR bcl (1),
+.BR bcl-control (1),
+.BR bcl-variables (1)

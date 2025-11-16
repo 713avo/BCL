@@ -1,0 +1,319 @@
+.TH BCL-ARRAY 1 "November 2025" "BCL 1.5.1" "BCL Associative Array Commands"
+.SH NAME
+bcl-array \- BCL associative array operations
+.SH SYNOPSIS
+.B $array(key)
+.br
+.B SET array(key) value
+.br
+.B ARRAY EXISTS
+.I arrayname
+.br
+.B ARRAY SIZE
+.I arrayname
+.br
+.B ARRAY NAMES
+.I arrayname
+.RI [ pattern ]
+.br
+.B ARRAY GET
+.I arrayname
+.br
+.B ARRAY SET
+.I arrayname list
+.br
+.B ARRAY UNSET
+.I arrayname
+.RI [ key ]
+.SH DESCRIPTION
+BCL provides associative arrays (hash tables) using parenthesis notation. Arrays map string keys to string values. Both keys and values are case-insensitive.
+.SH ARRAY SYNTAX
+.SS Setting Array Elements
+.in +4n
+.EX
+SET config(host) "localhost"
+SET config(port) 8080
+SET config(database) "mydb"
+.EE
+.in
+.SS Getting Array Elements
+.in +4n
+.EX
+PUTS "Host: $config(host)"
+SET p $config(port)
+PUTS "Connecting to $config(host):$p"
+.EE
+.in
+.SS Variable Keys
+.in +4n
+.EX
+SET key "host"
+PUTS $config($key)                    # Same as $config(host)
+.EE
+.in
+.SH COMMANDS
+.SS ARRAY EXISTS
+Tests if array exists.
+.PP
+.in +4n
+.EX
+SET myarray(key) "value"
+IF [ARRAY EXISTS myarray] THEN
+    PUTS "Array exists"
+END
+
+IF ![ARRAY EXISTS notexist] THEN
+    PUTS "Array doesn't exist"
+END
+.EE
+.in
+.SS ARRAY SIZE
+Returns number of elements in array.
+.PP
+.in +4n
+.EX
+SET config(a) 1
+SET config(b) 2
+SET config(c) 3
+SET count [ARRAY SIZE config]         # 3
+.EE
+.in
+.SS ARRAY NAMES
+Returns list of all keys in array. Optional pattern filters keys.
+.PP
+.in +4n
+.EX
+SET person(name) "Alice"
+SET person(age) 30
+SET person(city) "NYC"
+
+SET keys [ARRAY NAMES person]
+# keys = "name age city" (order may vary)
+
+# With glob pattern
+SET n_keys [ARRAY NAMES person "na*"]
+# n_keys = "name"
+.EE
+.in
+.SS ARRAY GET
+Returns flat list of alternating keys and values.
+.PP
+.in +4n
+.EX
+SET data(x) 10
+SET data(y) 20
+SET pairs [ARRAY GET data]
+# pairs = "x 10 y 20"
+.EE
+.in
+.SS ARRAY SET
+Sets array from flat key-value list.
+.PP
+.in +4n
+.EX
+SET pairs [LIST key1 value1 key2 value2]
+ARRAY SET myarray $pairs
+# myarray(key1) = "value1"
+# myarray(key2) = "value2"
+
+# Copy array
+SET pairs [ARRAY GET source]
+ARRAY SET dest $pairs
+.EE
+.in
+.SS ARRAY UNSET
+Deletes array element or entire array.
+.PP
+.in +4n
+.EX
+# Delete specific element
+SET arr(a) 1
+SET arr(b) 2
+ARRAY UNSET arr a                     # Removes arr(a)
+
+# Delete entire array
+ARRAY UNSET arr                       # Removes all elements
+.EE
+.in
+.SH EXAMPLES
+.SS Configuration Storage
+.in +4n
+.EX
+# Store configuration
+SET config(server.host) "localhost"
+SET config(server.port) 8080
+SET config(db.name) "myapp"
+SET config(db.user) "admin"
+
+# Access configuration
+SET dbname $config(db.name)
+PUTS "Database: $dbname"
+
+# List all config keys
+FOREACH key IN [ARRAY NAMES config] DO
+    PUTS "$key = $config($key)"
+END
+.EE
+.in
+.SS Counting Occurrences
+.in +4n
+.EX
+SET text "apple banana apple cherry banana apple"
+SET words [SPLIT $text]
+
+# Count each word
+FOREACH word IN $words DO
+    IF [INFO EXISTS count($word)] THEN
+        INCR count($word)
+    ELSE
+        SET count($word) 1
+    END
+END
+
+# Display counts
+FOREACH word IN [ARRAY NAMES count] DO
+    PUTS "$word: $count($word)"
+END
+.EE
+.in
+.SS User Database
+.in +4n
+.EX
+# Store user data
+PROC addUser WITH userid name email DO
+    SET users($userid.name) $name
+    SET users($userid.email) $email
+END
+
+addUser "u001" "Alice" "alice@example.com"
+addUser "u002" "Bob" "bob@example.com"
+
+# Retrieve user
+SET name $users(u001.name)
+SET email $users(u001.email)
+PUTS "$name <$email>"
+.EE
+.in
+.SS Cache Implementation
+.in +4n
+.EX
+PROC cachedFibonacci WITH n DO
+    # Check cache
+    IF [INFO EXISTS fibcache($n)] THEN
+        RETURN $fibcache($n)
+    END
+
+    # Calculate
+    IF [EXPR $n <= 1] THEN
+        SET result $n
+    ELSE
+        SET f1 [cachedFibonacci [EXPR $n - 1]]
+        SET f2 [cachedFibonacci [EXPR $n - 2]]
+        SET result [EXPR $f1 + $f2]
+    END
+
+    # Cache result
+    SET fibcache($n) $result
+    RETURN $result
+END
+
+SET fib20 [cachedFibonacci 20]
+.EE
+.in
+.SS Grouping Data
+.in +4n
+.EX
+# Group items by category
+SET items [LIST "fruit:apple" "veg:carrot" "fruit:banana" "veg:broccoli"]
+
+FOREACH item IN $items DO
+    SET parts [SPLIT $item ":"]
+    SET category [LINDEX $parts 0]
+    SET name [LINDEX $parts 1]
+
+    # Append to category list
+    IF [INFO EXISTS groups($category)] THEN
+        APPEND groups($category) " " $name
+    ELSE
+        SET groups($category) $name
+    END
+END
+
+# Display groups
+FOREACH cat IN [ARRAY NAMES groups] DO
+    PUTS "$cat: $groups($cat)"
+END
+.EE
+.in
+.SS Command-Line Options
+.in +4n
+.EX
+# Parse command-line options into array
+SET args [ARGV]
+SET i 0
+
+WHILE [EXPR $i < [LLENGTH $args]] DO
+    SET arg [LINDEX $args $i]
+
+    IF [STRING MATCH "--*" $arg] THEN
+        SET key [STRING RANGE $arg 2 end]
+        INCR i
+        IF [EXPR $i < [LLENGTH $args]] THEN
+            SET value [LINDEX $args $i]
+            SET options($key) $value
+        END
+    END
+
+    INCR i
+END
+
+# Use options
+IF [INFO EXISTS options(output)] THEN
+    PUTS "Output file: $options(output)"
+END
+.EE
+.in
+.SS Array Iteration Patterns
+.in +4n
+.EX
+# Iterate over all key-value pairs
+FOREACH key IN [ARRAY NAMES data] DO
+    SET value $data($key)
+    PUTS "$key -> $value"
+END
+
+# Filter by key pattern
+FOREACH key IN [ARRAY NAMES config "db.*"] DO
+    PUTS "Database config: $key = $config($key)"
+END
+
+# Convert array to list of formatted strings
+SET result [LIST]
+FOREACH key IN [ARRAY NAMES items] DO
+    SET formatted "$key=$items($key)"
+    LAPPEND result $formatted
+END
+.EE
+.in
+.SH NOTES
+.TP
+.B Key Case-Insensitivity
+Array keys are case-insensitive:
+.B arr(key), arr(KEY), arr(Key)
+all refer to the same element.
+.TP
+.B Unordered
+Array elements have no defined order. Don't rely on ARRAY NAMES order.
+.TP
+.B String Keys and Values
+Both keys and values are stored as strings.
+.TP
+.B Key Existence
+Check with
+.B "INFO EXISTS arrayname(key)"
+before accessing.
+.SH SEE ALSO
+.BR bcl (1),
+.BR bcl-list (1),
+.BR bcl-variables (1),
+.BR bcl-info (1)

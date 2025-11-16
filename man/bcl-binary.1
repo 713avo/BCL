@@ -1,0 +1,366 @@
+.TH BCL-BINARY 1 "November 2025" "BCL 1.5.1" "BCL Binary Data Commands"
+.SH NAME
+bcl-binary \- BCL binary data packing and unpacking
+.SH SYNOPSIS
+.B BINARY FORMAT
+.I formatstring
+.RI [ value... ]
+.br
+.B BINARY SCAN
+.I data formatstring
+.RI [ varname... ]
+.SH DESCRIPTION
+The BINARY command provides low-level binary data manipulation for packing values into binary format and unpacking binary data into variables. Useful for file formats, network protocols, and binary file I/O.
+.SH FORMAT CODES
+.SS Integer Types
+.TP
+.B c
+Signed 8-bit integer (-128 to 127)
+.TP
+.B C
+Unsigned 8-bit integer (0 to 255)
+.TP
+.B s
+Signed 16-bit integer (little-endian)
+.TP
+.B S
+Unsigned 16-bit integer (little-endian)
+.TP
+.B i
+Signed 32-bit integer (little-endian)
+.TP
+.B I
+Unsigned 32-bit integer (little-endian)
+.SS Floating-Point Types
+.TP
+.B f
+32-bit float (IEEE 754 single precision)
+.TP
+.B d
+64-bit double (IEEE 754 double precision)
+.SS String Types
+.TP
+.B a
+ASCII string (null-terminated or space-padded)
+.TP
+.B A
+ASCII string (null-padded)
+.SS Hex Types
+.TP
+.B H
+Hex string, high nibble first
+.TP
+.B h
+Hex string, low nibble first
+.SS Special
+.TP
+.B x
+Null byte (padding)
+.TP
+.B X
+Back up one byte
+.TP
+.B @
+Absolute position
+.SH COMMANDS
+.SS BINARY FORMAT
+Packs values into binary data.
+.PP
+.B Syntax:
+.in +4n
+.EX
+BINARY FORMAT formatstring value1 value2 ...
+.EE
+.in
+.PP
+.B Examples:
+.in +4n
+.EX
+# Pack three bytes
+SET data [BINARY FORMAT "ccc" 65 66 67]       # ABC
+
+# Pack 32-bit integer
+SET data [BINARY FORMAT "I" 12345]
+
+# Pack hex string
+SET data [BINARY FORMAT "H8" "deadbeef"]
+
+# Pack mixed data
+SET data [BINARY FORMAT "cisH4" 65 12345 "test" "abcd"]
+
+# Pack multiple integers
+SET data [BINARY FORMAT "III" 100 200 300]
+.EE
+.in
+.SS BINARY SCAN
+Unpacks binary data into variables.
+.PP
+.B Syntax:
+.in +4n
+.EX
+BINARY SCAN data formatstring var1 var2 ...
+.EE
+.in
+.PP
+.B Examples:
+.in +4n
+.EX
+# Unpack bytes
+SET data [BINARY FORMAT "ccc" 65 66 67]
+BINARY SCAN $data "ccc" byte1 byte2 byte3
+PUTS "$byte1 $byte2 $byte3"                   # 65 66 67
+
+# Unpack integer
+SET data [BINARY FORMAT "I" 12345]
+BINARY SCAN $data "I" value
+PUTS $value                                   # 12345
+
+# Unpack hex
+SET data [BINARY FORMAT "H8" "deadbeef"]
+BINARY SCAN $data "H8" hex
+PUTS $hex                                     # deadbeef
+
+# Unpack mixed data
+SET data [BINARY FORMAT "cisH4" 65 12345 "test" "abcd"]
+BINARY SCAN $data "cisH4" c i s h
+PUTS "c=$c, i=$i, s=$s, h=$h"
+.EE
+.in
+.SH EXAMPLES
+.SS Read Binary File Header
+.in +4n
+.EX
+# Read 16-byte header
+SET fh [OPEN "data.bin" "r"]
+SET header [READ $fh 16]
+CLOSE $fh
+
+# Parse header (magic number + version + count)
+BINARY SCAN $header "Iii" magic version count
+PUTS "Magic: $magic"
+PUTS "Version: $version"
+PUTS "Count: $count"
+.EE
+.in
+.SS Write Binary File
+.in +4n
+.EX
+# Pack file header
+SET magic 0x12345678
+SET version 1
+SET count 100
+
+SET header [BINARY FORMAT "Iii" $magic $version $count]
+
+# Write to file
+SET fh [OPEN "output.bin" "w"]
+PUTS -NONEWLINE $fh $header
+CLOSE $fh
+.EE
+.in
+.SS Network Protocol
+.in +4n
+.EX
+# Create network packet (simplified)
+PROC createPacket WITH packetType dataLength data DO
+    # Header: type(1 byte) + length(2 bytes)
+    SET header [BINARY FORMAT "CS" $packetType $dataLength]
+
+    # Combine header and data
+    APPEND header $data
+    RETURN $header
+END
+
+# Parse network packet
+PROC parsePacket WITH packet DO
+    # Extract header
+    BINARY SCAN $packet "CS" type length
+    PUTS "Type: $type, Length: $length"
+
+    # Extract data (after 3-byte header)
+    SET data [STRING RANGE $packet 3 end]
+    RETURN $data
+END
+
+# Usage
+SET packet [createPacket 1 5 "Hello"]
+SET data [parsePacket $packet]
+.EE
+.in
+.SS Checksum Calculation
+.in +4n
+.EX
+PROC calculateChecksum WITH data DO
+    SET sum 0
+    SET len [STRING LENGTH $data]
+
+    # Sum all bytes
+    FOR 0 TO [EXPR $len - 1] DO
+        SET byte_str [STRING INDEX $data $__FOR]
+        BINARY SCAN $byte_str "C" byte
+        INCR sum $byte
+    END
+
+    # Return low byte
+    SET checksum [EXPR $sum % 256]
+    RETURN $checksum
+END
+
+SET data "Hello, World!"
+SET checksum [calculateChecksum $data]
+PUTS "Checksum: $checksum"
+.EE
+.in
+.SS Color Encoding (RGB)
+.in +4n
+.EX
+# Pack RGB color as 3 bytes
+PROC packColor WITH r g b DO
+    RETURN [BINARY FORMAT "CCC" $r $g $b]
+END
+
+# Unpack color
+PROC unpackColor WITH color DO
+    BINARY SCAN $color "CCC" r g b
+    PUTS "R:$r G:$g B:$b"
+END
+
+SET red [packColor 255 0 0]
+unpackColor $red                              # R:255 G:0 B:0
+.EE
+.in
+.SS Struct-Like Data
+.in +4n
+.EX
+# Define "struct" for person record
+# struct Person {
+#     uint8_t  age;
+#     uint32_t id;
+#     char     name[10];
+# }
+
+PROC packPerson WITH age id name DO
+    # Ensure name is exactly 10 chars (pad or truncate)
+    SET padded $name
+    WHILE [EXPR [STRING LENGTH $padded] < 10] DO
+        APPEND padded " "
+    END
+    SET padded [STRING RANGE $padded 0 9]
+
+    RETURN [BINARY FORMAT "CIa10" $age $id $padded]
+END
+
+PROC unpackPerson WITH data DO
+    BINARY SCAN $data "CIa10" age id name
+    SET name [STRING TRIM $name]
+    PUTS "Age: $age, ID: $id, Name: $name"
+END
+
+SET person [packPerson 30 12345 "Alice"]
+unpackPerson $person
+.EE
+.in
+.SS File Format Writer
+.in +4n
+.EX
+# Write custom file format
+SET fh [OPEN "custom.dat" "w"]
+
+# File header
+SET magic 0x42434C00                          # BCL\\0
+SET version 1
+SET num_records 3
+SET header [BINARY FORMAT "III" $magic $version $num_records]
+PUTS -NONEWLINE $fh $header
+
+# Records
+FOR 1 TO $num_records DO
+    SET record [BINARY FORMAT "Ifs" $__FOR 3.14 "test"]
+    PUTS -NONEWLINE $fh $record
+END
+
+CLOSE $fh
+PUTS "File written"
+.EE
+.in
+.SS File Format Reader
+.in +4n
+.EX
+# Read custom file format
+SET fh [OPEN "custom.dat" "r"]
+
+# Read header
+SET header [READ $fh 12]
+BINARY SCAN $header "III" magic version num_records
+
+IF [EXPR $magic != 0x42434C00] THEN
+    PUTS "Invalid file format"
+    CLOSE $fh
+    EXIT 1
+END
+
+PUTS "Version: $version, Records: $num_records"
+
+# Read records
+FOR 1 TO $num_records DO
+    SET record [READ $fh 10]                  # Assuming 10 bytes per record
+    BINARY SCAN $record "Ifs" id fval str
+    PUTS "Record $__FOR: ID=$id, Float=$fval, String=$str"
+END
+
+CLOSE $fh
+.EE
+.in
+.SS Byte Swapping (Endianness)
+.in +4n
+.EX
+# Convert between little-endian and big-endian
+PROC swapEndian32 WITH value DO
+    SET packed [BINARY FORMAT "I" $value]
+
+    # Extract bytes
+    BINARY SCAN $packed "CCCC" b1 b2 b3 b4
+
+    # Reverse and repack
+    SET swapped [BINARY FORMAT "CCCC" $b4 $b3 $b2 $b1]
+    BINARY SCAN $swapped "I" result
+
+    RETURN $result
+END
+
+SET little_endian 0x12345678
+SET big_endian [swapEndian32 $little_endian]
+PUTS "Swapped: $big_endian"
+.EE
+.in
+.SH COUNT SPECIFIERS
+Some format codes accept count:
+.PP
+.in +4n
+.EX
+"c3"      # Three signed bytes
+"I5"      # Five 32-bit integers
+"a10"     # 10-character string
+.EE
+.in
+.SH BYTE ORDER
+.TP
+.B Little-Endian
+Default for multi-byte integers (s, S, i, I)
+.TP
+.B Big-Endian
+Use byte swapping if needed
+.SH NOTES
+.TP
+.B Alignment
+No automatic padding; manual alignment with 'x' if needed
+.TP
+.B String Termination
+ASCII strings not automatically null-terminated unless specified
+.TP
+.B Float Precision
+Platform-dependent; typically IEEE 754
+.SH SEE ALSO
+.BR bcl (1),
+.BR bcl-file (1),
+.BR bcl-string (1)

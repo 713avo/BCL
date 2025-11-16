@@ -1,0 +1,380 @@
+.TH BCL-FILEOPS 1 "November 2025" "BCL 1.5.1" "BCL File Operations"
+.SH NAME
+bcl-fileops \- BCL file system operations
+.SH SYNOPSIS
+.B FILE EXISTS
+.I filename
+.br
+.B FILE SIZE
+.I filename
+.br
+.B FILE TYPE
+.I filename
+.br
+.B FILE DELETE
+.I filename
+.RI [ filename... ]
+.br
+.B FILE RENAME
+.I oldname newname
+.br
+.B FILE MTIME
+.I filename
+.br
+.B PWD
+.br
+.B GLOB
+.I pattern
+.SH DESCRIPTION
+BCL provides file system operations for testing, querying, and manipulating files and directories.
+.SH COMMANDS
+.SS FILE EXISTS
+Tests if file or directory exists. Returns 1 if exists, 0 otherwise.
+.PP
+.in +4n
+.EX
+IF [FILE EXISTS "/path/to/file.txt"] THEN
+    PUTS "File exists"
+ELSE
+    PUTS "File not found"
+END
+
+# Check before opening
+IF [FILE EXISTS $filename] THEN
+    SET fh [OPEN $filename "r"]
+    # ...
+    CLOSE $fh
+END
+.EE
+.in
+.SS FILE SIZE
+Returns file size in bytes.
+.PP
+.in +4n
+.EX
+SET bytes [FILE SIZE "data.txt"]
+PUTS "File size: $bytes bytes"
+
+SET kb [EXPR $bytes / 1024.0]
+PUTS "File size: $kb KB"
+.EE
+.in
+.SS FILE TYPE
+Returns file type: "file", "directory", "link", or "unknown".
+.PP
+.in +4n
+.EX
+SET type [FILE TYPE "myfile.txt"]
+IF [STRING EQUAL $type "file"] THEN
+    PUTS "It's a regular file"
+END
+
+SET type [FILE TYPE "/usr/bin"]
+IF [STRING EQUAL $type "directory"] THEN
+    PUTS "It's a directory"
+END
+.EE
+.in
+.PP
+.B Note:
+FILE TYPE may fail with SET assignment in command substitution. Use PUTS instead:
+.in +4n
+.EX
+# Workaround for known bug
+PUTS [FILE TYPE $filename]
+.EE
+.in
+.SS FILE DELETE
+Deletes one or more files.
+.PP
+.in +4n
+.EX
+FILE DELETE "temp.txt"
+FILE DELETE "file1.txt" "file2.txt" "file3.txt"
+
+# Delete if exists
+IF [FILE EXISTS "temp.log"] THEN
+    FILE DELETE "temp.log"
+END
+.EE
+.in
+.SS FILE RENAME
+Renames or moves a file.
+.PP
+.in +4n
+.EX
+FILE RENAME "oldname.txt" "newname.txt"
+FILE RENAME "file.txt" "/backup/file.txt"
+
+# Move to different directory
+FILE RENAME "data.txt" "/archive/data.txt"
+.EE
+.in
+.SS FILE MTIME
+Returns modification time as Unix timestamp (seconds since epoch).
+.PP
+.in +4n
+.EX
+SET timestamp [FILE MTIME "file.txt"]
+SET formatted [CLOCK FORMAT $timestamp "%Y-%m-%d %H:%M:%S"]
+PUTS "Last modified: $formatted"
+
+# Check if file is recent
+SET now [CLOCK SECONDS]
+SET age [EXPR $now - $timestamp]
+IF [EXPR $age < 3600] THEN
+    PUTS "Modified within last hour"
+END
+.EE
+.in
+.SS PWD
+Returns current working directory.
+.PP
+.in +4n
+.EX
+SET cwd [PWD]
+PUTS "Current directory: $cwd"
+.EE
+.in
+.SS GLOB
+Finds files matching glob pattern. Returns list of matching filenames.
+.PP
+Patterns:
+.B *
+(any chars),
+.B ?
+(one char),
+.B [abc]
+(char class)
+.PP
+.in +4n
+.EX
+# Find all .txt files
+SET txtfiles [GLOB "*.txt"]
+FOREACH file IN $txtfiles DO
+    PUTS "Found: $file"
+END
+
+# Find all .c and .h files
+SET sources [GLOB "*.c"]
+SET headers [GLOB "*.h"]
+
+# Check if pattern matches any files
+SET logs [GLOB "*.log"]
+IF [EXPR [LLENGTH $logs] > 0] THEN
+    PUTS "Found [LLENGTH $logs] log files"
+ELSE
+    PUTS "No log files found"
+END
+.EE
+.in
+.SH EXAMPLES
+.SS Safe File Operations
+.in +4n
+.EX
+PROC safeDelete WITH filename DO
+    IF ![FILE EXISTS $filename] THEN
+        PUTS "Warning: File doesn't exist: $filename"
+        RETURN 0
+    END
+
+    FILE DELETE $filename
+    PUTS "Deleted: $filename"
+    RETURN 1
+END
+
+safeDelete "temp.txt"
+.EE
+.in
+.SS Process All Files in Directory
+.in +4n
+.EX
+SET files [GLOB "*.dat"]
+
+FOREACH file IN $files DO
+    PUTS "Processing $file..."
+
+    SET size [FILE SIZE $file]
+    PUTS "  Size: $size bytes"
+
+    SET mtime [FILE MTIME $file]
+    SET date [CLOCK FORMAT $mtime "%Y-%m-%d"]
+    PUTS "  Modified: $date"
+
+    # Process file content
+    # ...
+END
+.EE
+.in
+.SS Backup Old Files
+.in +4n
+.EX
+SET now [CLOCK SECONDS]
+SET cutoff [EXPR $now - (30 * 86400)]  # 30 days ago
+
+SET files [GLOB "*.log"]
+FOREACH file IN $files DO
+    SET mtime [FILE MTIME $file]
+
+    IF [EXPR $mtime < $cutoff] THEN
+        SET backup "$file.old"
+        FILE RENAME $file $backup
+        PUTS "Archived: $file -> $backup"
+    END
+END
+.EE
+.in
+.SS Delete Temporary Files
+.in +4n
+.EX
+SET temps [GLOB "*.tmp"]
+SET count 0
+
+FOREACH file IN $temps DO
+    FILE DELETE $file
+    INCR count
+END
+
+PUTS "Deleted $count temporary files"
+.EE
+.in
+.SS Find Largest File
+.in +4n
+.EX
+SET files [GLOB "*"]
+SET largest ""
+SET maxsize 0
+
+FOREACH file IN $files DO
+    SET type [FILE TYPE $file]
+    IF [STRING EQUAL $type "file"] THEN
+        SET size [FILE SIZE $file]
+        IF [EXPR $size > $maxsize] THEN
+            SET maxsize $size
+            SET largest $file
+        END
+    END
+END
+
+PUTS "Largest file: $largest ($maxsize bytes)"
+.EE
+.in
+.SS Disk Usage Summary
+.in +4n
+.EX
+SET files [GLOB "*"]
+SET total 0
+SET filecount 0
+
+FOREACH file IN $files DO
+    SET type [FILE TYPE $file]
+    IF [STRING EQUAL $type "file"] THEN
+        SET size [FILE SIZE $file]
+        INCR total $size
+        INCR filecount
+    END
+END
+
+SET mb [EXPR $total / 1048576.0]
+PUTS "Total: $filecount files, $mb MB"
+.EE
+.in
+.SS File Extension Filtering
+.in +4n
+.EX
+PROC getFilesByExtension WITH ext DO
+    SET pattern "*.$ext"
+    SET files [GLOB $pattern]
+    RETURN $files
+END
+
+SET images [getFilesByExtension "jpg"]
+SET docs [getFilesByExtension "pdf"]
+
+PUTS "Found [LLENGTH $images] images"
+PUTS "Found [LLENGTH $docs] documents"
+.EE
+.in
+.SS Rename Files in Batch
+.in +4n
+.EX
+# Add prefix to all .txt files
+SET files [GLOB "*.txt"]
+SET count 0
+
+FOREACH file IN $files DO
+    SET newname "backup_$file"
+    FILE RENAME $file $newname
+    INCR count
+END
+
+PUTS "Renamed $count files"
+.EE
+.in
+.SS Check File Age
+.in +4n
+.EX
+PROC isFileOlderThan WITH filename days DO
+    IF ![FILE EXISTS $filename] THEN
+        RETURN 0
+    END
+
+    SET mtime [FILE MTIME $filename]
+    SET now [CLOCK SECONDS]
+    SET age [EXPR ($now - $mtime) / 86400]
+
+    RETURN [EXPR $age > $days]
+END
+
+IF [isFileOlderThan "cache.dat" 7] THEN
+    PUTS "Cache is stale, refreshing..."
+    FILE DELETE "cache.dat"
+END
+.EE
+.in
+.SH GLOB PATTERNS
+.TP
+.B *
+Matches zero or more characters
+.TP
+.B ?
+Matches exactly one character
+.TP
+.B [abc]
+Matches one character from set a, b, or c
+.TP
+.B [a-z]
+Matches one character in range a through z
+.TP
+.B [^abc]
+Matches one character NOT in set
+.PP
+.B Examples:
+.in +4n
+.EX
+GLOB "*.txt"              # All .txt files
+GLOB "test_*.bcl"         # Files starting with test_
+GLOB "file?.dat"          # file1.dat, fileA.dat, etc.
+GLOB "[abc]*.txt"         # a*.txt, b*.txt, c*.txt
+.EE
+.in
+.SH NOTES
+.TP
+.B FILE COPY Not Implemented
+Use combination of OPEN, READ, WRITE to copy files.
+.TP
+.B Relative vs Absolute Paths
+FILE operations accept both relative and absolute paths.
+.TP
+.B Symbolic Links
+FILE TYPE returns "link" for symbolic links.
+.TP
+.B Directory Operations
+Limited directory operations; use GLOB for directory listings.
+.TP
+.B Known Issue
+FILE TYPE may fail with SET assignment; use workaround shown above.
+.SH SEE ALSO
+.BR bcl (1),
+.BR bcl-file (1),
+.BR glob (7)

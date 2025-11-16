@@ -1,0 +1,327 @@
+.TH BCL 1 "November 2025" "BCL 1.5.1" "BCL Interpreter Manual"
+.SH NAME
+bcl \- Basic Command Language interpreter
+.SH SYNOPSIS
+.B bcl
+.RI [ script.bcl ]
+.RI [ arguments... ]
+.br
+.B bcl
+.SH DESCRIPTION
+.B BCL
+(Basic Command Language) is a lightweight scripting language interpreter inspired by Tcl 8.x with a more readable BASIC-like syntax. It provides a complete scripting environment with 62 built-in commands, zero external dependencies, and case-insensitive command execution.
+.PP
+BCL follows the "everything is a string" philosophy, featuring dynamic typing, variable substitution with
+.BR $ ,
+and command substitution with
+.BR [] .
+All control structures use consistent
+.B END
+keywords for block termination.
+.SH USAGE
+.SS Interactive Mode (REPL)
+When invoked without arguments,
+.B bcl
+starts an interactive read-eval-print loop:
+.PP
+.in +4n
+.EX
+$ bcl
+BCL Interactive Shell
+Type 'EXIT' to quit
+bcl> PUTS "Hello, World!"
+Hello, World!
+bcl> SET x 42
+bcl> PUTS $x
+42
+bcl> EXIT
+.EE
+.in
+.PP
+The REPL includes command history (use arrow keys) and multi-line editing.
+.SS Script Execution
+To execute a BCL script file:
+.PP
+.in +4n
+.EX
+$ bcl script.bcl arg1 arg2 arg3
+.EE
+.in
+.PP
+Script files should start with a shebang line for direct execution:
+.PP
+.in +4n
+.EX
+#!/usr/bin/env bcl
+PUTS "This is a BCL script"
+.EE
+.in
+.PP
+Make the script executable:
+.PP
+.in +4n
+.EX
+$ chmod +x script.bcl
+$ ./script.bcl
+.EE
+.in
+.SH LANGUAGE FEATURES
+.SS Variable Substitution
+Variables are referenced using
+.B $varname
+or
+.BR ${varname} :
+.PP
+.in +4n
+.EX
+SET name "Alice"
+PUTS "Hello, $name"
+PUTS "Hello, ${name}!"
+.EE
+.in
+.SS Command Substitution
+Commands enclosed in
+.B []
+are executed and their result is substituted:
+.PP
+.in +4n
+.EX
+SET length [STRING LENGTH "Hello"]
+SET sum [EXPR 5 + 3]
+.EE
+.in
+.SS Comments
+Comments start with
+.B #
+and must begin at the start of a line:
+.PP
+.in +4n
+.EX
+# This is a comment
+SET x 10    # This is NOT a comment (causes error)
+.EE
+.in
+.SS Case Insensitivity
+All commands and variable names are case-insensitive:
+.PP
+.in +4n
+.EX
+PUTS "Hello"
+puts "Hello"
+Puts "Hello"     # All equivalent
+SET myvar 10
+SET MYVAR 20     # Same variable
+.EE
+.in
+.SH COMMAND CATEGORIES
+.TP
+.B Variables
+SET, UNSET, INCR, APPEND, GLOBAL
+.br
+See
+.BR bcl-variables (1)
+.TP
+.B Expressions
+EXPR with 30+ math functions
+.br
+See
+.BR bcl-expr (1)
+.TP
+.B Control Flow
+IF, WHILE, FOR, FOREACH, SWITCH, BREAK, CONTINUE, RETURN, EXIT
+.br
+See
+.BR bcl-control (1)
+.TP
+.B Procedures
+PROC
+.br
+See
+.BR bcl-proc (1)
+.TP
+.B Lists
+LIST, SPLIT, JOIN, LINDEX, LRANGE, LLENGTH, LAPPEND, LINSERT, LREPLACE, CONCAT, LSORT, LSEARCH
+.br
+See
+.BR bcl-list (1)
+.TP
+.B Strings
+STRING with 20+ subcommands
+.br
+See
+.BR bcl-string (1)
+.TP
+.B Arrays
+ARRAY with associative array operations
+.br
+See
+.BR bcl-array (1)
+.TP
+.B File I/O
+OPEN, CLOSE, READ, GETS, PUTS, TELL, SEEK, EOF, FLUSH
+.br
+See
+.BR bcl-file (1)
+.TP
+.B File Operations
+FILE, PWD, GLOB
+.br
+See
+.BR bcl-fileops (1)
+.TP
+.B Regular Expressions
+REGEXP, REGSUB
+.br
+See
+.BR bcl-regexp (1)
+.TP
+.B Time and Date
+CLOCK with multiple subcommands
+.br
+See
+.BR bcl-clock (1)
+.TP
+.B System
+EXEC, ENV, ARGV, EVAL, SOURCE, AFTER
+.br
+See
+.BR bcl-system (1)
+.TP
+.B Binary Data
+BINARY FORMAT, BINARY SCAN
+.br
+See
+.BR bcl-binary (1)
+.TP
+.B Introspection
+INFO with multiple subcommands
+.br
+See
+.BR bcl-info (1)
+.TP
+.B Formatting
+FORMAT, SCAN
+.br
+See
+.BR bcl-format (1)
+.SH EXAMPLES
+.SS Hello World
+.in +4n
+.EX
+PUTS "Hello, World!"
+.EE
+.in
+.SS Variables and Expressions
+.in +4n
+.EX
+SET a 10
+SET b 20
+SET sum [EXPR $a + $b]
+PUTS "Sum: $sum"
+.EE
+.in
+.SS Control Flow
+.in +4n
+.EX
+SET counter 1
+WHILE [EXPR $counter <= 5] DO
+    PUTS "Count: $counter"
+    INCR counter
+END
+.EE
+.in
+.SS Procedures
+.in +4n
+.EX
+PROC factorial WITH n DO
+    IF [EXPR $n <= 1] THEN
+        RETURN 1
+    ELSE
+        SET prev [factorial [EXPR $n - 1]]
+        RETURN [EXPR $n * $prev]
+    END
+END
+
+SET result [factorial 5]
+PUTS "5! = $result"
+.EE
+.in
+.SS File Processing
+.in +4n
+.EX
+SET fh [OPEN "input.txt" "r"]
+WHILE ![EOF $fh] DO
+    SET line [GETS $fh]
+    PUTS "Line: $line"
+END
+CLOSE $fh
+.EE
+.in
+.SH FILES
+.TP
+.I ~/.bcl_history
+Command history file for interactive REPL sessions
+.SH EXIT STATUS
+.TP
+.B 0
+Successful execution
+.TP
+.B 1
+General error (script error, file not found, etc.)
+.TP
+.B N
+Custom exit code specified by
+.B EXIT
+command
+.SH ENVIRONMENT
+.TP
+.B PATH
+Used to locate the bcl interpreter when using shebang
+.SH NOTES
+.SS Known Limitations
+.IP \(bu 2
+STRING LENGTH may segfault in interactive REPL (works fine in scripts)
+.IP \(bu 2
+ARGV and FILE TYPE commands fail when used with SET assignment in command substitution
+.IP \(bu 2
+Negative list indices are not supported
+.IP \(bu 2
+FILE COPY command is not implemented
+.IP \(bu 2
+No exception handling (try/catch) - errors terminate script
+.SS Performance
+.IP \(bu 2
+~12,700 lines of C99 code
+.IP \(bu 2
+Binary size: ~180 KB optimized
+.IP \(bu 2
+Zero external dependencies
+.IP \(bu 2
+Instant startup time
+.SH BUGS
+Report bugs to the project issue tracker.
+.SH AUTHOR
+Written by Rafa, co-authored by Claude (Anthropic).
+.SH COPYRIGHT
+License information pending.
+.SH SEE ALSO
+.BR bcl-variables (1),
+.BR bcl-expr (1),
+.BR bcl-control (1),
+.BR bcl-proc (1),
+.BR bcl-list (1),
+.BR bcl-string (1),
+.BR bcl-array (1),
+.BR bcl-file (1),
+.BR bcl-fileops (1),
+.BR bcl-regexp (1),
+.BR bcl-clock (1),
+.BR bcl-system (1),
+.BR bcl-binary (1),
+.BR bcl-info (1),
+.BR bcl-format (1)
+.PP
+Full documentation available in
+.I docs/manual-eng/
+and
+.I docs/manual-es/

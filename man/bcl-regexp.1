@@ -1,0 +1,342 @@
+.TH BCL-REGEXP 1 "November 2025" "BCL 1.5.1" "BCL Regular Expression Commands"
+.SH NAME
+bcl-regexp \- BCL regular expression pattern matching and substitution
+.SH SYNOPSIS
+.B REGEXP
+.RB [ \-NOCASE ]
+.I pattern string
+.RI [ matchVar ]
+.RI [ subMatch... ]
+.br
+.B REGSUB
+.RB [ \-NOCASE ]
+.RB [ \-ALL ]
+.I pattern string replacement
+.SH DESCRIPTION
+BCL provides built-in regular expression support for pattern matching and text substitution. The regex engine is standalone (not PCRE) with limited but commonly-used features.
+.SH COMMANDS
+.SS REGEXP
+Tests if pattern matches string. Optionally captures matched text and subgroups.
+.PP
+.B Syntax:
+.in +4n
+.EX
+REGEXP pattern string                     # Test match
+REGEXP pattern string matchVar            # Capture full match
+REGEXP pattern string full sub1 sub2      # Capture subgroups
+REGEXP -NOCASE pattern string             # Case-insensitive
+.EE
+.in
+.PP
+Returns 1 if match, 0 if no match.
+.PP
+.B Examples:
+.in +4n
+.EX
+# Simple match test
+IF [REGEXP "hello" "hello world"] THEN
+    PUTS "Match found"
+END
+
+# Capture match
+REGEXP "([0-9]+)" "Age: 25" whole number
+# whole = "25", number = "25"
+
+# Multiple captures
+REGEXP "(\\d+)-(\\d+)-(\\d+)" "2025-11-16" full year month day
+# full = "2025-11-16", year = "2025", month = "11", day = "16"
+
+# Case-insensitive
+IF [REGEXP -NOCASE "hello" "HELLO WORLD"] THEN
+    PUTS "Match (case-insensitive)"
+END
+.EE
+.in
+.SS REGSUB
+Substitutes pattern matches with replacement text.
+.PP
+.B Syntax:
+.in +4n
+.EX
+REGSUB pattern string replacement        # Replace first
+REGSUB -ALL pattern string replacement   # Replace all
+REGSUB -NOCASE pattern string replacement # Case-insensitive
+.EE
+.in
+.PP
+Returns modified string.
+.PP
+.B Examples:
+.in +4n
+.EX
+# Replace first occurrence
+SET text "Hello World"
+SET result [REGSUB "World" $text "BCL"]
+# result = "Hello BCL"
+
+# Replace all occurrences
+SET text "aaa bbb aaa"
+SET result [REGSUB -ALL "aaa" $text "xxx"]
+# result = "xxx bbb xxx"
+
+# Case-insensitive
+SET text "Hello WORLD"
+SET result [REGSUB -NOCASE "world" $text "BCL"]
+# result = "Hello BCL"
+
+# Using capture groups in replacement
+SET text "2025-11-16"
+SET result [REGSUB "(\\d+)-(\\d+)-(\\d+)" $text "\\3/\\2/\\1"]
+# result = "16/11/2025"
+.EE
+.in
+.SH PATTERN SYNTAX
+.SS Metacharacters
+.TP
+.B .
+Matches any single character
+.TP
+.B ^
+Matches start of string
+.TP
+.B $
+Matches end of string
+.TP
+.B *
+Matches zero or more of previous
+.TP
+.B +
+Matches one or more of previous
+.TP
+.B ?
+Matches zero or one of previous
+.SS Character Classes
+.TP
+.B [abc]
+Matches one character from set (a, b, or c)
+.TP
+.B [^abc]
+Matches one character NOT in set
+.TP
+.B [a-z]
+Matches one character in range
+.TP
+.B \\d
+Matches digit [0-9]
+.TP
+.B \\D
+Matches non-digit
+.TP
+.B \\w
+Matches word character [a-zA-Z0-9_]
+.TP
+.B \\W
+Matches non-word character
+.TP
+.B \\s
+Matches whitespace [ \\t\\n\\r]
+.TP
+.B \\S
+Matches non-whitespace
+.SS Grouping
+.TP
+.B (...)
+Capture group (numbered \\1, \\2, etc.)
+.SH EXAMPLES
+.SS Validate Input
+.in +4n
+.EX
+# Check if all digits
+PROC isNumeric WITH str DO
+    IF [REGEXP "^\\d+$" $str] THEN
+        RETURN 1
+    ELSE
+        RETURN 0
+    END
+END
+
+IF [isNumeric "12345"] THEN
+    PUTS "Valid number"
+END
+
+# Validate email (simplified)
+PROC validateEmail WITH email DO
+    RETURN [REGEXP "^\\w+@\\w+\\.\\w+$" $email]
+END
+.EE
+.in
+.SS Extract Data
+.in +4n
+.EX
+SET log "ERROR [2025-11-16 10:30:45] Connection failed"
+
+# Extract log level
+IF [REGEXP "^(\\w+)" $log full level] THEN
+    PUTS "Level: $level"               # ERROR
+END
+
+# Extract timestamp
+IF [REGEXP "\\[(.*?)\\]" $log full timestamp] THEN
+    PUTS "Time: $timestamp"            # 2025-11-16 10:30:45
+END
+.EE
+.in
+.SS Parse Structured Data
+.in +4n
+.EX
+SET record "ID:12345,Name:Alice,Age:30"
+
+# Extract fields
+REGEXP "ID:(\\d+)" $record full id
+REGEXP "Name:(\\w+)" $record full name
+REGEXP "Age:(\\d+)" $record full age
+
+PUTS "ID=$id, Name=$name, Age=$age"
+.EE
+.in
+.SS Text Cleaning
+.in +4n
+.EX
+# Remove multiple spaces
+SET text "Hello    World"
+SET clean [REGSUB -ALL "\\s+" $text " "]
+# clean = "Hello World"
+
+# Remove non-alphanumeric
+SET text "Hello, World! 123"
+SET clean [REGSUB -ALL "[^a-zA-Z0-9 ]" $text ""]
+# clean = "Hello World 123"
+.EE
+.in
+.SS Format Conversion
+.in +4n
+.EX
+# Convert date format YYYY-MM-DD to DD/MM/YYYY
+PROC convertDate WITH date DO
+    SET result [REGSUB "(\\d+)-(\\d+)-(\\d+)" $date "\\3/\\2/\\1"]
+    RETURN $result
+END
+
+SET date [convertDate "2025-11-16"]
+PUTS $date                              # 16/11/2025
+.EE
+.in
+.SS Find and Extract URLs
+.in +4n
+.EX
+SET text "Visit http://example.com for more info"
+
+IF [REGEXP "(https?://[^\\s]+)" $text full url] THEN
+    PUTS "Found URL: $url"
+END
+.EE
+.in
+.SS Replace Variable References
+.in +4n
+.EX
+# Replace ${var} with value
+SET template "Hello, ${name}! You are ${age} years old."
+
+SET result $template
+SET result [REGSUB "\\$\\{name\\}" $result "Alice"]
+SET result [REGSUB "\\$\\{age\\}" $result "30"]
+
+PUTS $result
+# Output: Hello, Alice! You are 30 years old.
+.EE
+.in
+.SS Strip HTML Tags
+.in +4n
+.EX
+SET html "<p>Hello <b>World</b>!</p>"
+SET text [REGSUB -ALL "<[^>]+>" $html ""]
+PUTS $text                              # Hello World!
+.EE
+.in
+.SS Word Boundary Matching
+.in +4n
+.EX
+# Match whole word only
+SET text "Thecat and the catalog"
+
+# Match "cat" as whole word (simplified)
+IF [REGEXP "\\bcat\\b" $text] THEN
+    PUTS "Found 'cat' as whole word"
+END
+.EE
+.in
+.SS Extract Quoted Strings
+.in +4n
+.EX
+SET text "He said \\"Hello World\\" to me"
+
+IF [REGEXP "\\"([^\\"]+)\\"" $text full quoted] THEN
+    PUTS "Quoted text: $quoted"        # Hello World
+END
+.EE
+.in
+.SS Log Level Filtering
+.in +4n
+.EX
+SET fh [OPEN "app.log" "r"]
+
+WHILE ![EOF $fh] DO
+    SET line [GETS $fh]
+
+    # Match ERROR or WARNING lines
+    IF [REGEXP "^(ERROR|WARNING)" $line] THEN
+        PUTS $line
+    END
+END
+
+CLOSE $fh
+.EE
+.in
+.SH PATTERN EXAMPLES
+.TP
+.B "^\\d+$"
+All digits
+.TP
+.B "^[a-zA-Z]+$"
+All letters
+.TP
+.B "^\\w+@\\w+\\.\\w+$"
+Simple email pattern
+.TP
+.B "^\\s*$"
+Blank line (whitespace only)
+.TP
+.B "\\d{3}-\\d{4}"
+Phone pattern XXX-XXXX (Note: quantifiers {n} may not be supported)
+.TP
+.B "https?://[^\\s]+"
+URL pattern
+.SH LIMITATIONS
+.TP
+.B No Lookahead/Lookbehind
+Advanced assertions not supported
+.TP
+.B Limited Quantifiers
+{n,m} syntax may not be fully supported
+.TP
+.B No Backreferences in Pattern
+\\1 in pattern not supported (only in replacement)
+.TP
+.B Basic Features Only
+Not PCRE-compatible; use for simple patterns
+.SH NOTES
+.TP
+.B Escape Backslashes
+Use
+.B \\\\
+to match literal backslash
+.TP
+.B Case Sensitivity
+Default is case-sensitive; use -NOCASE for case-insensitive
+.TP
+.B Greedy Matching
+Quantifiers are greedy by default
+.SH SEE ALSO
+.BR bcl (1),
+.BR bcl-string (1),
+.BR regex (7)

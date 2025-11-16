@@ -1,0 +1,406 @@
+.TH BCL-STRING 1 "November 2025" "BCL 1.5.1" "BCL String Commands"
+.SH NAME
+bcl-string \- BCL string manipulation commands
+.SH SYNOPSIS
+.B STRING LENGTH
+.I string
+.br
+.B STRING INDEX
+.I string index
+.br
+.B STRING RANGE
+.I string first last
+.br
+.B STRING TOUPPER
+.I string
+.br
+.B STRING TOLOWER
+.I string
+.br
+.B STRING TOTITLE
+.I string
+.br
+.B STRING TRIM
+.I string
+.RI [ chars ]
+.br
+.B STRING TRIMLEFT
+.I string
+.RI [ chars ]
+.br
+.B STRING TRIMRIGHT
+.I string
+.RI [ chars ]
+.br
+.B STRING COMPARE
+.RB [ \-NOCASE ]
+.I string1 string2
+.br
+.B STRING EQUAL
+.RB [ \-NOCASE ]
+.I string1 string2
+.br
+.B STRING MATCH
+.RB [ \-NOCASE ]
+.I pattern string
+.br
+.B STRING REPLACE
+.I string old new
+.br
+.B STRING REPEAT
+.I string count
+.br
+.B STRING REVERSE
+.I string
+.br
+.B STRING MAP
+.I mapping string
+.br
+.B STRING FIRST
+.I needle haystack
+.RI [ start ]
+.br
+.B STRING LAST
+.I needle haystack
+.SH DESCRIPTION
+The
+.B STRING
+command provides comprehensive string manipulation through subcommands. All operations return new strings; original strings are not modified.
+.SH SUBCOMMANDS
+.SS STRING LENGTH
+Returns number of characters in string.
+.PP
+.in +4n
+.EX
+SET len [STRING LENGTH "Hello"]       # 5
+SET len [STRING LENGTH ""]            # 0
+.EE
+.in
+.PP
+.B Warning:
+May segfault in interactive REPL. Safe in scripts.
+.SS STRING INDEX
+Returns character at specified index (0-based).
+.PP
+.in +4n
+.EX
+SET char [STRING INDEX "Hello" 0]     # H
+SET char [STRING INDEX "Hello" 4]     # o
+.EE
+.in
+.SS STRING RANGE
+Extracts substring from
+.I first
+to
+.I last
+index (inclusive).
+.PP
+.in +4n
+.EX
+SET text "Hello, World!"
+SET hello [STRING RANGE $text 0 4]    # Hello
+SET world [STRING RANGE $text 7 11]   # World
+SET rest [STRING RANGE $text 7 end]   # World!
+.EE
+.in
+.SS STRING TOUPPER
+Converts to uppercase.
+.PP
+.in +4n
+.EX
+SET upper [STRING TOUPPER "hello"]    # HELLO
+.EE
+.in
+.SS STRING TOLOWER
+Converts to lowercase.
+.PP
+.in +4n
+.EX
+SET lower [STRING TOLOWER "HELLO"]    # hello
+.EE
+.in
+.SS STRING TOTITLE
+Converts to title case (first letter of each word uppercase).
+.PP
+.in +4n
+.EX
+SET title [STRING TOTITLE "hello world"]  # Hello World
+.EE
+.in
+.SS STRING TRIM
+Removes whitespace (or specified characters) from both ends.
+.PP
+.in +4n
+.EX
+SET trimmed [STRING TRIM "  Hello  "]     # Hello
+SET trimmed [STRING TRIM "***Hi***" "*"]  # Hi
+.EE
+.in
+.SS STRING TRIMLEFT
+Removes from left end only.
+.PP
+.in +4n
+.EX
+SET trimmed [STRING TRIMLEFT "  Hello"]   # Hello
+.EE
+.in
+.SS STRING TRIMRIGHT
+Removes from right end only.
+.PP
+.in +4n
+.EX
+SET trimmed [STRING TRIMRIGHT "Hello  "]  # Hello
+.EE
+.in
+.SS STRING COMPARE
+Compares strings lexicographically. Returns 0 if equal, <0 if string1 < string2, >0 if string1 > string2.
+.PP
+.in +4n
+.EX
+SET r [STRING COMPARE "abc" "abc"]        # 0
+SET r [STRING COMPARE "abc" "xyz"]        # <0
+SET r [STRING COMPARE "xyz" "abc"]        # >0
+
+# Case-insensitive
+SET r [STRING COMPARE -NOCASE "Hello" "hello"]  # 0
+.EE
+.in
+.SS STRING EQUAL
+Tests string equality. Returns 1 if equal, 0 otherwise.
+.PP
+.in +4n
+.EX
+IF [STRING EQUAL $name "Alice"] THEN
+    PUTS "Hello, Alice!"
+END
+
+# Case-insensitive
+IF [STRING EQUAL -NOCASE $input "yes"] THEN
+    PUTS "Confirmed"
+END
+.EE
+.in
+.SS STRING MATCH
+Glob-style pattern matching. Returns 1 if matches, 0 otherwise.
+.PP
+Patterns:
+.B *
+(any chars),
+.B ?
+(one char),
+.B [abc]
+(char class)
+.PP
+.in +4n
+.EX
+IF [STRING MATCH "*.txt" $filename] THEN
+    PUTS "Text file"
+END
+
+IF [STRING MATCH -NOCASE "*error*" $msg] THEN
+    PUTS "Error found"
+END
+
+# Pattern examples
+STRING MATCH "test_*" "test_case"         # 1
+STRING MATCH "file?.txt" "file1.txt"      # 1
+STRING MATCH "[abc]*" "apple"             # 1
+.EE
+.in
+.SS STRING REPLACE
+Replaces first occurrence of substring.
+.PP
+.in +4n
+.EX
+SET text "Hello World"
+SET new [STRING REPLACE $text "World" "BCL"]  # Hello BCL
+
+SET text "aaa"
+SET new [STRING REPLACE $text "a" "b"]        # baa
+.EE
+.in
+.SS STRING REPEAT
+Repeats string specified number of times.
+.PP
+.in +4n
+.EX
+SET dashes [STRING REPEAT "-" 40]
+SET pattern [STRING REPEAT "ab" 5]            # ababababab
+.EE
+.in
+.SS STRING REVERSE
+Reverses string.
+.PP
+.in +4n
+.EX
+SET rev [STRING REVERSE "Hello"]              # olleH
+.EE
+.in
+.SS STRING MAP
+Maps characters according to mapping list.
+.PP
+.in +4n
+.EX
+SET mapping [LIST a A e E i I o O u U]
+SET result [STRING MAP $mapping "hello"]      # hEllO
+.EE
+.in
+.SS STRING FIRST
+Finds first occurrence of substring. Returns index or -1.
+.PP
+.in +4n
+.EX
+SET idx [STRING FIRST "o" "Hello World"]      # 4
+SET idx [STRING FIRST "x" "Hello"]            # -1
+
+# Search from position
+SET idx [STRING FIRST "o" "Hello World" 5]    # 7
+.EE
+.in
+.SS STRING LAST
+Finds last occurrence of substring.
+.PP
+.in +4n
+.EX
+SET idx [STRING LAST "o" "Hello World"]       # 7
+.EE
+.in
+.SH EXAMPLES
+.SS Text Processing
+.in +4n
+.EX
+SET text "  Hello, World!  "
+SET clean [STRING TRIM $text]
+SET upper [STRING TOUPPER $clean]
+PUTS $upper                                   # HELLO, WORLD!
+.EE
+.in
+.SS Filename Extension Check
+.in +4n
+.EX
+PROC getExtension WITH filename DO
+    SET idx [STRING LAST "." $filename]
+    IF [EXPR $idx >= 0] THEN
+        INCR idx
+        SET ext [STRING RANGE $filename $idx end]
+        RETURN [STRING TOLOWER $ext]
+    END
+    RETURN ""
+END
+
+SET ext [getExtension "document.PDF"]         # pdf
+.EE
+.in
+.SS String Validation
+.in +4n
+.EX
+PROC isEmpty WITH str DO
+    SET trimmed [STRING TRIM $str]
+    RETURN [STRING EQUAL $trimmed ""]
+END
+
+IF [isEmpty "   "] THEN
+    PUTS "String is empty or whitespace"
+END
+.EE
+.in
+.SS Word Count
+.in +4n
+.EX
+SET text "The quick brown fox"
+SET words [SPLIT $text]
+SET count [LLENGTH $words]
+PUTS "Word count: $count"
+.EE
+.in
+.SS Substring Extraction
+.in +4n
+.EX
+SET email "user@example.com"
+SET at_pos [STRING FIRST "@" $email]
+SET username [STRING RANGE $email 0 [EXPR $at_pos - 1]]
+SET domain [STRING RANGE $email [EXPR $at_pos + 1] end]
+
+PUTS "User: $username"
+PUTS "Domain: $domain"
+.EE
+.in
+.SS Case-Insensitive Search
+.in +4n
+.EX
+SET haystack "The Quick Brown Fox"
+SET needle "quick"
+
+# Convert both to lowercase for comparison
+SET lower_haystack [STRING TOLOWER $haystack]
+SET lower_needle [STRING TOLOWER $needle]
+
+IF [EXPR [STRING FIRST $lower_needle $lower_haystack] >= 0] THEN
+    PUTS "Found (case-insensitive)"
+END
+
+# Or use STRING MATCH
+IF [STRING MATCH -NOCASE "*quick*" $haystack] THEN
+    PUTS "Found using MATCH"
+END
+.EE
+.in
+.SS Building Formatted Output
+.in +4n
+.EX
+PROC formatRow WITH col1 col2 col3 DO
+    SET width 15
+    SET sep " | "
+
+    # Pad columns (simplified)
+    SET line ""
+    APPEND line $col1
+    APPEND line $sep
+    APPEND line $col2
+    APPEND line $sep
+    APPEND line $col3
+
+    RETURN $line
+END
+
+PUTS [formatRow "Name" "Age" "City"]
+PUTS [STRING REPEAT "-" 50]
+PUTS [formatRow "Alice" "30" "NYC"]
+.EE
+.in
+.SH PATTERN SYNTAX
+For
+.B STRING MATCH:
+.TP
+.B *
+Matches any number of characters
+.TP
+.B ?
+Matches exactly one character
+.TP
+.B [abc]
+Matches one character from set
+.TP
+.B [a-z]
+Matches one character from range
+.TP
+.B [^abc]
+Matches one character NOT in set
+.SH NOTES
+.TP
+.B String Immutability
+All STRING operations return new strings; originals are unchanged.
+.TP
+.B Zero-Based Indexing
+String indices start at 0.
+.TP
+.B REPL Warning
+STRING LENGTH may crash in interactive REPL; use in scripts only.
+.TP
+.B Unicode
+Limited Unicode support; primarily ASCII-focused.
+.SH SEE ALSO
+.BR bcl (1),
+.BR bcl-list (1),
+.BR bcl-regexp (1),
+.BR bcl-format (1)

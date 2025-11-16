@@ -1,0 +1,480 @@
+.TH BCL-CONTROL 1 "November 2025" "BCL 1.5.1" "BCL Control Flow Commands"
+.SH NAME
+bcl-control \- BCL control flow and loop commands
+.SH SYNOPSIS
+.B IF
+.I condition
+.B THEN
+.I commands
+.RB [ ELSEIF
+.I condition
+.B THEN
+.IR commands ]...
+.RB [ ELSE
+.IR commands ]
+.B END
+.br
+.B WHILE
+.I condition
+.B DO
+.I commands
+.B END
+.br
+.B FOR
+.RI [ FROM ]
+.I start
+.B TO
+.I end
+.RB [ STEP
+.IR increment ]
+.B DO
+.I commands
+.B END
+.br
+.B FOREACH
+.I varname
+.B IN
+.I list
+.B DO
+.I commands
+.B END
+.br
+.B SWITCH
+.I value
+.B DO
+.RB [ CASE
+.I pattern
+.IR commands ]...
+.RB [ DEFAULT
+.IR commands ]
+.B END
+.br
+.B BREAK
+.br
+.B CONTINUE
+.br
+.B RETURN
+.RI [ value ]
+.br
+.B EXIT
+.RI [ code ]
+.SH DESCRIPTION
+BCL provides comprehensive control flow structures for conditional execution, loops, and flow control. All structures use the
+.B END
+keyword for consistent block termination.
+.SH COMMANDS
+.SS IF/THEN/ELSE/ELSEIF/END
+Conditional execution based on expressions.
+.PP
+.B Syntax:
+.in +4n
+.EX
+IF condition THEN
+    commands
+ELSEIF condition THEN
+    commands
+ELSE
+    commands
+END
+.EE
+.in
+.PP
+Evaluates
+.I condition
+and executes the corresponding block. Multiple
+.B ELSEIF
+clauses are supported.
+.B ELSE
+is optional.
+.PP
+.B Examples:
+.in +4n
+.EX
+IF [EXPR $x > 0] THEN
+    PUTS "Positive"
+END
+
+IF [EXPR $age >= 18] THEN
+    PUTS "Adult"
+ELSE
+    PUTS "Minor"
+END
+
+# ELSEIF chain
+IF [EXPR $score >= 90] THEN
+    SET grade "A"
+ELSEIF [EXPR $score >= 80] THEN
+    SET grade "B"
+ELSEIF [EXPR $score >= 70] THEN
+    SET grade "C"
+ELSE
+    SET grade "F"
+END
+.EE
+.in
+.SS WHILE/DO/END
+Loops while condition is true.
+.PP
+.B Syntax:
+.in +4n
+.EX
+WHILE condition DO
+    commands
+END
+.EE
+.in
+.PP
+Repeatedly evaluates
+.I condition
+and executes
+.I commands
+while condition is true (non-zero).
+.PP
+.B Examples:
+.in +4n
+.EX
+SET counter 0
+WHILE [EXPR $counter < 5] DO
+    PUTS "Count: $counter"
+    INCR counter
+END
+
+# Infinite loop with BREAK
+SET running 1
+WHILE [EXPR $running] DO
+    # ... process ...
+    IF [EXPR $done] THEN
+        BREAK
+    END
+END
+.EE
+.in
+.SS FOR/FROM/TO/STEP/DO/END
+Numeric iteration loop.
+.PP
+.B Syntax:
+.in +4n
+.EX
+FOR [FROM] start TO end [STEP increment] DO
+    commands
+END
+.EE
+.in
+.PP
+Iterates from
+.I start
+to
+.I end
+(inclusive) with optional
+.I increment
+(default 1). The current value is available in
+.B $__FOR
+variable.
+.PP
+.B Examples:
+.in +4n
+.EX
+# Count 1 to 5
+FOR 1 TO 5 DO
+    PUTS $__FOR
+END
+
+# Count 0 to 10 by 2
+FOR 0 TO 10 STEP 2 DO
+    PUTS $__FOR                # 0, 2, 4, 6, 8, 10
+END
+
+# Countdown
+FOR 10 TO 0 STEP -1 DO
+    PUTS "T-minus $__FOR"
+END
+
+# Sum calculation
+SET total 0
+FOR 1 TO 100 DO
+    INCR total $__FOR
+END
+PUTS "Sum 1-100: $total"
+.EE
+.in
+.SS FOREACH/IN/DO/END
+Iterates over list elements.
+.PP
+.B Syntax:
+.in +4n
+.EX
+FOREACH varname IN list DO
+    commands
+END
+.EE
+.in
+.PP
+Iterates over each element in
+.IR list ,
+assigning the current element to
+.IR varname .
+.PP
+.B Examples:
+.in +4n
+.EX
+SET fruits [LIST apple banana cherry]
+FOREACH fruit IN $fruits DO
+    PUTS "Fruit: $fruit"
+END
+
+# Iterate over array keys
+FOREACH key IN [ARRAY NAMES config] DO
+    PUTS "$key = $config($key)"
+END
+
+# Process files
+SET files [GLOB "*.txt"]
+FOREACH file IN $files DO
+    PUTS "Processing $file"
+    # ... process file ...
+END
+.EE
+.in
+.SS SWITCH/CASE/DEFAULT/END
+Multi-way branching based on value.
+.PP
+.B Syntax:
+.in +4n
+.EX
+SWITCH value DO
+    CASE pattern
+        commands
+    CASE pattern
+        commands
+    DEFAULT
+        commands
+END
+.EE
+.in
+.PP
+Compares
+.I value
+against each
+.I pattern
+and executes matching case.
+.B DEFAULT
+is optional and matches if no case matches.
+.PP
+.B Examples:
+.in +4n
+.EX
+SWITCH $day DO
+    CASE Monday
+        PUTS "Start of week"
+    CASE Friday
+        PUTS "Almost weekend"
+    CASE Saturday
+    CASE Sunday
+        PUTS "Weekend!"
+    DEFAULT
+        PUTS "Midweek"
+END
+
+# Command dispatcher
+SWITCH $command DO
+    CASE start
+        startService
+    CASE stop
+        stopService
+    CASE restart
+        stopService
+        startService
+    DEFAULT
+        PUTS "Unknown command: $command"
+        EXIT 1
+END
+.EE
+.in
+.SS BREAK
+Exits the innermost loop immediately.
+.PP
+.B Examples:
+.in +4n
+.EX
+# Find first match
+SET found ""
+FOREACH item IN $items DO
+    IF [STRING MATCH $pattern $item] THEN
+        SET found $item
+        BREAK
+    END
+END
+
+# Early exit from WHILE
+SET i 0
+WHILE [EXPR $i < 1000] DO
+    INCR i
+    IF [EXPR $i == 100] THEN
+        BREAK
+    END
+END
+.EE
+.in
+.SS CONTINUE
+Skips to next iteration of loop.
+.PP
+.B Examples:
+.in +4n
+.EX
+# Process only even numbers
+FOR 1 TO 10 DO
+    IF [EXPR $__FOR % 2 != 0] THEN
+        CONTINUE
+    END
+    PUTS "Even: $__FOR"
+END
+
+# Skip empty lines
+WHILE ![EOF $fh] DO
+    SET line [GETS $fh]
+    IF [STRING EQUAL $line ""] THEN
+        CONTINUE
+    END
+    processLine $line
+END
+.EE
+.in
+.SS RETURN
+Returns from procedure with optional value.
+.PP
+.B Syntax:
+.in +4n
+.EX
+RETURN [value]
+.EE
+.in
+.PP
+Exits current procedure and optionally returns
+.IR value .
+If no value specified, returns empty string.
+.PP
+.B Examples:
+.in +4n
+.EX
+PROC add WITH a b DO
+    RETURN [EXPR $a + $b]
+END
+
+PROC isPositive WITH n DO
+    IF [EXPR $n > 0] THEN
+        RETURN 1
+    ELSE
+        RETURN 0
+    END
+END
+
+# Early return
+PROC validate WITH input DO
+    IF [STRING EQUAL $input ""] THEN
+        RETURN "ERROR: empty input"
+    END
+    # ... validation logic ...
+    RETURN "OK"
+END
+.EE
+.in
+.SS EXIT
+Terminates the program with exit code.
+.PP
+.B Syntax:
+.in +4n
+.EX
+EXIT [code]
+.EE
+.in
+.PP
+Exits the BCL interpreter with the specified exit
+.I code
+(default 0).
+.PP
+.B Examples:
+.in +4n
+.EX
+# Normal exit
+EXIT 0
+
+# Error exit
+IF ![FILE EXISTS $required_file] THEN
+    PUTS "Error: Required file not found"
+    EXIT 1
+END
+
+# Custom exit code
+IF [EXPR $errors > 0] THEN
+    EXIT 2
+END
+.EE
+.in
+.SH NESTED STRUCTURES
+All control structures can be nested arbitrarily:
+.PP
+.in +4n
+.EX
+FOR 1 TO 10 DO
+    SET i $__FOR
+    FOR 1 TO 10 DO
+        SET j $__FOR
+        SET product [EXPR $i * $j]
+        PUTS "$i × $j = $product"
+    END
+END
+
+WHILE [EXPR $running] DO
+    IF [EXPR $condition1] THEN
+        FOREACH item IN $list DO
+            # Nested structures
+        END
+    ELSE
+        SWITCH $value DO
+            # ...
+        END
+    END
+END
+.EE
+.in
+.SH COMMON PATTERNS
+.SS Loop Until Found
+.in +4n
+.EX
+SET found 0
+SET index 0
+WHILE [EXPR $index < [LLENGTH $list] && !$found] DO
+    SET item [LINDEX $list $index]
+    IF [STRING EQUAL $item $target] THEN
+        SET found 1
+    ELSE
+        INCR index
+    END
+END
+.EE
+.in
+.SS Accumulation
+.in +4n
+.EX
+SET sum 0
+FOREACH number IN $numbers DO
+    INCR sum $number
+END
+.EE
+.in
+.SS Filtering
+.in +4n
+.EX
+SET result [LIST]
+FOREACH item IN $items DO
+    IF [matchCriteria $item] THEN
+        LAPPEND result $item
+    END
+END
+.EE
+.in
+.SH SEE ALSO
+.BR bcl (1),
+.BR bcl-expr (1),
+.BR bcl-proc (1),
+.BR bcl-variables (1)

@@ -1,0 +1,264 @@
+.TH BCL-VARIABLES 1 "November 2025" "BCL 1.5.1" "BCL Variable Commands"
+.SH NAME
+bcl-variables \- BCL variable manipulation commands
+.SH SYNOPSIS
+.B SET
+.I varname
+.RI [ value ]
+.br
+.B UNSET
+.I varname
+.RI [ varname... ]
+.br
+.B INCR
+.I varname
+.RI [ increment ]
+.br
+.B APPEND
+.I varname
+.I value
+.RI [ value... ]
+.br
+.B GLOBAL
+.I varname
+.RI [ varname... ]
+.SH DESCRIPTION
+BCL provides commands for creating, modifying, and managing variables. All variables are stored as strings and converted as needed. Variable names are case-insensitive.
+.SH COMMANDS
+.SS SET
+Assigns a value to a variable or retrieves its current value.
+.PP
+.B Syntax:
+.in +4n
+.EX
+SET varname value
+SET varname
+.EE
+.in
+.PP
+When called with two arguments, assigns
+.I value
+to
+.IR varname .
+When called with one argument, returns the current value of
+.IR varname .
+.PP
+.B Examples:
+.in +4n
+.EX
+SET name "Alice"
+SET age 30
+SET x 10
+SET y [SET x]        # y = 10
+.EE
+.in
+.SS UNSET
+Deletes one or more variables.
+.PP
+.B Syntax:
+.in +4n
+.EX
+UNSET varname [varname...]
+.EE
+.in
+.PP
+Removes the specified variables from the current scope. If a variable doesn't exist, no error is raised.
+.PP
+.B Examples:
+.in +4n
+.EX
+SET temp 123
+UNSET temp
+UNSET var1 var2 var3
+.EE
+.in
+.SS INCR
+Increments a numeric variable by a specified amount.
+.PP
+.B Syntax:
+.in +4n
+.EX
+INCR varname [increment]
+.EE
+.in
+.PP
+Increments
+.I varname
+by
+.I increment
+(default 1). If
+.I varname
+doesn't exist, it's created with value 0 before incrementing. The increment can be negative for decrementing.
+.PP
+.B Examples:
+.in +4n
+.EX
+SET counter 5
+INCR counter           # counter = 6
+INCR counter 5         # counter = 11
+INCR counter -3        # counter = 8
+
+# Auto-initialization
+INCR newvar           # newvar = 1 (created as 0, then incremented)
+.EE
+.in
+.SS APPEND
+Appends one or more values to a variable.
+.PP
+.B Syntax:
+.in +4n
+.EX
+APPEND varname value [value...]
+.EE
+.in
+.PP
+Concatenates all
+.I value
+arguments to the current value of
+.IR varname .
+If
+.I varname
+doesn't exist, it's created as an empty string first.
+.PP
+.B Examples:
+.in +4n
+.EX
+SET str "Hello"
+APPEND str " " "World"     # str = "Hello World"
+APPEND str "!"             # str = "Hello World!"
+
+# Auto-initialization
+APPEND newstr "First"      # newstr = "First"
+.EE
+.in
+.SS GLOBAL
+Declares variables as global within a procedure.
+.PP
+.B Syntax:
+.in +4n
+.EX
+GLOBAL varname [varname...]
+.EE
+.in
+.PP
+Inside a procedure, makes the specified variables refer to global scope rather than creating local variables. Must be called before using the variables.
+.PP
+.B Examples:
+.in +4n
+.EX
+SET globalVar "global value"
+
+PROC modifyGlobal WITH DO
+    GLOBAL globalVar
+    SET globalVar "modified"    # Modifies global variable
+END
+
+modifyGlobal
+PUTS $globalVar                # Prints: modified
+.EE
+.in
+.SH VARIABLE SUBSTITUTION
+Variables are referenced using
+.B $varname
+or
+.BR ${varname} :
+.PP
+.in +4n
+.EX
+SET name "World"
+PUTS "Hello, $name"              # Simple substitution
+PUTS "Hello, ${name}!"           # Braced form (recommended with punctuation)
+.EE
+.in
+.SH VARIABLE SCOPE
+.TP
+.B Global Scope
+Variables defined outside procedures exist in global scope and persist for the entire program lifetime.
+.TP
+.B Local Scope
+Variables defined inside procedures (without GLOBAL) are local and disappear when the procedure returns.
+.PP
+.B Example:
+.in +4n
+.EX
+SET global "global value"
+
+PROC testScope WITH DO
+    SET local "local value"       # Local variable
+    GLOBAL global
+    SET global "modified"         # Modifies global
+    PUTS "Local: $local"
+END
+
+testScope
+PUTS "Global: $global"           # Prints: modified
+# Variable 'local' no longer exists
+.EE
+.in
+.SH VARIABLE NAMING
+.TP
+.B Valid Names
+Variable names can contain letters, digits, and underscores, starting with a letter or underscore:
+.B myVar, my_var, MyVar123, _private
+.TP
+.B Case Insensitivity
+Variable names are case-insensitive:
+.B myvar, MYVAR, MyVar
+all refer to the same variable.
+.SH RETURN VALUE
+.TP
+.B SET
+Returns the value assigned (when assigning) or the current value (when retrieving).
+.TP
+.B UNSET
+Returns empty string.
+.TP
+.B INCR
+Returns the new value after incrementing.
+.TP
+.B APPEND
+Returns the new concatenated value.
+.TP
+.B GLOBAL
+Returns empty string.
+.SH EXAMPLES
+.SS Counter Pattern
+.in +4n
+.EX
+SET counter 0
+WHILE [EXPR $counter < 10] DO
+    PUTS "Count: $counter"
+    INCR counter
+END
+.EE
+.in
+.SS String Building
+.in +4n
+.EX
+SET message ""
+APPEND message "Hello"
+APPEND message " "
+APPEND message "World"
+PUTS $message              # Prints: Hello World
+.EE
+.in
+.SS Global Variable in Procedure
+.in +4n
+.EX
+SET total 0
+
+PROC addToTotal WITH value DO
+    GLOBAL total
+    INCR total $value
+END
+
+addToTotal 5
+addToTotal 10
+addToTotal 3
+PUTS "Total: $total"      # Prints: Total: 18
+.EE
+.in
+.SH SEE ALSO
+.BR bcl (1),
+.BR bcl-proc (1),
+.BR bcl-info (1)

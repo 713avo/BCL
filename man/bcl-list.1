@@ -1,0 +1,360 @@
+.TH BCL-LIST 1 "November 2025" "BCL 1.5.1" "BCL List Commands"
+.SH NAME
+bcl-list \- BCL list manipulation commands
+.SH SYNOPSIS
+.B LIST
+.RI [ element... ]
+.br
+.B SPLIT
+.I string
+.RI [ separator ]
+.br
+.B JOIN
+.I list
+.RI [ separator ]
+.br
+.B LINDEX
+.I list index
+.br
+.B LRANGE
+.I list first last
+.br
+.B LLENGTH
+.I list
+.br
+.B LAPPEND
+.I varname
+.RI [ value... ]
+.br
+.B LINSERT
+.I list index
+.RI [ element... ]
+.br
+.B LREPLACE
+.I list first last
+.RI [ element... ]
+.br
+.B CONCAT
+.RI [ list... ]
+.br
+.B LSORT
+.I list
+.br
+.B LSEARCH
+.I list value
+.SH DESCRIPTION
+BCL lists are space-separated strings. Elements containing spaces are enclosed in braces
+.B {}
+or quotes. List commands provide comprehensive list manipulation capabilities.
+.SH COMMANDS
+.SS LIST
+Creates a list from arguments.
+.PP
+.in +4n
+.EX
+SET fruits [LIST apple banana cherry]
+SET numbers [LIST 1 2 3 4 5]
+SET mixed [LIST one "two words" three]
+SET empty [LIST]
+.EE
+.in
+.SS SPLIT
+Splits a string into list elements.
+.PP
+.in +4n
+.EX
+SET csv "apple,banana,cherry"
+SET fruits [SPLIT $csv ","]
+
+SET path "/usr/local/bin"
+SET parts [SPLIT $path "/"]
+
+# Split by whitespace (default)
+SET words [SPLIT "one two three"]
+.EE
+.in
+.SS JOIN
+Joins list elements into a string.
+.PP
+.in +4n
+.EX
+SET items [LIST apple banana cherry]
+SET csv [JOIN $items ","]
+
+SET path_parts [LIST usr local bin]
+SET path [JOIN $path_parts "/"]
+
+# Join with space (default)
+SET text [JOIN $items]
+.EE
+.in
+.SS LINDEX
+Gets element at specified index (0-based).
+.PP
+.in +4n
+.EX
+SET fruits [LIST apple banana cherry]
+SET first [LINDEX $fruits 0]     # apple
+SET second [LINDEX $fruits 1]    # banana
+SET last [LINDEX $fruits 2]      # cherry
+
+# Negative indices NOT supported
+.EE
+.in
+.SS LRANGE
+Extracts sublist from
+.I first
+to
+.I last
+index (inclusive).
+.PP
+.in +4n
+.EX
+SET numbers [LIST 0 1 2 3 4 5 6 7 8 9]
+SET subset [LRANGE $numbers 2 5]      # 2 3 4 5
+SET from3 [LRANGE $numbers 3 end]     # 3 4 5 6 7 8 9
+SET first3 [LRANGE $numbers 0 2]      # 0 1 2
+.EE
+.in
+.SS LLENGTH
+Returns number of elements in list.
+.PP
+.in +4n
+.EX
+SET items [LIST a b c d e]
+SET count [LLENGTH $items]            # 5
+
+SET empty [LIST]
+SET zero [LLENGTH $empty]             # 0
+
+# Check if empty
+IF [EXPR [LLENGTH $list] == 0] THEN
+    PUTS "List is empty"
+END
+.EE
+.in
+.SS LAPPEND
+Appends elements to list variable.
+.PP
+.in +4n
+.EX
+SET fruits [LIST apple banana]
+LAPPEND fruits cherry                 # apple banana cherry
+LAPPEND fruits date elderberry
+
+# Creates list if variable doesn't exist
+LAPPEND newlist first
+.EE
+.in
+.SS LINSERT
+Inserts elements at specified index.
+.PP
+.in +4n
+.EX
+SET numbers [LIST 1 2 4 5]
+SET fixed [LINSERT $numbers 2 3]      # 1 2 3 4 5
+
+SET list [LIST a c]
+SET list2 [LINSERT $list 1 b]         # a b c
+.EE
+.in
+.SS LREPLACE
+Replaces range with new elements.
+.PP
+.in +4n
+.EX
+SET numbers [LIST 0 1 2 3 4 5]
+SET r [LREPLACE $numbers 2 3 X Y]     # 0 1 X Y 4 5
+
+# Delete elements (no replacement)
+SET deleted [LREPLACE $numbers 1 2]   # 0 3 4 5
+.EE
+.in
+.SS CONCAT
+Concatenates multiple lists.
+.PP
+.in +4n
+.EX
+SET list1 [LIST a b c]
+SET list2 [LIST d e f]
+SET combined [CONCAT $list1 $list2]   # a b c d e f
+
+SET all [CONCAT [LIST 1 2] [LIST 3 4] [LIST 5 6]]
+.EE
+.in
+.SS LSORT
+Sorts list lexicographically.
+.PP
+.in +4n
+.EX
+SET unsorted [LIST cherry apple banana]
+SET sorted [LSORT $unsorted]          # apple banana cherry
+
+# Note: Lexicographic sort (not numeric)
+SET numbers [LIST 10 2 5 1 8]
+SET sorted [LSORT $numbers]           # 1 10 2 5 8
+.EE
+.in
+.SS LSEARCH
+Finds element in list, returns index or -1.
+.PP
+.in +4n
+.EX
+SET fruits [LIST apple banana cherry]
+SET idx [LSEARCH $fruits "banana"]    # 1
+SET notfound [LSEARCH $fruits "grape"] # -1
+
+# Check if exists
+IF [EXPR [LSEARCH $fruits "apple"] >= 0] THEN
+    PUTS "Found apple"
+END
+.EE
+.in
+.SH EXAMPLES
+.SS Building Lists
+.in +4n
+.EX
+# Empty list
+SET mylist [LIST]
+
+# Add elements
+LAPPEND mylist first
+LAPPEND mylist second
+LAPPEND mylist third
+
+PUTS "List has [LLENGTH $mylist] elements"
+.EE
+.in
+.SS List Iteration
+.in +4n
+.EX
+SET items [LIST apple banana cherry date]
+
+# Using FOREACH
+FOREACH item IN $items DO
+    PUTS "Item: $item"
+END
+
+# Using FOR with LINDEX
+SET len [LLENGTH $items]
+FOR 0 TO [EXPR $len - 1] DO
+    SET item [LINDEX $items $__FOR]
+    PUTS "[$__FOR] $item"
+END
+.EE
+.in
+.SS List Processing
+.in +4n
+.EX
+# Filter list (keep only long words)
+SET words [LIST cat elephant dog hippopotamus]
+SET long [LIST]
+
+FOREACH word IN $words DO
+    IF [EXPR [STRING LENGTH $word] > 5] THEN
+        LAPPEND long $word
+    END
+END
+
+PUTS "Long words: $long"
+.EE
+.in
+.SS List Accumulation
+.in +4n
+.EX
+SET numbers [LIST 1 2 3 4 5 6 7 8 9 10]
+SET sum 0
+
+FOREACH num IN $numbers DO
+    INCR sum $num
+END
+
+PUTS "Sum: $sum"
+.EE
+.in
+.SS CSV Processing
+.in +4n
+.EX
+SET csv_line "John,Doe,30,Engineer"
+SET fields [SPLIT $csv_line ","]
+
+SET firstname [LINDEX $fields 0]
+SET lastname [LINDEX $fields 1]
+SET age [LINDEX $fields 2]
+SET job [LINDEX $fields 3]
+
+PUTS "$firstname $lastname, $age, $job"
+.EE
+.in
+.SS List Transformation
+.in +4n
+.EX
+SET names [LIST alice bob charlie]
+SET upper [LIST]
+
+FOREACH name IN $names DO
+    SET u [STRING TOUPPER $name]
+    LAPPEND upper $u
+END
+
+PUTS "Uppercase: $upper"
+.EE
+.in
+.SS Finding Maximum
+.in +4n
+.EX
+SET numbers [LIST 5 2 9 1 7 3]
+SET max [LINDEX $numbers 0]
+
+FOREACH num IN $numbers DO
+    IF [EXPR $num > $max] THEN
+        SET max $num
+    END
+END
+
+PUTS "Maximum: $max"
+.EE
+.in
+.SS Removing Duplicates
+.in +4n
+.EX
+SET items [LIST a b c a d b e]
+SET unique [LIST]
+
+FOREACH item IN $items DO
+    IF [EXPR [LSEARCH $unique $item] < 0] THEN
+        LAPPEND unique $item
+    END
+END
+
+PUTS "Unique: $unique"
+.EE
+.in
+.SH LIST FORMAT
+Lists are space-separated strings. Elements with spaces need braces or quotes:
+.PP
+.in +4n
+.EX
+SET simple "a b c"                    # 3 elements
+SET quoted "a \\"hello world\\" c"     # 3 elements (2nd has space)
+SET braced "a {hello world} c"        # 3 elements (2nd has space)
+.EE
+.in
+.SH NOTES
+.TP
+.B Zero-Based Indexing
+List indices start at 0.
+.TP
+.B Negative Indices
+NOT supported. Use LLENGTH to calculate from end.
+.TP
+.B Lexicographic Sort
+LSORT sorts as strings, not numbers. For numeric sort, implement custom comparison.
+.TP
+.B List Modification
+Most commands return new list; LAPPEND modifies variable in place.
+.SH SEE ALSO
+.BR bcl (1),
+.BR bcl-string (1),
+.BR bcl-array (1),
+.BR bcl-control (1)

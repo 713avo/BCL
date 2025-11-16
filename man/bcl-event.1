@@ -1,0 +1,212 @@
+.TH BCL-EVENT 1 "November 2025" "BCL 2.0.0" "BCL Event System"
+.SH NAME
+bcl-event \- BCL event-driven programming commands
+.SH SYNOPSIS
+.B EVENT CREATE
+.I fd event_type callback
+.br
+.B EVENT DELETE
+.I fd
+.RI [ event_type ]
+.br
+.B EVENT TIMER
+.I milliseconds callback
+.br
+.B EVENT PROCESS
+.RI [ timeout ]
+.br
+.B EVENT LOOP
+.br
+.B EVENT STOP
+.br
+.B EVENT INFO
+.SH DESCRIPTION
+BCL v2.0 provides a complete event-driven programming system for asynchronous I/O and timer-based callbacks. The event system uses POSIX select() for portable operation and integrates with file descriptors from extensions.
+.SH COMMANDS
+.SS EVENT CREATE
+Register a callback for file descriptor events.
+.PP
+.in +4n
+.EX
+# Register callback for readable socket
+PROC ON_DATA WITH fd DO
+    SET data [SOCKET RECV $fd 1024]
+    PUTS "Received: $data"
+END
+
+EVENT CREATE $socket READABLE ON_DATA
+
+# Event types: READABLE, WRITABLE, EXCEPTION
+EVENT CREATE $fd WRITABLE ON_WRITE_READY
+EVENT CREATE $fd EXCEPTION ON_ERROR
+.EE
+.in
+.PP
+The callback procedure receives the file descriptor as a parameter.
+.SS EVENT DELETE
+Remove registered event handler.
+.PP
+.in +4n
+.EX
+# Delete specific event type
+EVENT DELETE $fd READABLE
+
+# Delete all events for this fd
+EVENT DELETE $fd
+.EE
+.in
+.SS EVENT TIMER
+Register a one-shot timer callback.
+.PP
+.in +4n
+.EX
+# Timer after 5 seconds
+PROC ON_TIMEOUT DO
+    PUTS "5 seconds elapsed"
+END
+
+EVENT TIMER 5000 ON_TIMEOUT
+
+# Immediate timer (0 ms)
+EVENT TIMER 0 ON_IMMEDIATE
+
+# Repeating timer (re-register in callback)
+PROC ON_TICK DO
+    GLOBAL count
+    INCR count
+    IF [EXPR $count < 10] THEN
+        EVENT TIMER 1000 ON_TICK
+    END
+END
+
+EVENT TIMER 1000 ON_TICK
+.EE
+.in
+.SS EVENT PROCESS
+Process pending events once, with optional timeout.
+.PP
+.in +4n
+.EX
+# Poll (non-blocking)
+SET result [EVENT PROCESS 0]
+
+# Wait up to 1 second
+SET result [EVENT PROCESS 1000]
+
+# Block indefinitely
+SET result [EVENT PROCESS]
+.EE
+.in
+.PP
+Returns 1 if an event was processed, 0 on timeout.
+.SS EVENT LOOP
+Run event loop indefinitely until EVENT STOP is called.
+.PP
+.in +4n
+.EX
+# Set up events
+EVENT CREATE $server READABLE ON_ACCEPT
+EVENT TIMER 60000 ON_HEARTBEAT
+
+# Run forever
+PUTS "Server started"
+EVENT LOOP
+PUTS "Server stopped"
+.EE
+.in
+.SS EVENT STOP
+Stop the event loop (causes EVENT LOOP to return).
+.PP
+.in +4n
+.EX
+PROC ON_SIGNAL DO
+    PUTS "Stopping server..."
+    EVENT STOP
+END
+.EE
+.in
+.SS EVENT INFO
+Returns list of all registered events in human-readable format.
+.PP
+.in +4n
+.EX
+SET info [EVENT INFO]
+PUTS "Registered events:\\n$info"
+.EE
+.in
+.SH EXAMPLES
+.SS TCP Echo Server
+.in +4n
+.EX
+LOAD "extensions/socket.so"
+
+GLOBAL clients
+SET clients [LIST]
+
+PROC ON_ACCEPT WITH server_fd DO
+    GLOBAL clients
+    SET client [SOCKET ACCEPT $server_fd]
+    SET clients [LAPPEND $clients $client]
+    EVENT CREATE $client READABLE ON_DATA
+END
+
+PROC ON_DATA WITH client_fd DO
+    GLOBAL clients
+    SET data [SOCKET RECV $client_fd 1024]
+    
+    IF [EXPR [STRING LENGTH $data] == 0] THEN
+        SOCKET CLOSE $client_fd
+        EVENT DELETE $client_fd
+    ELSE
+        SOCKET SEND $client_fd $data
+    END
+END
+
+SET server [SOCKET SERVER 9999]
+EVENT CREATE $server READABLE ON_ACCEPT
+EVENT LOOP
+.EE
+.in
+.SS Periodic Timer
+.in +4n
+.EX
+GLOBAL tick
+SET tick 0
+
+PROC ON_TICK DO
+    GLOBAL tick
+    INCR tick
+    PUTS "Tick $tick"
+    
+    IF [EXPR $tick < 10] THEN
+        EVENT TIMER 1000 ON_TICK
+    ELSE
+        EVENT STOP
+    END
+END
+
+EVENT TIMER 1000 ON_TICK
+EVENT LOOP
+.EE
+.in
+.SH NOTES
+.IP \[bu] 2
+Callbacks for I/O events receive the file descriptor as a parameter
+.IP \[bu]
+Timer callbacks receive no parameters
+.IP \[bu]
+Timers are one-shot; re-register in callback for repeating timers
+.IP \[bu]
+Timer precision: millisecond accuracy with ±10% variance
+.IP \[bu]
+Maximum file descriptors: ~1000 with select() (system-dependent)
+.IP \[bu]
+Use epoll/kqueue extensions for >1000 connections
+.SH SEE ALSO
+.BR bcl-system (1),
+.BR bcl (1),
+.BR bcl (7)
+.PP
+Complete documentation: docs/EVENT_SYSTEM.md
+.SH AUTHOR
+BCL Development Team

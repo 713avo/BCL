@@ -1,0 +1,231 @@
+\chapter{Sistema de Eventos}
+\label{ch:eventos}
+
+BCL v2.0 introduce un sistema completo de programación orientada a eventos que permite operaciones de E/S asíncronas y callbacks basados en temporizadores. El sistema de eventos es similar al mecanismo \texttt{fileevent} de Tcl e se integra perfectamente con el sistema de extensiones dinámicas.
+
+\section{Descripción General}
+
+El sistema de eventos proporciona una manera de registrar callbacks que se ejecutan cuando ocurren eventos específicos:
+
+\begin{itemize}
+    \item \textbf{Eventos de E/S}: Descriptores de archivo que se vuelven legibles, escribibles o encuentran excepciones
+    \item \textbf{Eventos de Temporizador}: Callbacks disparados después de un retraso especificado (milisegundos)
+    \item \textbf{Eventos Personalizados}: Eventos definidos por extensiones (GPIO, señales, etc.)
+\end{itemize}
+
+\subsection{Arquitectura}
+
+El sistema de eventos de BCL usa una arquitectura híbrida:
+
+\begin{itemize}
+    \item \textbf{Núcleo}: POSIX \texttt{select()} para multiplexación de E/S portable
+    \item \textbf{Temporizadores}: Temporizadores de alta precisión en milisegundos
+    \item \textbf{Extensiones}: Backends opcionales (epoll, kqueue) para alto rendimiento
+\end{itemize}
+
+\section{Comando EVENT}
+
+El comando \texttt{EVENT} tiene seis subcomandos para gestionar el bucle de eventos:
+
+\subsection{EVENT CREATE - Registrar Evento de E/S}
+
+\begin{lstlisting}[style=bcl]
+EVENT CREATE fd tipo_evento proc_callback
+\end{lstlisting}
+
+Registra un callback para un evento de descriptor de archivo.
+
+\textbf{Parámetros:}
+\begin{itemize}
+    \item \texttt{fd} - Número de descriptor de archivo
+    \item \texttt{tipo\_evento} - READABLE, WRITABLE o EXCEPTION
+    \item \texttt{proc\_callback} - Nombre del procedimiento (recibe fd como parámetro)
+\end{itemize}
+
+\textbf{Ejemplo:}
+\begin{lstlisting}[style=bcl]
+PROC AL_RECIBIR_DATOS WITH fd DO
+    SET datos [READ $fd 1024]
+    PUTS "Recibido: $datos"
+END
+
+EVENT CREATE $socket READABLE AL_RECIBIR_DATOS
+\end{lstlisting}
+
+\subsection{EVENT DELETE - Eliminar Evento}
+
+\begin{lstlisting}[style=bcl]
+EVENT DELETE fd [tipo_evento]
+\end{lstlisting}
+
+Elimina un manejador de eventos registrado.
+
+\subsection{EVENT TIMER - Registrar Temporizador}
+
+\begin{lstlisting}[style=bcl]
+EVENT TIMER milisegundos proc_callback
+\end{lstlisting}
+
+Registra un callback de temporizador de disparo único.
+
+\textbf{Ejemplo:}
+\begin{lstlisting}[style=bcl]
+PROC AL_TIMEOUT DO
+    PUTS "Han pasado 5 segundos"
+END
+
+EVENT TIMER 5000 AL_TIMEOUT
+\end{lstlisting}
+
+\subsection{EVENT PROCESS - Procesar Una Vez}
+
+\begin{lstlisting}[style=bcl]
+EVENT PROCESS [timeout_ms]
+\end{lstlisting}
+
+Procesa eventos pendientes una vez, con timeout opcional.
+
+\textbf{Retorna:} 1 si se procesó un evento, 0 en timeout
+
+\subsection{EVENT LOOP - Ejecutar Bucle de Eventos}
+
+\begin{lstlisting}[style=bcl]
+EVENT LOOP
+\end{lstlisting}
+
+Ejecuta el bucle de eventos indefinidamente hasta que se llame \texttt{EVENT STOP}.
+
+\subsection{EVENT STOP - Detener Bucle de Eventos}
+
+\begin{lstlisting}[style=bcl]
+EVENT STOP
+\end{lstlisting}
+
+Detiene el bucle de eventos (hace que \texttt{EVENT LOOP} retorne).
+
+\subsection{EVENT INFO - Listar Eventos}
+
+\begin{lstlisting}[style=bcl]
+SET info [EVENT INFO]
+\end{lstlisting}
+
+Retorna una lista de todos los eventos registrados en formato legible.
+
+\section{Ejemplos Completos}
+
+\subsection{Servidor Echo TCP}
+
+\begin{lstlisting}[style=bcl]
+LOAD "extensions/socket.so"
+
+GLOBAL clientes
+SET clientes [LIST]
+
+PROC AL_ACEPTAR WITH servidor_fd DO
+    GLOBAL clientes
+    SET cliente [SOCKET ACCEPT $servidor_fd]
+    SET clientes [LAPPEND $clientes $cliente]
+    PUTS "Cliente $cliente conectado"
+    
+    EVENT CREATE $cliente READABLE AL_RECIBIR_DATOS
+END
+
+PROC AL_RECIBIR_DATOS WITH cliente_fd DO
+    GLOBAL clientes
+    SET datos [SOCKET RECV $cliente_fd 1024]
+    
+    IF [EXPR [STRING LENGTH $datos] == 0] THEN
+        PUTS "Cliente $cliente_fd desconectado"
+        SOCKET CLOSE $cliente_fd
+        EVENT DELETE $cliente_fd
+        SET clientes [LREMOVE $clientes $cliente_fd]
+    ELSE
+        SOCKET SEND $cliente_fd $datos
+    END
+END
+
+SET servidor [SOCKET SERVER 9999]
+EVENT CREATE $servidor READABLE AL_ACEPTAR
+
+PUTS "Servidor echo escuchando en puerto 9999"
+EVENT LOOP
+\end{lstlisting}
+
+\subsection{Temporizador Repetitivo}
+
+\begin{lstlisting}[style=bcl]
+GLOBAL contador
+SET contador 0
+
+PROC AL_TICK DO
+    GLOBAL contador
+    INCR contador
+    
+    PUTS "Tick $contador"
+    
+    IF [EXPR $contador < 10] THEN
+        EVENT TIMER 1000 AL_TICK
+    ELSE
+        PUTS "Terminado!"
+        EVENT STOP
+    END
+END
+
+EVENT TIMER 1000 AL_TICK
+EVENT LOOP
+\end{lstlisting}
+
+\section{Integración con Extensiones}
+
+El sistema de eventos está diseñado para trabajar con extensiones dinámicas. Las extensiones pueden:
+
+\begin{enumerate}
+    \item Retornar descriptores de archivo que pueden ser monitoreados con \texttt{EVENT CREATE}
+    \item Registrar backends de eventos personalizados (epoll, kqueue, etc.)
+    \item Proporcionar GPIO, señales u otras fuentes de eventos
+\end{enumerate}
+
+\section{Mejores Prácticas}
+
+\subsection{Parámetros de Callback}
+
+Los callbacks de eventos de E/S reciben el descriptor de archivo como parámetro:
+
+\begin{lstlisting}[style=bcl]
+# Correcto - usa parámetro
+PROC AL_LEER WITH fd DO
+    SET datos [READ $fd 1024]
+END
+
+# Incorrecto - depende de variable global
+PROC AL_LEER DO
+    GLOBAL socket
+    SET datos [READ $socket 1024]
+END
+\end{lstlisting}
+
+\subsection{Manejo de Errores}
+
+Siempre verificar errores y limpiar:
+
+\begin{lstlisting}[style=bcl]
+PROC AL_RECIBIR WITH fd DO
+    SET datos [SOCKET RECV $fd 1024]
+    
+    IF [EXPR [STRING LENGTH $datos] == 0] THEN
+        SOCKET CLOSE $fd
+        EVENT DELETE $fd
+    ELSE
+        # Procesar datos
+    END
+END
+\end{lstlisting}
+
+\section{Véase También}
+
+\begin{itemize}
+    \item Capítulo~\ref{ch:sistema}: Comandos de Integración del Sistema
+    \item \texttt{docs/EVENT\_SYSTEM.md}: Documentación completa del sistema de eventos
+    \item \texttt{docs/extensions/main.pdf}: Guía de desarrollo de extensiones
+    \item \texttt{extensions/README.md}: Documentación de la extensión SOCKET
+\end{itemize}

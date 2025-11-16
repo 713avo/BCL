@@ -403,222 +403,68 @@ make test
 - **v1.5.0** (2025-10-21) - REPL rewrite, system commands
 - **v1.0.0** (2025-10-20) - Initial implementation
 
-See [ChangeLog.txt](ChangeLog.txt) for complete version history.
+See [CHANGELOG.md](CHANGELOG.md) for complete version history.
 
-## Standard Libraries (v2.0+)
+## Standard Libraries
 
-### MATRIX.BLB - MATLAB-Style Matrix Operations
-Complete matrix library with 21 functions:
+BCL includes five standard libraries for common programming tasks:
+
+- **ANSI.BLB** - Terminal control with colors, styles, and Unicode graphics
+- **WINDOW.BLB** - Terminal window management with menus and progress bars
+- **MATRIX.BLB** - MATLAB-style matrix operations (21 functions)
+- **CALCULUS.BLB** - Numerical analysis (derivatives, integration, root finding, ODEs)
+- **ROMAN.BLB** - Roman numeral conversion and arithmetic (1-3999)
+
+**Quick Example:**
 ```bcl
 SOURCE "lib/MATRIX.BLB"
-
-MAT_ZEROS A 3 3                     # Create 3x3 zero matrix
-MAT_EYE I 3                         # Create 3x3 identity matrix
-MAT_FROM_LIST B 2 2 "1 2 3 4"       # Create from list
-MAT_ADD A B C                        # C = A + B
-MAT_MUL A B D                        # D = A * B (matrix multiplication)
-MAT_TRANSPOSE A A_T                  # Transpose
-MAT_TRACE A tr                       # Trace (sum of diagonal)
-MAT_PRINT A                          # Pretty-print matrix
-```
-
-Functions: MAT_CREATE, MAT_ZEROS, MAT_ONES, MAT_EYE, MAT_RAND, MAT_FROM_LIST, MAT_PRINT, MAT_ADD, MAT_SUB, MAT_MUL, MAT_SCALAR_MUL, MAT_ELEM_MUL, MAT_TRANSPOSE, MAT_SUM, MAT_MEAN, MAT_MIN, MAT_MAX, MAT_TRACE, MAT_DET_2X2, MAT_COPY, MAT_FILL, MAT_GET_ROW, MAT_GET_COL
-
-### ANSI.BLB - Terminal Control & Unicode Graphics
-Terminal control with 60+ Unicode character constants:
-```bcl
-SOURCE "lib/ANSI.BLB"
-
-ANSI_CLEAR                                    # Clear screen
-ANSI_CURSOR_GOTO 10 20                       # Move cursor
-ANSI_SET_COLOR $ANSI_FG_BRIGHT_CYAN $ANSI_BG_BLUE
-PUTS -NONEWLINE $ANSI_BOX_TL                 # ┌ (box corner)
-PUTS -NONEWLINE $ANSI_BOX_H                  # ─ (horizontal line)
-PUTS $ANSI_BOX_TR                            # ┐ (box corner)
-ANSI_RESET
-```
-
-Features:
-- 16 foreground colors, 16 background colors
-- Text styles (bold, italic, underline, etc.)
-- Box drawing characters (single, double, rounded)
-- Unicode symbols (arrows, checkmarks, blocks, spinners)
-- Cursor control, screen clearing
-
-### WINDOW.BLB - Advanced Window Management
-Terminal window management with global array persistence:
-```bcl
-SOURCE "lib/WINDOW.BLB"
-
-WIN_INIT                                      # Initialize system
-WIN_CREATE 0 5 10 50 15 "My Window"          # Create window
-WIN_SET_BORDER_STYLE 0 1                     # Double-line border
-WIN_SET_COLOR 0 $ANSI_FG_WHITE $ANSI_BG_BLUE
-WIN_DRAW 0                                    # Draw window
-
-WIN_PRINT 0 1 "Hello, World!"                # Print text
-WIN_PRINT_CENTER 0 3 "Centered text"         # Centered text
-WIN_PROGRESS 0 5 75                          # Progress bar (75%)
-WIN_MENU 0 "New|Open|Save|Exit" 1            # Menu with selection
-
-WIN_CLEANUP                                   # Cleanup on exit
-```
-
-Features:
-- Multiple windows with z-ordering
-- Three border styles (single, double, rounded)
-- Configurable colors (content and border)
-- Menus, progress bars, buttons
-- Scrollable content buffering
-- Window show/hide, move
-- Message boxes and dialogs
-
-### CALCULUS.BLB - Numerical Calculus
-Complete numerical analysis library:
-```bcl
-SOURCE "lib/CALCULUS.BLB"
-
-# Derivatives
-CALC_DERIV_CENTRAL "$x * $x" 3.0 0.001 deriv  # d/dx(x²) at x=3
-
-# Integration
-CALC_INTEGRATE_SIMPSON "$x * $x" 0 1 100 area  # ∫x²dx from 0 to 1
-
-# Root finding
-CALC_NEWTON "$x*$x - 2" "2*$x" 1.0 1e-6 100 root  # Find √2
-
-# Differential equations
-CALC_RK4 "$y" 0 1 0.1 10  # Solve dy/dx=y with RK4
-```
-
-### ROMAN.BLB - Roman Numeral Conversion
-Complete bidirectional Roman numeral library (1-3999):
-```bcl
 SOURCE "lib/ROMAN.BLB"
 
-# Conversions
-SET roman [DECIMAL_TO_ROMAN 1994]   # Returns "MCMXCIV"
-SET num [ROMAN_TO_DECIMAL "XIV"]    # Returns 14
-
-# Validation
-IF [ROMAN_VALIDATE "XIV"] THEN
-    PUTS "Valid Roman numeral"
-END
-
-# Arithmetic operations
-SET sum [ROMAN_ADD "X" "V"]         # Returns "XV" (15)
-SET diff [ROMAN_SUB "XX" "V"]       # Returns "XV" (15)
-SET prod [ROMAN_MULTIPLY "V" "IV"]  # Returns "XX" (20)
-SET quot [ROMAN_DIVIDE "C" "V"]     # Returns "XX" (20)
-
-# Comparison
-SET cmp [ROMAN_COMPARE "X" "V"]     # Returns 1 (X > V)
-
-# Formatting
-SET lower [ROMAN_FORMAT 1994 "lower"]  # Returns "mcmxciv"
-SET upper [ROMAN_FORMAT 1994 "upper"]  # Returns "MCMXCIV"
-
-# Display tables
-ROMAN_TABLE 1 25                    # Print conversion table
+MAT_EYE I 3                         # Create 3x3 identity matrix
+SET roman [DECIMAL_TO_ROMAN 2025]   # "MMXXV"
 ```
 
-Features:
-- Bidirectional conversion (Roman ↔ Decimal)
-- Range: I to MMMCMXCIX (1 to 3999)
-- Supports all subtraction rules (IV, IX, XL, XC, CD, CM)
-- Validates canonical form (rejects IIII, VV, IC, etc.)
-- Arithmetic operations (+, -, ×, ÷)
-- Comparison and formatting utilities
+📖 **See [lib/README.md](lib/README.md) for complete library documentation**
 
-## Event System (v2.0+)
+## Event System
 
-BCL v2.0 introduces a complete event-driven programming system similar to TCL's fileevent:
+BCL v2.0 features a complete event-driven programming system for asynchronous I/O and timers:
 
 ```bcl
-# Load SOCKET extension
-LOAD "extensions/socket.so"
-
-GLOBAL clients
-SET clients 0
-
-# Define callback WITH parameter (receives server FD)
-PROC ON_ACCEPT WITH server_fd DO
-    GLOBAL clients
-    SET client [SOCKET ACCEPT $server_fd]
-    INCR clients
-    PUTS "Client connected: $client"
-
-    # Register callback for client data
-    EVENT CREATE $client READABLE ON_CLIENT_DATA
+# Timer example
+PROC ON_TIMER DO
+    PUTS "Timer fired!"
 END
 
-# Callback receives client FD as parameter
-PROC ON_CLIENT_DATA WITH client_fd DO
-    SET data [SOCKET RECV $client_fd 1024]
-
-    IF [EXPR [STRING LENGTH $data] == 0] THEN
-        SOCKET CLOSE $client_fd
-        EVENT DELETE $client_fd
-        PUTS "Client disconnected"
-    ELSE
-        PUTS "Received: $data"
-        SOCKET SEND $client_fd "Echo: $data"
-    END
-END
-
-# Create server and register accept event
-SET server [SOCKET SERVER 9999]
-EVENT CREATE $server READABLE ON_ACCEPT
-
-PUTS "Server listening on port 9999"
-EVENT LOOP  # Run until EVENT STOP
+EVENT TIMER 1000 ON_TIMER  # Fire after 1 second
+EVENT PROCESS 2000         # Wait up to 2 seconds
 ```
 
-### Event System Features
+**Features:**
+- Asynchronous I/O (READABLE, WRITABLE, EXCEPTION)
+- Millisecond-precision timers
+- Callbacks with parameters
+- Integrated with SOCKET extension for network programming
 
-- **Asynchronous I/O**: Non-blocking event-driven architecture
-- **Timer Events**: Millisecond-precision timers with callbacks
-- **POSIX select()**: Portable implementation (Linux, macOS, BSD)
-- **Callbacks with Parameters**: Event handlers receive FD/handle
-- **Extensible**: Backends for epoll, kqueue, GPIO via extensions
+📖 **See [docs/EVENT_SYSTEM.md](docs/EVENT_SYSTEM.md) for complete event system documentation**
 
-See [docs/EVENT_SYSTEM.md](docs/EVENT_SYSTEM.md) for complete documentation.
+## Dynamic Extensions
 
-## Dynamic Extensions (v2.0+)
-
-BCL supports loading compiled extensions at runtime:
+Load compiled C extensions at runtime:
 
 ```bcl
-# Load socket extension
 LOAD "extensions/socket.so"
 
-# Now SOCKET commands are available
 SET server [SOCKET SERVER 8080]
-SET client [SOCKET CLIENT "localhost" 8080]
-SET data [SOCKET RECV $client 1024]
-SOCKET SEND $client "Hello"
-SOCKET CLOSE $client
+SET client [SOCKET ACCEPT $server]
+SOCKET SEND $client "Hello, World!"
 ```
 
-### Available Extensions
+**Available Extensions:**
+- **socket.so** - TCP/UDP networking with EVENT system integration
 
-- **socket.so** - TCP networking (client/server, send/recv)
-
-### Creating Extensions
-
-Extensions use a stable C API:
-
-```c
-#include "bcl.h"
-
-int bcl_extension_init(bcl_extension_api_t *api) {
-    // Register commands
-    api->register_command(interp, "MYCMD", my_command_func);
-    return 0;
-}
-```
-
-See [docs/extensions/main.pdf](docs/extensions/main.pdf) for extension development guide.
+📖 **See [extensions/README.md](extensions/README.md) for extension usage**
+📖 **See [docs/extensions/main.pdf](docs/extensions/main.pdf) for extension development guide**
 
 ## Future Plans
 

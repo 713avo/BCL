@@ -1,0 +1,174 @@
+.TH BCL-LOAD 1 "November 2025" "BCL 2.0.0" "BCL Extension Loading"
+.SH NAME
+bcl-load \- BCL dynamic extension loading
+.SH SYNOPSIS
+.B LOAD
+.I extension_path
+.SH DESCRIPTION
+BCL v2.0 supports loading compiled C extensions at runtime. Extensions are shared libraries (.so files) that register new commands with the interpreter.
+.SH USAGE
+.PP
+.in +4n
+.EX
+# Load extension
+LOAD "extensions/socket.so"
+
+# Extension commands are now available
+SET server [SOCKET SERVER 8080]
+.EE
+.in
+.SH EXTENSION PATHS
+.IP \[bu] 2
+Absolute path: LOAD "/usr/local/lib/bcl/myext.so"
+.IP \[bu]
+Relative path: LOAD "extensions/myext.so"
+.IP \[bu]
+Current directory: LOAD "./myext.so"
+.SH ERROR HANDLING
+LOAD returns an error if:
+.IP \[bu] 2
+File does not exist
+.IP \[bu]
+File is not a valid shared library
+.IP \[bu]
+Extension initialization fails
+.IP \[bu]
+Missing dependencies
+.PP
+.in +4n
+.EX
+# Check if extension loads
+IF [CATCH {LOAD "myext.so"} err] THEN
+    PUTS "Failed to load: $err"
+ELSE
+    PUTS "Extension loaded successfully"
+END
+.EE
+.in
+.SH AVAILABLE EXTENSIONS
+.SS socket.so - TCP Networking
+TCP client/server networking with EVENT integration.
+.PP
+.in +4n
+.EX
+LOAD "extensions/socket.so"
+
+# Commands: SOCKET SERVER, SOCKET CLIENT, SOCKET ACCEPT,
+#           SOCKET SEND, SOCKET RECV, SOCKET CLOSE,
+#           SOCKET BIND, SOCKET LISTEN, SOCKET CONNECT,
+#           SOCKET GETOPT, SOCKET SETOPT
+
+SET server [SOCKET SERVER 9999]
+SET client [SOCKET ACCEPT $server]
+SOCKET SEND $client "Hello"
+SET data [SOCKET RECV $client 1024]
+SOCKET CLOSE $client
+.EE
+.in
+.SH CREATING EXTENSIONS
+Extensions are C shared libraries that implement:
+.PP
+.in +4n
+.EX
+#include <tcl.h>
+
+int bcl_extension_init(Tcl_Interp *interp) {
+    Tcl_CreateCommand(interp, "MYCOMMAND", 
+                     My_Cmd, NULL, NULL);
+    return TCL_OK;
+}
+.EE
+.in
+.PP
+See docs/llm_extensions.md for complete development guide.
+.SH COMPILATION
+.PP
+.in +4n
+.EX
+# Basic Makefile
+CC = gcc
+CFLAGS = -fPIC -Wall -O2 -I../include
+
+myext.so: myext.c
+\&    $(CC) $(CFLAGS) -shared -o $@ $<
+.EE
+.in
+.SH EXAMPLES
+.SS Loading Multiple Extensions
+.PP
+.in +4n
+.EX
+LOAD "extensions/socket.so"
+LOAD "extensions/json.so"
+LOAD "extensions/gpio.so"
+
+# All commands now available
+SET sock [SOCKET SERVER 8080]
+SET data [JSON PARSE $input]
+GPIO WRITE 17 1
+.EE
+.in
+.SS Conditional Loading
+.PP
+.in +4n
+.EX
+# Try to load optional extension
+IF [CATCH {LOAD "optional.so"} err] THEN
+    PUTS "Optional extension not available"
+    # Use fallback implementation
+ELSE
+    PUTS "Using hardware acceleration"
+END
+.EE
+.in
+.SS Extension with Event Integration
+.PP
+.in +4n
+.EX
+LOAD "extensions/socket.so"
+
+PROC ON_ACCEPT WITH server_fd DO
+    SET client [SOCKET ACCEPT $server_fd]
+    EVENT CREATE $client READABLE ON_DATA
+END
+
+SET server [SOCKET SERVER 9999]
+EVENT CREATE $server READABLE ON_ACCEPT
+EVENT LOOP
+.EE
+.in
+.SH NOTES
+.IP \[bu] 2
+Extensions are loaded once; subsequent LOAD calls are ignored
+.IP \[bu]
+Extension commands remain available for interpreter lifetime
+.IP \[bu]
+No automatic cleanup on error; extension manages own resources
+.IP \[bu]
+Extension initialization must return TCL_OK
+.IP \[bu]
+Command names should be UPPERCASE by convention
+.SH FILES
+.TP
+.I extensions/
+Directory containing standard extensions
+.TP
+.I docs/llm_extensions.md
+LLM-optimized extension development guide
+.TP
+.I docs/extensions/main.pdf
+Complete extension development manual
+.TP
+.I extensions/socket.c
+Reference implementation
+.SH SEE ALSO
+.BR bcl-event (1),
+.BR bcl-system (1),
+.BR bcl (1),
+.BR bcl (7)
+.PP
+Extension documentation: docs/extensions/main.pdf
+.br
+Quick start: docs/llm_extensions.md
+.SH AUTHOR
+BCL Development Team

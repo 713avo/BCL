@@ -1,0 +1,364 @@
+\chapter{Event System}
+\label{ch:events}
+
+BCL v2.0 introduces a complete event-driven programming system that enables asynchronous I/O operations and timer-based callbacks. The event system is similar to Tcl's \texttt{fileevent} mechanism and integrates seamlessly with the dynamic extension system.
+
+\section{Overview}
+
+The event system provides a way to register callbacks that are executed when specific events occur:
+
+\begin{itemize}
+    \item \textbf{I/O Events}: File descriptors becoming readable, writable, or encountering exceptions
+    \item \textbf{Timer Events}: Callbacks fired after a specified delay (milliseconds)
+    \item \textbf{Custom Events}: Extension-defined events (GPIO, signals, etc.)
+\end{itemize}
+
+\subsection{Architecture}
+
+The BCL event system uses a hybrid architecture:
+
+\begin{itemize}
+    \item \textbf{Core}: POSIX \texttt{select()} for portable I/O multiplexing
+    \item \textbf{Timers}: High-precision millisecond timers
+    \item \textbf{Extensions}: Optional backends (epoll, kqueue) for high performance
+\end{itemize}
+
+\section{EVENT Command}
+
+The \texttt{EVENT} command has six subcommands for managing the event loop:
+
+\subsection{EVENT CREATE - Register I/O Event}
+
+\begin{lstlisting}[style=bcl]
+EVENT CREATE fd event_type callback_proc
+\end{lstlisting}
+
+Register a callback for a file descriptor event.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{fd} - File descriptor number
+    \item \texttt{event\_type} - READABLE, WRITABLE, or EXCEPTION
+    \item \texttt{callback\_proc} - Procedure name (receives fd as parameter)
+\end{itemize}
+
+\textbf{Example:}
+\begin{lstlisting}[style=bcl]
+PROC ON_DATA WITH fd DO
+    SET data [READ $fd 1024]
+    PUTS "Received: $data"
+END
+
+EVENT CREATE $socket READABLE ON_DATA
+\end{lstlisting}
+
+\subsection{EVENT DELETE - Unregister Event}
+
+\begin{lstlisting}[style=bcl]
+EVENT DELETE fd [event_type]
+\end{lstlisting}
+
+Remove a registered event handler.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{fd} - File descriptor
+    \item \texttt{event\_type} - (Optional) READABLE, WRITABLE, or EXCEPTION. If omitted, all events for this fd are removed
+\end{itemize}
+
+\subsection{EVENT TIMER - Register Timer}
+
+\begin{lstlisting}[style=bcl]
+EVENT TIMER milliseconds callback_proc
+\end{lstlisting}
+
+Register a one-shot timer callback.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{milliseconds} - Delay before callback (0 = immediate)
+    \item \texttt{callback\_proc} - Procedure name (no parameters)
+\end{itemize}
+
+\textbf{Example:}
+\begin{lstlisting}[style=bcl]
+PROC ON_TIMEOUT DO
+    PUTS "5 seconds elapsed"
+END
+
+EVENT TIMER 5000 ON_TIMEOUT
+\end{lstlisting}
+
+\textbf{Note:} Timers are one-shot. To create repeating timers, re-register the timer within the callback.
+
+\subsection{EVENT PROCESS - Process Once}
+
+\begin{lstlisting}[style=bcl]
+EVENT PROCESS [timeout_ms]
+\end{lstlisting}
+
+Process pending events once, with optional timeout.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{timeout\_ms} - Maximum wait time in milliseconds (0 = poll, omit = block indefinitely)
+\end{itemize}
+
+\textbf{Returns:} 1 if an event was processed, 0 on timeout
+
+\textbf{Example:}
+\begin{lstlisting}[style=bcl]
+# Poll for events without blocking
+SET result [EVENT PROCESS 0]
+
+# Wait up to 1 second
+SET result [EVENT PROCESS 1000]
+\end{lstlisting}
+
+\subsection{EVENT LOOP - Run Event Loop}
+
+\begin{lstlisting}[style=bcl]
+EVENT LOOP
+\end{lstlisting}
+
+Run the event loop indefinitely until \texttt{EVENT STOP} is called.
+
+\textbf{Example:}
+\begin{lstlisting}[style=bcl]
+# Set up events...
+EVENT CREATE $server READABLE ON_ACCEPT
+EVENT TIMER 60000 ON_HEARTBEAT
+
+# Run forever
+PUTS "Server started"
+EVENT LOOP  # Blocks until EVENT STOP
+\end{lstlisting}
+
+\subsection{EVENT STOP - Stop Event Loop}
+
+\begin{lstlisting}[style=bcl]
+EVENT STOP
+\end{lstlisting}
+
+Stop the event loop (causes \texttt{EVENT LOOP} to return).
+
+\subsection{EVENT INFO - List Events}
+
+\begin{lstlisting}[style=bcl]
+SET info [EVENT INFO]
+\end{lstlisting}
+
+Returns a list of all registered events in human-readable format.
+
+\section{Complete Examples}
+
+\subsection{TCP Echo Server}
+
+\begin{lstlisting}[style=bcl]
+LOAD "extensions/socket.so"
+
+GLOBAL clients
+SET clients [LIST]
+
+# Handle new connections
+PROC ON_ACCEPT WITH server_fd DO
+    GLOBAL clients
+    SET client [SOCKET ACCEPT $server_fd]
+    SET clients [LAPPEND $clients $client]
+    PUTS "Client $client connected"
+    
+    # Register data handler
+    EVENT CREATE $client READABLE ON_CLIENT_DATA
+END
+
+# Handle client data
+PROC ON_CLIENT_DATA WITH client_fd DO
+    GLOBAL clients
+    SET data [SOCKET RECV $client_fd 1024]
+    
+    IF [EXPR [STRING LENGTH $data] == 0] THEN
+        # Client disconnected
+        PUTS "Client $client_fd disconnected"
+        SOCKET CLOSE $client_fd
+        EVENT DELETE $client_fd
+        SET clients [LREMOVE $clients $client_fd]
+    ELSE
+        # Echo data back
+        SOCKET SEND $client_fd $data
+    END
+END
+
+# Create server
+SET server [SOCKET SERVER 9999]
+EVENT CREATE $server READABLE ON_ACCEPT
+
+PUTS "Echo server listening on port 9999"
+EVENT LOOP
+\end{lstlisting}
+
+\subsection{Repeating Timer}
+
+\begin{lstlisting}[style=bcl]
+GLOBAL tick_count
+SET tick_count 0
+
+PROC ON_TICK DO
+    GLOBAL tick_count
+    INCR tick_count
+    
+    PUTS "Tick $tick_count"
+    
+    # Re-register for next tick
+    IF [EXPR $tick_count < 10] THEN
+        EVENT TIMER 1000 ON_TICK
+    ELSE
+        PUTS "Done!"
+        EVENT STOP
+    END
+END
+
+# Start timer
+EVENT TIMER 1000 ON_TICK
+EVENT LOOP
+\end{lstlisting}
+
+\subsection{File Monitoring}
+
+\begin{lstlisting}[style=bcl]
+# Open file for reading
+SET fd [OPEN "logfile.txt" r]
+
+PROC ON_LOG_DATA WITH log_fd DO
+    SET line [GETS $log_fd]
+    
+    IF [EOF $log_fd] THEN
+        PUTS "End of file"
+        CLOSE $log_fd
+        EVENT DELETE $log_fd
+        EVENT STOP
+    ELSE
+        PUTS "Log: $line"
+    END
+END
+
+EVENT CREATE $fd READABLE ON_LOG_DATA
+EVENT LOOP
+\end{lstlisting}
+
+\section{Integration with Extensions}
+
+The event system is designed to work with dynamic extensions. Extensions can:
+
+\begin{enumerate}
+    \item Return file descriptors that can be monitored with \texttt{EVENT CREATE}
+    \item Register custom event backends (epoll, kqueue, etc.)
+    \item Provide GPIO, signal, or other event sources
+\end{enumerate}
+
+\textbf{Example - SOCKET Extension:}
+
+The SOCKET extension returns file descriptors that integrate seamlessly:
+
+\begin{lstlisting}[style=bcl]
+LOAD "extensions/socket.so"
+
+SET server [SOCKET SERVER 8080]  # Returns FD
+EVENT CREATE $server READABLE ON_ACCEPT
+
+SET client [SOCKET ACCEPT $server]  # Returns FD
+EVENT CREATE $client READABLE ON_DATA
+\end{lstlisting}
+
+\section{Best Practices}
+
+\subsection{Callback Parameters}
+
+I/O event callbacks receive the file descriptor as a parameter:
+
+\begin{lstlisting}[style=bcl]
+# Correct - uses parameter
+PROC ON_READ WITH fd DO
+    SET data [READ $fd 1024]
+END
+
+# Incorrect - relies on global variable
+PROC ON_READ DO
+    GLOBAL socket
+    SET data [READ $socket 1024]
+END
+\end{lstlisting}
+
+\subsection{Error Handling}
+
+Always check for errors and cleanup:
+
+\begin{lstlisting}[style=bcl]
+PROC ON_DATA WITH fd DO
+    SET data [SOCKET RECV $fd 1024]
+    
+    IF [EXPR [STRING LENGTH $data] == 0] THEN
+        # Connection closed or error
+        SOCKET CLOSE $fd
+        EVENT DELETE $fd
+    ELSE
+        # Process data
+    END
+END
+\end{lstlisting}
+
+\subsection{Global Variables in Callbacks}
+
+Use explicit GLOBAL declarations for shared state:
+
+\begin{lstlisting}[style=bcl]
+GLOBAL connection_count
+
+PROC ON_ACCEPT WITH server_fd DO
+    GLOBAL connection_count
+    INCR connection_count
+    # ...
+END
+\end{lstlisting}
+
+\section{Performance Considerations}
+
+\begin{itemize}
+    \item \textbf{Timer Precision}: Millisecond accuracy with ±10\% variance acceptable
+    \item \textbf{select() Limitations}: Maximum ~1000 file descriptors on most systems
+    \item \textbf{Extension Backends}: Use epoll (Linux) or kqueue (BSD/macOS) extensions for >1000 connections
+    \item \textbf{Callback Overhead}: Keep callbacks fast; long-running operations should use timers
+\end{itemize}
+
+\section{Troubleshooting}
+
+\subsection{Events Not Firing}
+
+\begin{enumerate}
+    \item Verify event is registered with \texttt{EVENT INFO}
+    \item Check file descriptor is valid and open
+    \item Ensure \texttt{EVENT PROCESS} or \texttt{EVENT LOOP} is called
+    \item Verify callback procedure name is correct
+\end{enumerate}
+
+\subsection{Memory Leaks}
+
+Always cleanup when done:
+
+\begin{lstlisting}[style=bcl]
+# Always delete events before closing FD
+EVENT DELETE $fd
+CLOSE $fd  # or SOCKET CLOSE
+\end{lstlisting}
+
+\subsection{Callback Errors}
+
+If a callback throws an error, the event system continues processing. Check logs for error messages.
+
+\section{See Also}
+
+\begin{itemize}
+    \item Chapter~\ref{ch:system}: System Integration Commands
+    \item \texttt{docs/EVENT\_SYSTEM.md}: Complete event system documentation
+    \item \texttt{docs/extensions/main.pdf}: Extension development guide
+    \item \texttt{extensions/README.md}: SOCKET extension documentation
+\end{itemize}

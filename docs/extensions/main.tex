@@ -38,6 +38,8 @@
     keywords={PROC, END, WITH, DO, SET, GLOBAL, IF, THEN, ELSE,
               WHILE, FOR, FOREACH, SWITCH, CASE, RETURN, LOAD,
               SOCKET, SERVER, CLIENT, ACCEPT, SEND, RECV, CLOSE,
+              EVENT, CREATE, DELETE, TIMER, PROCESS, LOOP, STOP, INFO,
+              READABLE, WRITABLE, EXCEPTION,
               PUTS, GETS, SOURCE},
     sensitive=false,
     morecomment=[l]{\#},
@@ -263,6 +265,76 @@ Debe retornar \texttt{BCL\_OK} (0) si éxito, \texttt{BCL\_ERROR} (1) si error.
 \subsection{Descripción}
 
 La extensión SOCKET implementa comunicación TCP similar a TCL. Permite crear servidores y clientes TCP, aceptar conexiones, enviar y recibir datos.
+
+\subsection{Integración con Sistema de Eventos}
+
+La extensión SOCKET está diseñada para integrarse perfectamente con el sistema de eventos de BCL v2.0. Los sockets retornan descriptores de archivo que pueden ser monitoreados con el comando \texttt{EVENT}.
+
+\begin{notebox}
+La integración con eventos permite crear servidores no bloqueantes que pueden manejar múltiples clientes simultáneamente sin hilos ni procesos adicionales.
+\end{notebox}
+
+\textbf{Ejemplo de uso con eventos:}
+
+\begin{lstlisting}
+LOAD "extensions/socket.so"
+
+GLOBAL clientes
+SET clientes [LIST]
+
+# Callback para nuevas conexiones
+PROC AL_ACEPTAR WITH servidor_fd DO
+    GLOBAL clientes
+    SET cliente [SOCKET ACCEPT $servidor_fd]
+    SET clientes [LAPPEND $clientes $cliente]
+    PUTS "Cliente conectado: $cliente"
+
+    # Registrar callback para datos del cliente
+    EVENT CREATE $cliente READABLE AL_DATOS_CLIENTE
+END
+
+# Callback para datos de cliente
+PROC AL_DATOS_CLIENTE WITH cliente_fd DO
+    GLOBAL clientes
+    SET datos [SOCKET RECV $cliente_fd 1024]
+
+    IF [EXPR [STRING LENGTH $datos] == 0] THEN
+        # Cliente desconectado
+        PUTS "Cliente $cliente_fd desconectado"
+        SOCKET CLOSE $cliente_fd
+        EVENT DELETE $cliente_fd
+        SET clientes [LREMOVE $clientes $cliente_fd]
+    ELSE
+        # Hacer echo de los datos
+        SOCKET SEND $cliente_fd "Echo: $datos"
+    END
+END
+
+# Crear servidor y registrar evento
+SET servidor [SOCKET SERVER 9999]
+EVENT CREATE $servidor READABLE AL_ACEPTAR
+
+PUTS "Servidor asíncrono escuchando en puerto 9999"
+PUTS "Presiona Ctrl+C para detener"
+
+# Ejecutar bucle de eventos
+EVENT LOOP
+\end{lstlisting}
+
+\textbf{Ventajas del enfoque asíncrono:}
+
+\begin{itemize}
+    \item Múltiples clientes sin hilos o procesos
+    \item Bajo consumo de recursos
+    \item Escalable hasta ~1000 conexiones con select()
+    \item Compatible con timers y otros eventos
+\end{itemize}
+
+Para más información sobre el sistema de eventos, consulte:
+\begin{itemize}
+    \item \texttt{docs/EVENT\_SYSTEM.md} - Documentación completa del sistema de eventos
+    \item Manual BCL, Capítulo 18 - Sistema de Eventos
+\end{itemize}
 
 \subsection{Compilación}
 

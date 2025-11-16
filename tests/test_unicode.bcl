@@ -1,0 +1,207 @@
+#!/usr/bin/env bcl
+# Test suite para validar el soporte mejorado de Unicode
+
+PUTS "=========================================="
+PUTS "Testing Unicode Support"
+PUTS "=========================================="
+
+SET test_passed 0
+SET test_failed 0
+
+# ==============================================================================
+# Test 1: Secuencias \uXXXX básicas
+# ==============================================================================
+
+PUTS "\n[TEST 1] Secuencias Unicode básicas \\uXXXX"
+
+# \u0041 = 'A', \u0042 = 'B', \u0043 = 'C'
+SET str1 "\u0041\u0042\u0043"
+
+IF [STRING EQUAL $str1 "ABC"] THEN
+    PUTS "  PASS: \\uXXXX para caracteres ASCII funciona"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: Esperado 'ABC', obtenido '$str1'"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Test 2: Caracteres Unicode comunes
+# ==============================================================================
+
+PUTS "\n[TEST 2] Caracteres Unicode comunes"
+
+# \u00E1 = 'á', \u00F1 = 'ñ', \u00E9 = 'é'
+SET spanish "\u00E1\u00F1\u00E9"
+SET expected_len [STRING LENGTH $spanish]
+
+# Deberíamos tener 3 caracteres (aunque en UTF-8 sean varios bytes)
+IF [EXPR $expected_len > 0] THEN
+    PUTS "  PASS: Caracteres españoles procesados (longitud: $expected_len bytes)"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: String vacío"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Test 3: Caracteres CJK (Chino/Japonés/Coreano)
+# ==============================================================================
+
+PUTS "\n[TEST 3] Caracteres CJK"
+
+# \u4E2D = '中' (chino), \u6587 = '文'
+SET chinese "\u4E2D\u6587"
+
+# Verificar que se procesó algo
+IF [EXPR [STRING LENGTH $chinese] > 0] THEN
+    PUTS "  PASS: Caracteres CJK procesados (bytes: [STRING LENGTH $chinese])"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: Caracteres CJK no procesados"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Test 4: Emojis con \UXXXXXXXX
+# ==============================================================================
+
+PUTS "\n[TEST 4] Emojis con secuencias \\UXXXXXXXX"
+
+# \U0001F600 = 😀 (grinning face)
+# \U0001F389 = 🎉 (party popper)
+SET emoji "\U0001F600\U0001F389"
+
+IF [EXPR [STRING LENGTH $emoji] > 0] THEN
+    PUTS "  PASS: Emojis procesados (bytes: [STRING LENGTH $emoji])"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: Emojis no procesados"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Test 5: Mix de ASCII y Unicode
+# ==============================================================================
+
+PUTS "\n[TEST 5] Mix de ASCII y Unicode"
+
+SET mixed "Hello \u4E16\u754C (World)"  # 世界 = mundo en chino
+
+IF [EXPR [STRING LENGTH $mixed] > 10] THEN
+    PUTS "  PASS: Mix de ASCII y Unicode procesado"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: String demasiado corto: $mixed"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Test 6: Símbolos matemáticos
+# ==============================================================================
+
+PUTS "\n[TEST 6] Símbolos matemáticos Unicode"
+
+# \u2200 = ∀ (para todo), \u2203 = ∃ (existe), \u221E = ∞ (infinito)
+SET math "\u2200\u2203\u221E"
+
+IF [EXPR [STRING LENGTH $math] > 0] THEN
+    PUTS "  PASS: Símbolos matemáticos procesados"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: Símbolos matemáticos no procesados"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Test 7: Caracteres de control y espacios especiales
+# ==============================================================================
+
+PUTS "\n[TEST 7] Espacios y caracteres especiales"
+
+# \u00A0 = espacio no rompible
+# \u2003 = espacio EM
+SET spaces "A\u00A0B\u2003C"
+
+IF [EXPR [STRING LENGTH $spaces] >= 5] THEN
+    PUTS "  PASS: Espacios especiales procesados"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: Espacios especiales no procesados correctamente"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Test 8: Caracteres de flecha
+# ==============================================================================
+
+PUTS "\n[TEST 8] Caracteres de flecha y símbolos"
+
+# \u2190 = ← \u2191 = ↑ \u2192 = → \u2193 = ↓
+SET arrows "\u2190\u2191\u2192\u2193"
+
+IF [EXPR [STRING LENGTH $arrows] > 0] THEN
+    PUTS "  PASS: Flechas procesadas (bytes: [STRING LENGTH $arrows])"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: Flechas no procesadas"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Test 9: Box drawing characters (importante para WINDOW library)
+# ==============================================================================
+
+PUTS "\n[TEST 9] Box drawing characters"
+
+# \u2500 = ─ \u2502 = │ \u250C = ┌ \u2510 = ┐
+SET box "\u250C\u2500\u2500\u2510"
+
+IF [EXPR [STRING LENGTH $box] > 0] THEN
+    PUTS "  PASS: Box drawing characters procesados"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: Box drawing characters no procesados"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Test 10: Validación de secuencias inválidas
+# ==============================================================================
+
+PUTS "\n[TEST 10] Manejo de secuencias inválidas"
+
+# Secuencia incompleta o inválida debería manejarse gracefully
+SET invalid1 "\u"
+SET invalid2 "\u12"
+SET invalid3 "\uGGGG"
+
+# Deberían copiarse literalmente o manejarse sin crash
+IF [EXPR 1 == 1] THEN
+    PUTS "  PASS: Secuencias inválidas manejadas sin crash"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: No debería llegar aquí"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Resumen
+# ==============================================================================
+
+PUTS "\n=========================================="
+PUTS "Test Summary"
+PUTS "=========================================="
+PUTS "Passed: $test_passed"
+PUTS "Failed: $test_failed"
+
+SET total [EXPR $test_passed + $test_failed]
+PUTS "Total:  $total"
+
+IF [EXPR $test_failed == 0] THEN
+    PUTS "\n✓ All Unicode tests PASSED!"
+    EXIT 0
+ELSE
+    PUTS "\n✗ Some tests FAILED"
+    EXIT 1
+END

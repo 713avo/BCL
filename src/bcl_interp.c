@@ -85,6 +85,7 @@ void bcl_interp_destroy(bcl_interp_t *interp) {
             if (scope) {
                 if (scope->vars) bcl_hash_destroy(scope->vars);
                 if (scope->global_refs) bcl_hash_destroy(scope->global_refs);
+                if (scope->global_prefixes) bcl_hash_destroy(scope->global_prefixes);
                 free(scope);
             }
             interp->scope_depth--;
@@ -129,11 +130,13 @@ static bcl_scope_t *scope_create(bcl_scope_t *parent) {
 
     scope->vars = bcl_hash_create();
     scope->global_refs = bcl_hash_create();
+    scope->global_prefixes = bcl_hash_create();
     scope->parent = parent;
 
-    if (!scope->vars || !scope->global_refs) {
+    if (!scope->vars || !scope->global_refs || !scope->global_prefixes) {
         if (scope->vars) bcl_hash_destroy(scope->vars);
         if (scope->global_refs) bcl_hash_destroy(scope->global_refs);
+        if (scope->global_prefixes) bcl_hash_destroy(scope->global_prefixes);
         free(scope);
         return NULL;
     }
@@ -181,6 +184,7 @@ bcl_result_t bcl_scope_pop(bcl_interp_t *interp) {
     if (scope) {
         if (scope->vars) bcl_hash_destroy(scope->vars);
         if (scope->global_refs) bcl_hash_destroy(scope->global_refs);
+        if (scope->global_prefixes) bcl_hash_destroy(scope->global_prefixes);
         free(scope);
     }
 
@@ -193,6 +197,40 @@ bcl_result_t bcl_scope_pop(bcl_interp_t *interp) {
 static bcl_scope_t *get_current_scope(bcl_interp_t *interp) {
     if (!interp || interp->scope_depth == 0) return NULL;
     return interp->scope_stack[interp->scope_depth - 1];
+}
+
+/**
+ * @brief Verifica si una variable debe tratarse como global
+ * @param scope Scope actual (NULL = global)
+ * @param name Nombre completo de la variable (puede incluir índice de array)
+ * @return true si la variable debe ir en global_vars
+ */
+static bool is_global_var(bcl_scope_t *scope, const char *name) {
+    if (!scope) return true;  /* Estamos en scope global */
+
+    /* Verificar coincidencia exacta en global_refs */
+    if (bcl_hash_exists(scope->global_refs, name)) {
+        return true;
+    }
+
+    /* Verificar coincidencia por prefijo (para arrays) */
+    /* Si name es "myarray(foo)", buscar si "myarray(" está en global_prefixes */
+    const char *paren = strchr(name, '(');
+    if (paren) {
+        /* Construir prefijo: "myarray(" */
+        size_t prefix_len = paren - name + 1;
+        char prefix[256];
+        if (prefix_len < sizeof(prefix)) {
+            memcpy(prefix, name, prefix_len);
+            prefix[prefix_len] = '\0';
+
+            if (bcl_hash_exists(scope->global_prefixes, prefix)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 /* ========================================================================== */
@@ -211,19 +249,13 @@ bcl_result_t bcl_var_set(bcl_interp_t *interp, const char *name,
 
     bcl_scope_t *scope = get_current_scope(interp);
 
-    if (scope) {
-        /* Estamos en un scope local */
-        /* Verificar si está en global_refs (declarada GLOBAL) */
-        if (bcl_hash_exists(scope->global_refs, name)) {
-            /* Es una variable global */
-            bcl_hash_set(interp->global_vars, name, val);
-        } else {
-            /* Variable local */
-            bcl_hash_set(scope->vars, name, val);
-        }
-    } else {
-        /* Scope global */
+    /* Usar is_global_var para verificar si debe ir en global_vars */
+    if (is_global_var(scope, name)) {
+        /* Es una variable global */
         bcl_hash_set(interp->global_vars, name, val);
+    } else {
+        /* Variable local */
+        bcl_hash_set(scope->vars, name, val);
     }
 
     return BCL_OK;

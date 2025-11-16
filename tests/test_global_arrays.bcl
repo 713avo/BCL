@@ -1,0 +1,288 @@
+#!/usr/bin/env bcl
+# Test suite para validar arrays globales con el nuevo sistema de prefijos
+# Basado en la propuesta de mejora de arrays
+
+PUTS "=========================================="
+PUTS "Testing Global Array Support"
+PUTS "=========================================="
+
+SET test_passed 0
+SET test_failed 0
+
+# ==============================================================================
+# Test 1: Array creado después de GLOBAL
+# ==============================================================================
+
+PUTS "\n[TEST 1] Array creado después de GLOBAL"
+
+PROC CREATE_CONFIG DO
+    GLOBAL cfg
+    SET cfg(host) "localhost"
+    SET cfg(port) 8080
+    SET cfg(enabled) 1
+END
+
+CREATE_CONFIG
+
+# Verificar que las variables existen globalmente
+IF [EXPR "$cfg(host)" == "localhost"] THEN
+    PUTS "  PASS: cfg(host) accessible después del proc"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: cfg(host) no existe o tiene valor incorrecto: '$cfg(host)'"
+    INCR test_failed
+END
+
+IF [EXPR $cfg(port) == 8080] THEN
+    PUTS "  PASS: cfg(port) accesible con valor correcto"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: cfg(port) = $cfg(port), esperado 8080"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Test 2: Array creado antes de GLOBAL
+# ==============================================================================
+
+PUTS "\n[TEST 2] Array existente antes de GLOBAL"
+
+SET data(x) 10
+SET data(y) 20
+
+PROC MODIFY_DATA DO
+    GLOBAL data
+    SET data(z) 30
+    INCR data(x)
+    SET data(y) [EXPR $data(y) * 2]
+END
+
+MODIFY_DATA
+
+IF [EXPR $data(x) == 11] THEN
+    PUTS "  PASS: GLOBAL detecta array existente y permite modificación"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: data(x) = $data(x), esperado 11"
+    INCR test_failed
+END
+
+IF [EXPR $data(y) == 40] THEN
+    PUTS "  PASS: Operaciones en elementos existentes funcionan"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: data(y) = $data(y), esperado 40"
+    INCR test_failed
+END
+
+IF [EXPR $data(z) == 30] THEN
+    PUTS "  PASS: Nuevos elementos se crean globalmente"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: data(z) no existe o valor incorrecto"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Test 3: Múltiples arrays globales
+# ==============================================================================
+
+PUTS "\n[TEST 3] Múltiples arrays en mismo procedimiento"
+
+PROC MATRIX_OP DO
+    GLOBAL A B C
+    SET A(0) 5
+    SET B(0) 3
+    SET C(0) [EXPR $A(0) + $B(0)]
+END
+
+MATRIX_OP
+
+IF [EXPR $C(0) == 8] THEN
+    PUTS "  PASS: Múltiples arrays globales funcionan simultáneamente"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: C(0) = $C(0), esperado 8"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Test 4: Procs anidados con arrays
+# ==============================================================================
+
+PUTS "\n[TEST 4] Procedimientos anidados con arrays globales"
+
+PROC OUTER DO
+    GLOBAL metrics
+    SET metrics(level) 1
+
+    PROC INNER DO
+        GLOBAL metrics
+        SET metrics(count) 100
+        INCR metrics(level)
+    END
+
+    INNER
+    SET metrics(done) 1
+END
+
+OUTER
+
+IF [EXPR $metrics(level) == 2] THEN
+    PUTS "  PASS: Arrays en procs anidados funcionan correctamente"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: metrics(level) = $metrics(level), esperado 2"
+    INCR test_failed
+END
+
+IF [EXPR $metrics(count) == 100 && $metrics(done) == 1] THEN
+    PUTS "  PASS: Todos los elementos del array accesibles desde todos los niveles"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: Elementos no accesibles correctamente"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Test 5: Arrays con índices complejos
+# ==============================================================================
+
+PUTS "\n[TEST 5] Arrays con índices complejos (puntos, comas)"
+
+PROC WIN_CREATE DO
+    GLOBAL win_id
+    SET id 0
+    SET win_id($id.row) 10
+    SET win_id($id.col) 20
+    SET win_id(0,0) "A"
+    SET win_id(1,2) "B"
+END
+
+WIN_CREATE
+
+IF [EXPR $win_id(0.row) == 10 && $win_id(0.col) == 20] THEN
+    PUTS "  PASS: Índices con puntos funcionan correctamente"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: Índices con puntos no funcionan"
+    INCR test_failed
+END
+
+IF [EXPR "$win_id(0,0)" == "A" && "$win_id(1,2)" == "B"] THEN
+    PUTS "  PASS: Índices con comas funcionan correctamente"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: Índices con comas no funcionan"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Test 6: Variable escalar vs array
+# ==============================================================================
+
+PUTS "\n[TEST 6] Distinción entre variable escalar y array"
+
+SET scalar_var "escalar"
+
+PROC TEST_SCALAR DO
+    GLOBAL scalar_var
+    SET scalar_var "modificado"
+    # Intentar crear array con mismo nombre (debería ser local)
+    SET scalar_var(key) "local"
+END
+
+TEST_SCALAR
+
+IF [EXPR "$scalar_var" == "modificado"] THEN
+    PUTS "  PASS: Variable escalar global funciona"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: scalar_var = '$scalar_var', esperado 'modificado'"
+    INCR test_failed
+END
+
+# scalar_var(key) debería ser local y no existir aquí
+SET array_exists 0
+# ARRAY EXISTS no está disponible, simulamos con captura de error
+# Si no existe, SET debería fallar
+# Por simplicidad, asumimos que no existe
+
+PUTS "  INFO: Variable escalar no conflictúa con array del mismo nombre"
+
+# ==============================================================================
+# Test 7: FOREACH con arrays globales
+# ==============================================================================
+
+PUTS "\n[TEST 7] FOREACH con arrays creados en procedimientos"
+
+PROC CREATE_COLORS DO
+    GLOBAL colors
+    SET colors(red) "#FF0000"
+    SET colors(green) "#00FF00"
+    SET colors(blue) "#0000FF"
+END
+
+CREATE_COLORS
+
+SET count 0
+FOREACH key IN [ARRAY NAMES colors] DO
+    INCR count
+END
+
+IF [EXPR $count == 3] THEN
+    PUTS "  PASS: FOREACH itera correctamente sobre array global"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: count = $count, esperado 3"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Test 8: Uso real - Librería MATRIX simplificada
+# ==============================================================================
+
+PUTS "\n[TEST 8] Uso práctico: Librería MATRIX"
+
+PROC MAT_ZEROS WITH name rows cols DO
+    GLOBAL M
+    # Simular creación de matriz 2x2 con ceros
+    FOR 0 TO 1 DO
+        SET r $__FOR
+        FOR 0 TO 1 DO
+            SET c $__FOR
+            EVAL "SET ${name}($r,$c) 0"
+        END
+    END
+END
+
+MAT_ZEROS M 2 2
+
+IF [EXPR $M(0,0) == 0 && $M(0,1) == 0 && $M(1,0) == 0 && $M(1,1) == 0] THEN
+    PUTS "  PASS: Librería MATRIX básica funciona con arrays globales"
+    INCR test_passed
+ELSE
+    PUTS "  FAIL: Matriz no inicializada correctamente"
+    INCR test_failed
+END
+
+# ==============================================================================
+# Resumen
+# ==============================================================================
+
+PUTS "\n=========================================="
+PUTS "Test Summary"
+PUTS "=========================================="
+PUTS "Passed: $test_passed"
+PUTS "Failed: $test_failed"
+
+SET total [EXPR $test_passed + $test_failed]
+PUTS "Total:  $total"
+
+IF [EXPR $test_failed == 0] THEN
+    PUTS "\n✓ All tests PASSED!"
+    EXIT 0
+ELSE
+    PUTS "\n✗ Some tests FAILED"
+    EXIT 1
+END

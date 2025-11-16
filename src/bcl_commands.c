@@ -299,9 +299,40 @@ bcl_result_t bcl_cmd_global(bcl_interp_t *interp, int argc, char **argv,
     for (int i = 0; i < argc; i++) {
         const char *varname = argv[i];
 
-        /* Agregar a global_refs con un valor dummy */
-        bcl_value_t *marker = bcl_value_create("1");
-        bcl_hash_set(scope->global_refs, varname, marker);
+        /* Verificar si existe como array en scope global */
+        /* Buscar si existe alguna variable con patrón varname(...) */
+        char array_pattern[256];
+        snprintf(array_pattern, sizeof(array_pattern), "%s(", varname);
+        size_t pattern_len = strlen(array_pattern);
+
+        bool is_array = false;
+        for (size_t j = 0; j < BCL_HASH_TABLE_SIZE && !is_array; j++) {
+            bcl_hash_entry_t *entry = interp->global_vars->buckets[j];
+            while (entry) {
+                if (bcl_strncasecmp(entry->key, array_pattern, pattern_len) == 0) {
+                    is_array = true;
+                    break;
+                }
+                entry = entry->next;
+            }
+        }
+
+        /* Verificar también si existe como variable escalar */
+        bool is_scalar = bcl_hash_exists(interp->global_vars, varname);
+
+        if (is_array && !is_scalar) {
+            /* Es un array: marcar prefijo para todos los elementos */
+            bcl_value_t *marker = bcl_value_create("1");
+            bcl_hash_set(scope->global_prefixes, array_pattern, marker);
+        } else if (is_scalar && !is_array) {
+            /* Es variable escalar: marcar nombre exacto */
+            bcl_value_t *marker = bcl_value_create("1");
+            bcl_hash_set(scope->global_refs, varname, marker);
+        } else {
+            /* No existe o es ambiguo: asumir que será array (caso común) */
+            bcl_value_t *marker = bcl_value_create("1");
+            bcl_hash_set(scope->global_prefixes, array_pattern, marker);
+        }
     }
 
     if (result) *result = bcl_value_create("");

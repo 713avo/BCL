@@ -48,22 +48,88 @@ static char process_escape(char c) {
 }
 
 /**
+ * @brief Convierte un codepoint Unicode a UTF-8
+ * @param codepoint Código punto Unicode (0-0x10FFFF)
+ * @param out Buffer de salida (debe tener al menos 4 bytes)
+ * @return Número de bytes escritos (1-4)
+ */
+static int unicode_to_utf8(uint32_t codepoint, char *out) {
+    if (codepoint <= 0x7F) {
+        /* 1 byte: 0xxxxxxx */
+        out[0] = (char)codepoint;
+        return 1;
+    } else if (codepoint <= 0x7FF) {
+        /* 2 bytes: 110xxxxx 10xxxxxx */
+        out[0] = (char)(0xC0 | ((codepoint >> 6) & 0x1F));
+        out[1] = (char)(0x80 | (codepoint & 0x3F));
+        return 2;
+    } else if (codepoint <= 0xFFFF) {
+        /* 3 bytes: 1110xxxx 10xxxxxx 10xxxxxx */
+        out[0] = (char)(0xE0 | ((codepoint >> 12) & 0x0F));
+        out[1] = (char)(0x80 | ((codepoint >> 6) & 0x3F));
+        out[2] = (char)(0x80 | (codepoint & 0x3F));
+        return 3;
+    } else if (codepoint <= 0x10FFFF) {
+        /* 4 bytes: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx */
+        out[0] = (char)(0xF0 | ((codepoint >> 18) & 0x07));
+        out[1] = (char)(0x80 | ((codepoint >> 12) & 0x3F));
+        out[2] = (char)(0x80 | ((codepoint >> 6) & 0x3F));
+        out[3] = (char)(0x80 | (codepoint & 0x3F));
+        return 4;
+    }
+    return 0;  /* Codepoint inválido */
+}
+
+/**
  * @brief Decodifica secuencias de escape en un string
  */
 char *bcl_decode_escapes(const char *str) {
     if (!str) return NULL;
 
     size_t len = strlen(str);
-    char *result = malloc(len * 2 + 1);  /* Espacio extra para preservar backslashes */
+    char *result = malloc(len * 4 + 1);  /* UTF-8 puede usar hasta 4 bytes por carácter */
     if (!result) return NULL;
 
     size_t j = 0;
     for (size_t i = 0; i < len; i++) {
         if (str[i] == '\\' && i + 1 < len) {
             if (str[i+1] == 'u' && i + 5 < len) {
-                /* TODO: Procesar \uXXXX Unicode */
-                /* Por ahora, solo copiar literal */
-                result[j++] = str[i];
+                /* Procesar \uXXXX Unicode */
+                char hex[5] = {str[i+2], str[i+3], str[i+4], str[i+5], '\0'};
+                char *endptr;
+                uint32_t codepoint = (uint32_t)strtol(hex, &endptr, 16);
+
+                if (endptr == hex + 4) {
+                    /* Conversión exitosa */
+                    char utf8[4];
+                    int bytes = unicode_to_utf8(codepoint, utf8);
+                    for (int k = 0; k < bytes; k++) {
+                        result[j++] = utf8[k];
+                    }
+                    i += 5;  /* Saltar \uXXXX */
+                } else {
+                    /* Conversión falló, copiar literal */
+                    result[j++] = str[i];
+                }
+            } else if (str[i+1] == 'U' && i + 9 < len) {
+                /* Procesar \UXXXXXXXX Unicode (codepoints extendidos) */
+                char hex[9] = {str[i+2], str[i+3], str[i+4], str[i+5],
+                               str[i+6], str[i+7], str[i+8], str[i+9], '\0'};
+                char *endptr;
+                uint32_t codepoint = (uint32_t)strtol(hex, &endptr, 16);
+
+                if (endptr == hex + 8 && codepoint <= 0x10FFFF) {
+                    /* Conversión exitosa */
+                    char utf8[4];
+                    int bytes = unicode_to_utf8(codepoint, utf8);
+                    for (int k = 0; k < bytes; k++) {
+                        result[j++] = utf8[k];
+                    }
+                    i += 9;  /* Saltar \UXXXXXXXX */
+                } else {
+                    /* Conversión falló, copiar literal */
+                    result[j++] = str[i];
+                }
             } else if (str[i+1] == 'd' || str[i+1] == 'D' ||
                        str[i+1] == 'w' || str[i+1] == 'W' ||
                        str[i+1] == 's' || str[i+1] == 'S' ||

@@ -138,6 +138,7 @@ typedef struct {
 typedef struct bcl_scope {
     bcl_hash_table_t *vars;             /**< Variables locales */
     bcl_hash_table_t *global_refs;      /**< Referencias a globales (GLOBAL) */
+    bcl_hash_table_t *global_prefixes;  /**< Prefijos globales para arrays */
     struct bcl_scope *parent;           /**< Ámbito padre */
 } bcl_scope_t;
 

@@ -1,0 +1,548 @@
+################################################################################
+# MATRIX.BLB - MATLAB-Style Matrix Operations Library for BCL
+################################################################################
+# Version: 2.0.0
+# Date: 2025-11-16
+# Description: Complete matrix operations library with MATLAB-style syntax.
+#              Now fully functional with BCL's improved array global system.
+#              Matrices stored as: matrixname(row,col)
+#              Metadata stored as: _mat(matrixname.rows), _mat(matrixname.cols)
+# Usage: SOURCE "lib/MATRIX.BLB"
+# Requires: BCL 1.6+ with array global prefix support
+################################################################################
+
+# ==============================================================================
+# LIBRARY INITIALIZATION
+# ==============================================================================
+
+# Initialize metadata array (will be global across all procedures)
+SET _mat(__init) 1
+
+# ==============================================================================
+# MATRIX CREATION
+# ==============================================================================
+
+# MAT_CREATE - Create matrix metadata
+# Usage: MAT_CREATE name rows cols
+PROC MAT_CREATE WITH name rows cols DO
+    GLOBAL _mat
+    SET _mat($name.rows) $rows
+    SET _mat($name.cols) $cols
+    SET _mat($name.size) [EXPR $rows * $cols]
+END
+
+# MAT_ZEROS - Create matrix filled with zeros
+# Usage: MAT_ZEROS M 3 4
+PROC MAT_ZEROS WITH name rows cols DO
+    GLOBAL _mat
+    EVAL "GLOBAL $name"
+    MAT_CREATE $name $rows $cols
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        FOR 0 TO [EXPR $cols - 1] DO
+            SET c $__FOR
+            EVAL "SET ${name}($r,$c) 0"
+        END
+    END
+END
+
+# MAT_ONES - Create matrix filled with ones
+# Usage: MAT_ONES M 2 3
+PROC MAT_ONES WITH name rows cols DO
+    GLOBAL _mat
+    EVAL "GLOBAL $name"
+    MAT_CREATE $name $rows $cols
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        FOR 0 TO [EXPR $cols - 1] DO
+            SET c $__FOR
+            EVAL "SET ${name}($r,$c) 1"
+        END
+    END
+END
+
+# MAT_EYE - Create identity matrix
+# Usage: MAT_EYE I 3
+PROC MAT_EYE WITH name size DO
+    GLOBAL _mat
+    EVAL "GLOBAL $name"
+    MAT_CREATE $name $size $size
+
+    FOR 0 TO [EXPR $size - 1] DO
+        SET r $__FOR
+        FOR 0 TO [EXPR $size - 1] DO
+            SET c $__FOR
+            IF [EXPR $r == $c] THEN
+                EVAL "SET ${name}($r,$c) 1"
+            ELSE
+                EVAL "SET ${name}($r,$c) 0"
+            END
+        END
+    END
+END
+
+# MAT_RAND - Create matrix with random values [0,1]
+# Usage: MAT_RAND M 3 3
+PROC MAT_RAND WITH name rows cols DO
+    GLOBAL _mat
+    EVAL "GLOBAL $name"
+    MAT_CREATE $name $rows $cols
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        FOR 0 TO [EXPR $cols - 1] DO
+            SET c $__FOR
+            SET val [EXPR rand()]
+            EVAL "SET ${name}($r,$c) $val"
+        END
+    END
+END
+
+# MAT_FROM_LIST - Create matrix from flat list
+# Usage: MAT_FROM_LIST M 2 2 "1 2 3 4"
+PROC MAT_FROM_LIST WITH name rows cols data DO
+    GLOBAL _mat
+    EVAL "GLOBAL $name"
+    MAT_CREATE $name $rows $cols
+
+    SET values [SPLIT $data " "]
+    SET idx 0
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        FOR 0 TO [EXPR $cols - 1] DO
+            SET c $__FOR
+            SET val [LINDEX $values $idx]
+            EVAL "SET ${name}($r,$c) $val"
+            INCR idx
+        END
+    END
+END
+
+# ==============================================================================
+# MATRIX DISPLAY
+# ==============================================================================
+
+# MAT_PRINT - Print matrix in readable format
+# Usage: MAT_PRINT M
+PROC MAT_PRINT WITH name DO
+    GLOBAL _mat
+    EVAL "GLOBAL $name"
+
+    SET rows $_mat($name.rows)
+    SET cols $_mat($name.cols)
+
+    PUTS "Matrix $name ($rows x $cols):"
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        PUTS -NONEWLINE "  ["
+
+        FOR 0 TO [EXPR $cols - 1] DO
+            SET c $__FOR
+            EVAL "SET val \$${name}($r,$c)"
+            SET formatted [FORMAT "%8.4f" $val]
+            PUTS -NONEWLINE $formatted
+
+            IF [EXPR $c < $cols - 1] THEN
+                PUTS -NONEWLINE " "
+            END
+        END
+
+        PUTS "]"
+    END
+    PUTS ""
+END
+
+# ==============================================================================
+# BASIC MATRIX OPERATIONS
+# ==============================================================================
+
+# MAT_ADD - Matrix addition: C = A + B
+# Usage: MAT_ADD A B C
+PROC MAT_ADD WITH A B C DO
+    GLOBAL _mat
+    EVAL "GLOBAL $A"
+    EVAL "GLOBAL $B"
+    EVAL "GLOBAL $C"
+
+    SET rows $_mat($A.rows)
+    SET cols $_mat($A.cols)
+
+    # Verify dimensions match
+    IF [EXPR $rows != $_mat($B.rows) || $cols != $_mat($B.cols)] THEN
+        PUTS "ERROR: Matrix dimensions must match for addition"
+        RETURN
+    END
+
+    MAT_CREATE $C $rows $cols
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        FOR 0 TO [EXPR $cols - 1] DO
+            SET c $__FOR
+            EVAL "SET val_a \$${A}($r,$c)"
+            EVAL "SET val_b \$${B}($r,$c)"
+            SET sum [EXPR $val_a + $val_b]
+            EVAL "SET ${C}($r,$c) $sum"
+        END
+    END
+END
+
+# MAT_SUB - Matrix subtraction: C = A - B
+# Usage: MAT_SUB A B C
+PROC MAT_SUB WITH A B C DO
+    GLOBAL _mat
+    EVAL "GLOBAL $A"
+    EVAL "GLOBAL $B"
+    EVAL "GLOBAL $C"
+
+    SET rows $_mat($A.rows)
+    SET cols $_mat($A.cols)
+
+    IF [EXPR $rows != $_mat($B.rows) || $cols != $_mat($B.cols)] THEN
+        PUTS "ERROR: Matrix dimensions must match for subtraction"
+        RETURN
+    END
+
+    MAT_CREATE $C $rows $cols
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        FOR 0 TO [EXPR $cols - 1] DO
+            SET c $__FOR
+            EVAL "SET val_a \$${A}($r,$c)"
+            EVAL "SET val_b \$${B}($r,$c)"
+            SET diff [EXPR $val_a - $val_b]
+            EVAL "SET ${C}($r,$c) $diff"
+        END
+    END
+END
+
+# MAT_MUL - Matrix multiplication: C = A * B
+# Usage: MAT_MUL A B C
+PROC MAT_MUL WITH A B C DO
+    GLOBAL _mat
+    EVAL "GLOBAL $A"
+    EVAL "GLOBAL $B"
+    EVAL "GLOBAL $C"
+
+    SET rows_a $_mat($A.rows)
+    SET cols_a $_mat($A.cols)
+    SET rows_b $_mat($B.rows)
+    SET cols_b $_mat($B.cols)
+
+    IF [EXPR $cols_a != $rows_b] THEN
+        PUTS "ERROR: A columns must equal B rows for multiplication"
+        RETURN
+    END
+
+    MAT_CREATE $C $rows_a $cols_b
+
+    FOR 0 TO [EXPR $rows_a - 1] DO
+        SET i $__FOR
+        FOR 0 TO [EXPR $cols_b - 1] DO
+            SET j $__FOR
+            SET sum 0
+            FOR 0 TO [EXPR $cols_a - 1] DO
+                SET k $__FOR
+                EVAL "SET val_a \$${A}($i,$k)"
+                EVAL "SET val_b \$${B}($k,$j)"
+                SET sum [EXPR $sum + ($val_a * $val_b)]
+            END
+            EVAL "SET ${C}($i,$j) $sum"
+        END
+    END
+END
+
+# MAT_SCALAR_MUL - Scalar multiplication: B = k * A
+# Usage: MAT_SCALAR_MUL A 2.5 B
+PROC MAT_SCALAR_MUL WITH A scalar B DO
+    GLOBAL _mat
+    EVAL "GLOBAL $A"
+    EVAL "GLOBAL $B"
+
+    SET rows $_mat($A.rows)
+    SET cols $_mat($A.cols)
+
+    MAT_CREATE $B $rows $cols
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        FOR 0 TO [EXPR $cols - 1] DO
+            SET c $__FOR
+            EVAL "SET val \$${A}($r,$c)"
+            SET result [EXPR $scalar * $val]
+            EVAL "SET ${B}($r,$c) $result"
+        END
+    END
+END
+
+# MAT_ELEM_MUL - Element-wise multiplication: C = A .* B
+# Usage: MAT_ELEM_MUL A B C
+PROC MAT_ELEM_MUL WITH A B C DO
+    GLOBAL _mat
+    EVAL "GLOBAL $A"
+    EVAL "GLOBAL $B"
+    EVAL "GLOBAL $C"
+
+    SET rows $_mat($A.rows)
+    SET cols $_mat($A.cols)
+
+    IF [EXPR $rows != $_mat($B.rows) || $cols != $_mat($B.cols)] THEN
+        PUTS "ERROR: Matrix dimensions must match for element-wise multiplication"
+        RETURN
+    END
+
+    MAT_CREATE $C $rows $cols
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        FOR 0 TO [EXPR $cols - 1] DO
+            SET c $__FOR
+            EVAL "SET val_a \$${A}($r,$c)"
+            EVAL "SET val_b \$${B}($r,$c)"
+            SET prod [EXPR $val_a * $val_b]
+            EVAL "SET ${C}($r,$c) $prod"
+        END
+    END
+END
+
+# ==============================================================================
+# MATRIX TRANSFORMATIONS
+# ==============================================================================
+
+# MAT_TRANSPOSE - Transpose: B = A'
+# Usage: MAT_TRANSPOSE A B
+PROC MAT_TRANSPOSE WITH A B DO
+    GLOBAL _mat
+    EVAL "GLOBAL $A"
+    EVAL "GLOBAL $B"
+
+    SET rows $_mat($A.rows)
+    SET cols $_mat($A.cols)
+
+    MAT_CREATE $B $cols $rows
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        FOR 0 TO [EXPR $cols - 1] DO
+            SET c $__FOR
+            EVAL "SET val \$${A}($r,$c)"
+            EVAL "SET ${B}($c,$r) $val"
+        END
+    END
+END
+
+# ==============================================================================
+# MATRIX ANALYSIS
+# ==============================================================================
+
+# MAT_SUM - Sum of all elements
+# Usage: SET total [MAT_SUM M]
+PROC MAT_SUM WITH name DO
+    GLOBAL _mat
+    EVAL "GLOBAL $name"
+
+    SET rows $_mat($name.rows)
+    SET cols $_mat($name.cols)
+    SET sum 0
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        FOR 0 TO [EXPR $cols - 1] DO
+            SET c $__FOR
+            EVAL "SET val \$${name}($r,$c)"
+            SET sum [EXPR $sum + $val]
+        END
+    END
+
+    RETURN $sum
+END
+
+# MAT_MEAN - Mean of all elements
+# Usage: SET avg [MAT_MEAN M]
+PROC MAT_MEAN WITH name DO
+    GLOBAL _mat
+
+    SET total [MAT_SUM $name]
+    SET size $_mat($name.size)
+    RETURN [EXPR $total / $size]
+END
+
+# MAT_MIN - Minimum element
+# Usage: SET min_val [MAT_MIN M]
+PROC MAT_MIN WITH name DO
+    GLOBAL _mat
+    EVAL "GLOBAL $name"
+
+    SET rows $_mat($name.rows)
+    SET cols $_mat($name.cols)
+
+    EVAL "SET min_val \$${name}(0,0)"
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        FOR 0 TO [EXPR $cols - 1] DO
+            SET c $__FOR
+            EVAL "SET val \$${name}($r,$c)"
+            IF [EXPR $val < $min_val] THEN
+                SET min_val $val
+            END
+        END
+    END
+
+    RETURN $min_val
+END
+
+# MAT_MAX - Maximum element
+# Usage: SET max_val [MAT_MAX M]
+PROC MAT_MAX WITH name DO
+    GLOBAL _mat
+    EVAL "GLOBAL $name"
+
+    SET rows $_mat($name.rows)
+    SET cols $_mat($name.cols)
+
+    EVAL "SET max_val \$${name}(0,0)"
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        FOR 0 TO [EXPR $cols - 1] DO
+            SET c $__FOR
+            EVAL "SET val \$${name}($r,$c)"
+            IF [EXPR $val > $max_val] THEN
+                SET max_val $val
+            END
+        END
+    END
+
+    RETURN $max_val
+END
+
+# MAT_TRACE - Trace (sum of diagonal)
+# Usage: SET tr [MAT_TRACE M]
+PROC MAT_TRACE WITH name DO
+    GLOBAL _mat
+    EVAL "GLOBAL $name"
+
+    SET rows $_mat($name.rows)
+    SET cols $_mat($name.cols)
+
+    IF [EXPR $rows != $cols] THEN
+        PUTS "ERROR: TRACE requires square matrix"
+        RETURN 0
+    END
+
+    SET sum 0
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET i $__FOR
+        EVAL "SET val \$${name}($i,$i)"
+        SET sum [EXPR $sum + $val]
+    END
+
+    RETURN $sum
+END
+
+# MAT_DET_2X2 - Determinant of 2x2 matrix
+# Usage: SET det [MAT_DET_2X2 M]
+PROC MAT_DET_2X2 WITH name DO
+    GLOBAL _mat
+    EVAL "GLOBAL $name"
+
+    IF [EXPR $_mat($name.rows) != 2 || $_mat($name.cols) != 2] THEN
+        PUTS "ERROR: DET_2X2 requires 2x2 matrix"
+        RETURN 0
+    END
+
+    EVAL "SET a11 \$${name}(0,0)"
+    EVAL "SET a12 \$${name}(0,1)"
+    EVAL "SET a21 \$${name}(1,0)"
+    EVAL "SET a22 \$${name}(1,1)"
+
+    RETURN [EXPR ($a11 * $a22) - ($a12 * $a21)]
+END
+
+# ==============================================================================
+# UTILITY FUNCTIONS
+# ==============================================================================
+
+# MAT_COPY - Copy matrix A to B
+# Usage: MAT_COPY A B
+PROC MAT_COPY WITH A B DO
+    GLOBAL _mat
+    EVAL "GLOBAL $A"
+    EVAL "GLOBAL $B"
+
+    SET rows $_mat($A.rows)
+    SET cols $_mat($A.cols)
+
+    MAT_CREATE $B $rows $cols
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        FOR 0 TO [EXPR $cols - 1] DO
+            SET c $__FOR
+            EVAL "SET val \$${A}($r,$c)"
+            EVAL "SET ${B}($r,$c) $val"
+        END
+    END
+END
+
+# MAT_FILL - Fill matrix with value
+# Usage: MAT_FILL M 3.14
+PROC MAT_FILL WITH name value DO
+    GLOBAL _mat
+    EVAL "GLOBAL $name"
+
+    SET rows $_mat($name.rows)
+    SET cols $_mat($name.cols)
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        FOR 0 TO [EXPR $cols - 1] DO
+            SET c $__FOR
+            EVAL "SET ${name}($r,$c) $value"
+        END
+    END
+END
+
+# MAT_GET_ROW - Get row as list
+# Usage: SET row_data [MAT_GET_ROW M 0]
+PROC MAT_GET_ROW WITH name row DO
+    GLOBAL _mat
+    EVAL "GLOBAL $name"
+
+    SET cols $_mat($name.cols)
+    SET result [LIST]
+
+    FOR 0 TO [EXPR $cols - 1] DO
+        SET c $__FOR
+        EVAL "SET val \$${name}($row,$c)"
+        SET result [LAPPEND $result $val]
+    END
+
+    RETURN $result
+END
+
+# MAT_GET_COL - Get column as list
+# Usage: SET col_data [MAT_GET_COL M 0]
+PROC MAT_GET_COL WITH name col DO
+    GLOBAL _mat
+    EVAL "GLOBAL $name"
+
+    SET rows $_mat($name.rows)
+    SET result [LIST]
+
+    FOR 0 TO [EXPR $rows - 1] DO
+        SET r $__FOR
+        EVAL "SET val \$${name}($r,$col)"
+        SET result [LAPPEND $result $val]
+    END
+
+    RETURN $result
+END
+
+PUTS "MATRIX Library v2.0.0 loaded - Type 'MAT_' and TAB for available functions"

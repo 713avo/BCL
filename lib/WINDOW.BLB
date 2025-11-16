@@ -1,11 +1,11 @@
 ################################################################################
-# WINDOW.BLB - Window Management Library for BCL
+# WINDOW.BLB - Advanced Window Management Library for BCL
 ################################################################################
-# Version: 1.1.0
-# Date: 2025-10-22
-# Description: Unicode-based window management system
+# Version: 2.0.0
+# Date: 2025-11-16
+# Description: Unicode-based window management with full global array support
 # Usage: SOURCE "lib/WINDOW.BLB"
-# Requires: ANSI.BLB
+# Requires: ANSI.BLB (v2.0.0+), BCL 1.6+ with array global prefix support
 ################################################################################
 
 SOURCE "lib/ANSI.BLB"
@@ -14,11 +14,8 @@ SOURCE "lib/ANSI.BLB"
 # GLOBAL VARIABLES FOR WINDOW SYSTEM
 # ==============================================================================
 
-# Window stack (up to 10 windows)
 SET WIN_COUNT 0
 SET WIN_MAX 10
-
-# Current background color
 SET WIN_BG_COLOR $ANSI_BG_BLACK
 
 # ==============================================================================
@@ -26,9 +23,10 @@ SET WIN_BG_COLOR $ANSI_BG_BLACK
 # ==============================================================================
 
 # WIN_CREATE - Create a new window
-# Parameters: id row col width height title
+# Usage: WIN_CREATE id row col width height title
 PROC WIN_CREATE WITH id row col width height title DO
-    # Store window properties in array
+    GLOBAL win_id
+
     SET win_id($id.row) $row
     SET win_id($id.col) $col
     SET win_id($id.width) $width
@@ -37,14 +35,21 @@ PROC WIN_CREATE WITH id row col width height title DO
     SET win_id($id.visible) 1
     SET win_id($id.fg) $ANSI_FG_WHITE
     SET win_id($id.bg) $ANSI_BG_BLUE
+    SET win_id($id.border_style) 1
+    SET win_id($id.border_fg) $ANSI_FG_BRIGHT_WHITE
+    SET win_id($id.border_bg) $ANSI_BG_BLUE
+    SET win_id($id.scroll_top) 0
+    SET win_id($id.content_lines) 0
 
+    GLOBAL WIN_COUNT
     INCR WIN_COUNT
 END
 
 # WIN_DRAW - Draw a window
-# Parameters: id
+# Usage: WIN_DRAW id
 PROC WIN_DRAW WITH id DO
-    # Check if window is visible
+    GLOBAL win_id
+
     IF [EXPR $win_id($id.visible) == 0] THEN
         RETURN
     END
@@ -54,114 +59,213 @@ PROC WIN_DRAW WITH id DO
     SET width $win_id($id.width)
     SET height $win_id($id.height)
     SET title $win_id($id.title)
+    SET style $win_id($id.border_style)
 
-    # Set window colors
-    ANSI_SET_COLOR $win_id($id.fg) $win_id($id.bg)
+    # Select box drawing characters based on style
+    IF [EXPR $style == 0] THEN
+        # Single line
+        SET tl $ANSI_BOX_TL
+        SET tr $ANSI_BOX_TR
+        SET bl $ANSI_BOX_BL
+        SET br $ANSI_BOX_BR
+        SET h $ANSI_BOX_H
+        SET v $ANSI_BOX_V
+    ELSEIF [EXPR $style == 1] THEN
+        # Double line
+        SET tl $ANSI_BOX_D_TL
+        SET tr $ANSI_BOX_D_TR
+        SET bl $ANSI_BOX_D_BL
+        SET br $ANSI_BOX_D_BR
+        SET h $ANSI_BOX_D_H
+        SET v $ANSI_BOX_D_V
+    ELSE
+        # Rounded
+        SET tl $ANSI_BOX_R_TL
+        SET tr $ANSI_BOX_R_TR
+        SET bl $ANSI_BOX_R_BL
+        SET br $ANSI_BOX_R_BR
+        SET h $ANSI_BOX_H
+        SET v $ANSI_BOX_V
+    END
 
-    # Draw top border: ╔═══...═══╗
+    # Set border colors
+    ANSI_SET_COLOR $win_id($id.border_fg) $win_id($id.border_bg)
+
+    # Draw top border
     ANSI_CURSOR_GOTO $row $col
-    PUTSN "╔"
+    PUTS -NONEWLINE $tl
     SET i 1
     WHILE [EXPR $i < $width - 1] DO
-        PUTSN "═"
+        PUTS -NONEWLINE $h
         INCR i
     END
-    PUTSN "╗"
+    PUTS -NONEWLINE $tr
 
     # Draw title if provided
     IF [EXPR [STRING LENGTH $title] > 0] THEN
         SET title_col [EXPR $col + 2]
         ANSI_CURSOR_GOTO $row $title_col
         ANSI_SET_STYLE $ANSI_BOLD
-        PUTSN " "
-        PUTSN $title
-        PUTSN " "
-        ANSI_SET_COLOR $win_id($id.fg) $win_id($id.bg)
+        PUTS -NONEWLINE " "
+        PUTS -NONEWLINE $title
+        PUTS -NONEWLINE " "
+        ANSI_SET_COLOR $win_id($id.border_fg) $win_id($id.border_bg)
     END
 
-    # Draw sides: ║   ...   ║
+    # Draw sides
     SET r [EXPR $row + 1]
     SET end_row [EXPR $row + $height - 1]
     WHILE [EXPR $r < $end_row] DO
         ANSI_CURSOR_GOTO $r $col
-        PUTSN "║"
+        PUTS -NONEWLINE $v
+
+        # Fill with background color
+        ANSI_SET_COLOR $win_id($id.fg) $win_id($id.bg)
         SET i 1
         WHILE [EXPR $i < $width - 1] DO
-            PUTSN " "
+            PUTS -NONEWLINE " "
             INCR i
         END
-        PUTSN "║"
+
+        ANSI_SET_COLOR $win_id($id.border_fg) $win_id($id.border_bg)
+        PUTS -NONEWLINE $v
         INCR r
     END
 
-    # Draw bottom border: ╚═══...═══╝
+    # Draw bottom border
     ANSI_CURSOR_GOTO $end_row $col
-    PUTSN "╚"
+    PUTS -NONEWLINE $bl
     SET i 1
     WHILE [EXPR $i < $width - 1] DO
-        PUTSN "═"
+        PUTS -NONEWLINE $h
         INCR i
     END
-    PUTSN "╝"
+    PUTS -NONEWLINE $br
 
     ANSI_RESET
 END
 
 # WIN_PRINT - Print text inside window
-# Parameters: id row text
+# Usage: WIN_PRINT id row text
 PROC WIN_PRINT WITH id row text DO
+    GLOBAL win_id
+
     SET win_row $win_id($id.row)
     SET win_col $win_id($id.col)
+    SET width $win_id($id.width)
 
     SET print_row [EXPR $win_row + $row]
     SET print_col [EXPR $win_col + 2]
 
     ANSI_CURSOR_GOTO $print_row $print_col
     ANSI_SET_COLOR $win_id($id.fg) $win_id($id.bg)
-    PUTS $text
+
+    # Truncate text if too long
+    SET max_len [EXPR $width - 4]
+    SET text_len [STRING LENGTH $text]
+    IF [EXPR $text_len > $max_len] THEN
+        SET text [STRING RANGE $text 0 [EXPR $max_len - 1]]
+    END
+
+    PUTS -NONEWLINE $text
     ANSI_RESET
 END
 
+# WIN_PRINT_CENTER - Print centered text
+# Usage: WIN_PRINT_CENTER id row text
+PROC WIN_PRINT_CENTER WITH id row text DO
+    GLOBAL win_id
+
+    SET width $win_id($id.width)
+    SET text_len [STRING LENGTH $text]
+    SET spaces [EXPR ($width - $text_len - 4) / 2]
+
+    IF [EXPR $spaces < 0] THEN
+        SET spaces 0
+    END
+
+    SET padding ""
+    FOR 0 TO [EXPR $spaces - 1] DO
+        SET padding "$padding "
+    END
+
+    WIN_PRINT $id $row "$padding$text"
+END
+
+# ==============================================================================
+# WINDOW STATE MANAGEMENT
+# ==============================================================================
+
 # WIN_HIDE - Hide a window
+# Usage: WIN_HIDE id
 PROC WIN_HIDE WITH id DO
+    GLOBAL win_id
     SET win_id($id.visible) 0
 END
 
 # WIN_SHOW - Show a window
+# Usage: WIN_SHOW id
 PROC WIN_SHOW WITH id DO
+    GLOBAL win_id
     SET win_id($id.visible) 1
     WIN_DRAW $id
 END
 
 # WIN_MOVE - Move a window
+# Usage: WIN_MOVE id new_row new_col
 PROC WIN_MOVE WITH id new_row new_col DO
+    GLOBAL win_id
     SET win_id($id.row) $new_row
     SET win_id($id.col) $new_col
 END
 
-# WIN_SET_COLOR - Set window colors
+# WIN_SET_COLOR - Set window foreground/background colors
+# Usage: WIN_SET_COLOR id fg bg
 PROC WIN_SET_COLOR WITH id fg bg DO
+    GLOBAL win_id
     SET win_id($id.fg) $fg
     SET win_id($id.bg) $bg
 END
 
+# WIN_SET_BORDER_COLOR - Set border colors
+# Usage: WIN_SET_BORDER_COLOR id fg bg
+PROC WIN_SET_BORDER_COLOR WITH id fg bg DO
+    GLOBAL win_id
+    SET win_id($id.border_fg) $fg
+    SET win_id($id.border_bg) $bg
+END
+
+# WIN_SET_BORDER_STYLE - Set border style (0=single, 1=double, 2=rounded)
+# Usage: WIN_SET_BORDER_STYLE id style
+PROC WIN_SET_BORDER_STYLE WITH id style DO
+    GLOBAL win_id
+    SET win_id($id.border_style) $style
+END
+
+# ==============================================================================
+# CONTENT MANAGEMENT
+# ==============================================================================
+
 # WIN_CLEAR - Clear window content
+# Usage: WIN_CLEAR id
 PROC WIN_CLEAR WITH id DO
+    GLOBAL win_id
+
     SET row $win_id($id.row)
     SET col $win_id($id.col)
     SET width $win_id($id.width)
     SET height $win_id($id.height)
 
-    ANSI_SET_COLOR $win_id($id.fg) $win_id($id.bg)
-
     SET r [EXPR $row + 1]
     SET end_row [EXPR $row + $height - 1]
+
+    ANSI_SET_COLOR $win_id($id.fg) $win_id($id.bg)
 
     WHILE [EXPR $r < $end_row] DO
         ANSI_CURSOR_GOTO $r [EXPR $col + 1]
         SET i 1
         WHILE [EXPR $i < $width - 1] DO
-            PUTSN " "
+            PUTS -NONEWLINE " "
             INCR i
         END
         INCR r
@@ -170,151 +274,221 @@ PROC WIN_CLEAR WITH id DO
     ANSI_RESET
 END
 
-# WIN_DELETE - Completely remove a window from screen
-PROC WIN_DELETE WITH id DO
-    SET row $win_id($id.row)
-    SET col $win_id($id.col)
-    SET width $win_id($id.width)
-    SET height $win_id($id.height)
+# WIN_ADD_LINE - Add a line to window's content buffer
+# Usage: WIN_ADD_LINE id text
+PROC WIN_ADD_LINE WITH id text DO
+    GLOBAL win_id
 
-    # Clear the window area
-    SET r $row
-    SET end_row [EXPR $row + $height]
-    WHILE [EXPR $r < $end_row] DO
-        ANSI_CURSOR_GOTO $r $col
-        SET i 0
-        WHILE [EXPR $i < $width] DO
-            PUTSN " "
-            INCR i
+    SET line_num $win_id($id.content_lines)
+    SET win_id($id.line.$line_num) $text
+    INCR win_id($id.content_lines)
+END
+
+# WIN_REDRAW_CONTENT - Redraw content with scroll position
+# Usage: WIN_REDRAW_CONTENT id
+PROC WIN_REDRAW_CONTENT WITH id DO
+    GLOBAL win_id
+
+    SET height $win_id($id.height)
+    SET visible_lines [EXPR $height - 2]
+    SET scroll_top $win_id($id.scroll_top)
+    SET total_lines $win_id($id.content_lines)
+
+    WIN_CLEAR $id
+
+    SET line 0
+    WHILE [EXPR $line < $visible_lines] DO
+        SET content_idx [EXPR $scroll_top + $line]
+        IF [EXPR $content_idx < $total_lines] THEN
+            SET text $win_id($id.line.$content_idx)
+            WIN_PRINT $id [EXPR $line + 1] $text
         END
-        INCR r
+        INCR line
+    END
+END
+
+# WIN_SCROLL - Scroll content (direction: 1=down, -1=up)
+# Usage: WIN_SCROLL id direction
+PROC WIN_SCROLL WITH id direction DO
+    GLOBAL win_id
+
+    SET height $win_id($id.height)
+    SET visible_lines [EXPR $height - 2]
+    SET total_lines $win_id($id.content_lines)
+    SET max_scroll [EXPR $total_lines - $visible_lines]
+
+    IF [EXPR $max_scroll < 0] THEN
+        RETURN
     END
 
-    # Mark as not visible
-    SET win_id($id.visible) 0
+    IF [EXPR $direction < 0] THEN
+        # Scroll up
+        IF [EXPR $win_id($id.scroll_top) > 0] THEN
+            SET win_id($id.scroll_top) [EXPR $win_id($id.scroll_top) - 1]
+        END
+    ELSE
+        # Scroll down
+        IF [EXPR $win_id($id.scroll_top) < $max_scroll] THEN
+            SET win_id($id.scroll_top) [EXPR $win_id($id.scroll_top) + 1]
+        END
+    END
+
+    WIN_REDRAW_CONTENT $id
 END
 
 # ==============================================================================
-# SCREEN MANAGEMENT
+# ADVANCED FEATURES
 # ==============================================================================
 
-# WIN_INIT - Initialize window system
-PROC WIN_INIT DO
-    ANSI_INIT
-    WIN_CLEAR_SCREEN
-    ANSI_CURSOR_SHOW
+# WIN_MENU - Draw a menu with selection
+# Usage: WIN_MENU id items selected
+PROC WIN_MENU WITH id items selected DO
+    GLOBAL win_id
+
+    SET idx 0
+    FOREACH item IN $items DO
+        INCR idx
+        IF [EXPR $idx == $selected] THEN
+            # Highlight selected item
+            SET win_row $win_id($id.row)
+            SET win_col $win_id($id.col)
+            SET print_row [EXPR $win_row + $idx]
+            SET print_col [EXPR $win_col + 2]
+
+            ANSI_CURSOR_GOTO $print_row $print_col
+            ANSI_SET_COLOR $win_id($id.bg) $win_id($id.fg)
+            PUTS -NONEWLINE " $ANSI_ARROW_RIGHT $item "
+            ANSI_RESET
+        ELSE
+            WIN_PRINT $id $idx "  $item"
+        END
+    END
 END
 
-# WIN_CLEANUP - Cleanup and exit
-PROC WIN_CLEANUP DO
-    ANSI_CLEANUP
-    ANSI_CLEAR
-    ANSI_CURSOR_HOME
+# WIN_PROGRESS - Draw a progress bar inside window
+# Usage: WIN_PROGRESS id row percent
+PROC WIN_PROGRESS WITH id row percent DO
+    GLOBAL win_id
+
+    SET width $win_id($id.width)
+    SET bar_width [EXPR $width - 6]
+
+    IF [EXPR $percent < 0] THEN
+        SET percent 0
+    END
+    IF [EXPR $percent > 100] THEN
+        SET percent 100
+    END
+
+    SET filled [EXPR ($bar_width * $percent) / 100]
+
+    SET bar "["
+    SET i 0
+    WHILE [EXPR $i < $bar_width] DO
+        IF [EXPR $i < $filled] THEN
+            SET bar "$bar$ANSI_BLOCK_FULL"
+        ELSE
+            SET bar "$bar$ANSI_BLOCK_LIGHT"
+        END
+        INCR i
+    END
+    SET bar "$bar] $percent%"
+
+    WIN_PRINT $id $row $bar
 END
+
+# WIN_BUTTON - Draw a button
+# Usage: WIN_BUTTON id row col label
+PROC WIN_BUTTON WITH id row col label DO
+    GLOBAL win_id
+
+    SET win_row $win_id($id.row)
+    SET win_col $win_id($id.col)
+
+    SET btn_row [EXPR $win_row + $row]
+    SET btn_col [EXPR $win_col + $col]
+
+    ANSI_CURSOR_GOTO $btn_row $btn_col
+    ANSI_SET_COLOR $ANSI_FG_BLACK $ANSI_BG_BRIGHT_WHITE
+    PUTS -NONEWLINE " [ "
+    PUTS -NONEWLINE $label
+    PUTS -NONEWLINE " ] "
+    ANSI_RESET
+END
+
+# WIN_HLINE - Draw horizontal line inside window
+# Usage: WIN_HLINE id row
+PROC WIN_HLINE WITH id row DO
+    GLOBAL win_id
+
+    SET width $win_id($id.width)
+    SET line ""
+    SET i 0
+    WHILE [EXPR $i < $width - 4] DO
+        SET line "$line$ANSI_BOX_H"
+        INCR i
+    END
+
+    WIN_PRINT $id $row $line
+END
+
+# WIN_MESSAGE_BOX - Simple message box
+# Usage: WIN_MESSAGE_BOX msg
+PROC WIN_MESSAGE_BOX WITH msg DO
+    SET msg_len [STRING LENGTH $msg]
+    SET box_width [EXPR $msg_len + 6]
+    IF [EXPR $box_width < 20] THEN
+        SET box_width 20
+    END
+
+    SET box_row 10
+    SET box_col [EXPR (80 - $box_width) / 2]
+
+    WIN_CREATE 999 $box_row $box_col $box_width 5 "Message"
+    WIN_SET_BORDER_STYLE 999 2
+    WIN_SET_COLOR 999 $ANSI_FG_BLACK $ANSI_BG_BRIGHT_WHITE
+    WIN_SET_BORDER_COLOR 999 $ANSI_FG_BRIGHT_BLUE $ANSI_BG_BRIGHT_WHITE
+    WIN_DRAW 999
+    WIN_PRINT_CENTER 999 1 $msg
+    WIN_PRINT_CENTER 999 3 "[ OK ]"
+END
+
+# ==============================================================================
+# SYSTEM MANAGEMENT
+# ==============================================================================
 
 # WIN_CLEAR_SCREEN - Clear entire screen with background
+# Usage: WIN_CLEAR_SCREEN
 PROC WIN_CLEAR_SCREEN DO
+    GLOBAL WIN_BG_COLOR
+    ANSI_SET_COLOR $ANSI_FG_WHITE $WIN_BG_COLOR
     ANSI_CLEAR
-    ANSI_SET_BG $WIN_BG_COLOR
+    ANSI_CURSOR_HOME
 
-    SET row 1
-    WHILE [EXPR $row <= 24] DO
-        ANSI_CURSOR_GOTO $row 1
-        SET col 1
-        WHILE [EXPR $col <= 80] DO
-            PUTSN " "
-            INCR col
+    # Fill screen
+    FOR 0 TO 24 DO
+        SET i 0
+        WHILE [EXPR $i < 80] DO
+            PUTS -NONEWLINE " "
+            INCR i
         END
-        INCR row
     END
 
+    ANSI_CURSOR_HOME
     ANSI_RESET
 END
 
-# WIN_SET_BACKGROUND - Set screen background color
-PROC WIN_SET_BACKGROUND WITH color DO
-    SET WIN_BG_COLOR $color
+# WIN_INIT - Initialize window system
+# Usage: WIN_INIT
+PROC WIN_INIT DO
+    ANSI_INIT_FULL
     WIN_CLEAR_SCREEN
 END
 
-# WIN_REDRAW_ALL - Redraw all visible windows
-PROC WIN_REDRAW_ALL DO
-    WIN_CLEAR_SCREEN
-
-    # Redraw all windows
-    SET i 0
-    WHILE [EXPR $i < $WIN_COUNT] DO
-        WIN_DRAW $i
-        INCR i
-    END
+# WIN_CLEANUP - Cleanup window system
+# Usage: WIN_CLEANUP
+PROC WIN_CLEANUP DO
+    ANSI_CLEANUP_FULL
 END
 
-# ==============================================================================
-# UTILITY FUNCTIONS
-# ==============================================================================
-
-# WIN_PRINT_AT - Print text at absolute screen position with colors
-PROC WIN_PRINT_AT WITH row col fg bg text DO
-    ANSI_CURSOR_GOTO $row $col
-    ANSI_SET_COLOR $fg $bg
-    PUTS $text
-    ANSI_RESET
-END
-
-# WIN_STATUS - Print status message at bottom of screen
-PROC WIN_STATUS WITH message DO
-    ANSI_CURSOR_GOTO 24 1
-    ANSI_SET_COLOR $ANSI_FG_YELLOW $WIN_BG_COLOR
-    PUTSN $message
-
-    # Clear rest of line
-    SET len [STRING LENGTH $message]
-    SET i $len
-    WHILE [EXPR $i < 80] DO
-        PUTSN " "
-        INCR i
-    END
-
-    ANSI_RESET
-END
-
-# WIN_PRINT_INVERSE - Print text with inverse colors (for selection)
-PROC WIN_PRINT_INVERSE WITH id row text DO
-    SET win_row $win_id($id.row)
-    SET win_col $win_id($id.col)
-
-    SET print_row [EXPR $win_row + $row]
-    SET print_col [EXPR $win_col + 2]
-
-    ANSI_CURSOR_GOTO $print_row $print_col
-    # Inverse: swap fg and bg
-    ANSI_SET_COLOR $win_id($id.bg) $win_id($id.fg)
-    PUTS $text
-    ANSI_RESET
-END
-
-# WIN_FILL_LINE - Fill a line with spaces (for clearing)
-PROC WIN_FILL_LINE WITH id row DO
-    SET win_row $win_id($id.row)
-    SET win_col $win_id($id.col)
-    SET width $win_id($id.width)
-
-    SET print_row [EXPR $win_row + $row]
-    SET print_col [EXPR $win_col + 1]
-
-    ANSI_CURSOR_GOTO $print_row $print_col
-    ANSI_SET_COLOR $win_id($id.fg) $win_id($id.bg)
-
-    SET i 0
-    SET max [EXPR $width - 2]
-    WHILE [EXPR $i < $max] DO
-        PUTSN " "
-        INCR i
-    END
-
-    ANSI_RESET
-END
-
-################################################################################
-# END OF WINDOW.BLB v1.1.0
-################################################################################
+PUTS "WINDOW Library v2.0.0 loaded - Type 'WIN_' and TAB for available functions"

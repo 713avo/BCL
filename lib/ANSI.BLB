@@ -601,6 +601,82 @@ PROC ANSI_CLEANUP_FULL DO
     ANSI_RESTORE_SCREEN
 END
 
+# ==============================================================================
+# UNICODE CHARACTER CONSTANTS (BCL 1.6+)
+# ==============================================================================
+
+# Box Drawing Characters - Single Line
+SET ANSI_BOX_TL "\u250C"          # ┌ Top Left
+SET ANSI_BOX_TR "\u2510"          # ┐ Top Right
+SET ANSI_BOX_BL "\u2514"          # └ Bottom Left
+SET ANSI_BOX_BR "\u2518"          # ┘ Bottom Right
+SET ANSI_BOX_H "\u2500"           # ─ Horizontal
+SET ANSI_BOX_V "\u2502"           # │ Vertical
+SET ANSI_BOX_VR "\u251C"          # ├ Vertical Right
+SET ANSI_BOX_VL "\u2524"          # ┤ Vertical Left
+SET ANSI_BOX_DH "\u252C"          # ┬ Down Horizontal
+SET ANSI_BOX_UH "\u2534"          # ┴ Up Horizontal
+SET ANSI_BOX_CROSS "\u253C"       # ┼ Cross
+
+# Box Drawing Characters - Double Line
+SET ANSI_BOX_D_TL "\u2554"        # ╔ Top Left
+SET ANSI_BOX_D_TR "\u2557"        # ╗ Top Right
+SET ANSI_BOX_D_BL "\u255A"        # ╚ Bottom Left
+SET ANSI_BOX_D_BR "\u255D"        # ╝ Bottom Right
+SET ANSI_BOX_D_H "\u2550"         # ═ Horizontal
+SET ANSI_BOX_D_V "\u2551"         # ║ Vertical
+
+# Box Drawing Characters - Rounded
+SET ANSI_BOX_R_TL "\u256D"        # ╭ Top Left
+SET ANSI_BOX_R_TR "\u256E"        # ╮ Top Right
+SET ANSI_BOX_R_BL "\u2570"        # ╰ Bottom Left
+SET ANSI_BOX_R_BR "\u256F"        # ╯ Bottom Right
+
+# Block Elements
+SET ANSI_BLOCK_FULL "\u2588"      # █ Full block
+SET ANSI_BLOCK_DARK "\u2593"      # ▓ Dark shade
+SET ANSI_BLOCK_MEDIUM "\u2592"    # ▒ Medium shade
+SET ANSI_BLOCK_LIGHT "\u2591"     # ░ Light shade
+SET ANSI_BLOCK_UPPER "\u2580"     # ▀ Upper half
+SET ANSI_BLOCK_LOWER "\u2584"     # ▄ Lower half
+
+# Arrows
+SET ANSI_ARROW_UP "\u2191"        # ↑
+SET ANSI_ARROW_DOWN "\u2193"      # ↓
+SET ANSI_ARROW_LEFT "\u2190"      # ←
+SET ANSI_ARROW_RIGHT "\u2192"     # →
+SET ANSI_ARROW_UP_DOWN "\u2195"   # ↕
+SET ANSI_ARROW_LEFT_RIGHT "\u2194" # ↔
+
+# Geometric Shapes
+SET ANSI_CIRCLE "\u25CF"          # ● Filled circle
+SET ANSI_CIRCLE_OPEN "\u25CB"     # ○ Open circle
+SET ANSI_SQUARE "\u25A0"          # ■ Filled square
+SET ANSI_SQUARE_OPEN "\u25A1"     # □ Open square
+SET ANSI_TRIANGLE_UP "\u25B2"     # ▲ Up triangle
+SET ANSI_TRIANGLE_DOWN "\u25BC"   # ▼ Down triangle
+SET ANSI_DIAMOND "\u25C6"         # ◆ Diamond
+
+# Special Symbols
+SET ANSI_CHECKMARK "\u2713"       # ✓ Check mark
+SET ANSI_CROSS_MARK "\u2717"      # ✗ Cross mark
+SET ANSI_STAR "\u2605"            # ★ Star
+SET ANSI_HEART "\u2665"           # ♥ Heart
+SET ANSI_MUSIC_NOTE "\u266A"      # ♪ Music note
+SET ANSI_INFINITY "\u221E"        # ∞ Infinity
+
+# Progress/Spinner Characters
+SET ANSI_SPINNER_0 "\u280B"       # ⠋
+SET ANSI_SPINNER_1 "\u2819"       # ⠙
+SET ANSI_SPINNER_2 "\u2839"       # ⠹
+SET ANSI_SPINNER_3 "\u2838"       # ⠸
+SET ANSI_SPINNER_4 "\u283C"       # ⠼
+SET ANSI_SPINNER_5 "\u2834"       # ⠴
+SET ANSI_SPINNER_6 "\u2826"       # ⠦
+SET ANSI_SPINNER_7 "\u2827"       # ⠧
+SET ANSI_SPINNER_8 "\u2807"       # ⠇
+SET ANSI_SPINNER_9 "\u280F"       # ⠏
+
 ################################################################################
 # END OF ANSI.BLB v2.0.0
 ################################################################################

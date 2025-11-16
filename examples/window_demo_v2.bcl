@@ -1,0 +1,293 @@
+#!/usr/bin/env bcl
+################################################################################
+# WINDOW Library v2.0 Demonstration
+# Shows advanced window management with Unicode box drawing and global arrays
+################################################################################
+
+SOURCE "lib/WINDOW.BLB"
+
+# Initialize window system
+WIN_INIT
+
+# ==============================================================================
+# Demo 1: Multiple Windows with Different Border Styles
+# ==============================================================================
+
+# Create window 0 - Single line border
+WIN_CREATE 0 2 5 35 8 "Single Line Border"
+WIN_SET_BORDER_STYLE 0 0
+WIN_SET_COLOR 0 $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLUE
+WIN_SET_BORDER_COLOR 0 $ANSI_FG_BRIGHT_CYAN $ANSI_BG_BLUE
+WIN_DRAW 0
+WIN_PRINT 0 2 "Border style: SINGLE"
+WIN_PRINT 0 3 "Uses: ─ │ ┌ ┐ └ ┘"
+WIN_PRINT 0 5 "Simple and clean"
+
+# Create window 1 - Double line border
+WIN_CREATE 1 2 45 35 8 "Double Line Border"
+WIN_SET_BORDER_STYLE 1 1
+WIN_SET_COLOR 1 $ANSI_FG_BRIGHT_WHITE $ANSI_BG_MAGENTA
+WIN_SET_BORDER_COLOR 1 $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_MAGENTA
+WIN_DRAW 1
+WIN_PRINT 1 2 "Border style: DOUBLE"
+WIN_PRINT 1 3 "Uses: ═ ║ ╔ ╗ ╚ ╝"
+WIN_PRINT 1 5 "Bold and prominent"
+
+# Create window 2 - Rounded border
+WIN_CREATE 2 12 5 35 8 "Rounded Border"
+WIN_SET_BORDER_STYLE 2 2
+WIN_SET_COLOR 2 $ANSI_FG_BLACK $ANSI_BG_BRIGHT_GREEN
+WIN_SET_BORDER_COLOR 2 $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BRIGHT_GREEN
+WIN_DRAW 2
+WIN_PRINT 2 2 "Border style: ROUNDED"
+WIN_PRINT 2 3 "Uses: ─ │ ╭ ╮ ╰ ╯"
+WIN_PRINT 2 5 "Soft and modern"
+
+# Wait for user
+ANSI_CURSOR_GOTO 22 1
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
+PUTS -NONEWLINE "Press ENTER to continue to menu demo..."
+ANSI_RESET
+GETS input
+
+# ==============================================================================
+# Demo 2: Interactive Menu
+# ==============================================================================
+
+WIN_CLEAR_SCREEN
+
+# Create menu window
+WIN_CREATE 3 5 20 40 12 "Main Menu"
+WIN_SET_BORDER_STYLE 3 1
+WIN_SET_COLOR 3 $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLUE
+WIN_SET_BORDER_COLOR 3 $ANSI_FG_BRIGHT_CYAN $ANSI_BG_BLUE
+WIN_DRAW 3
+
+# Menu items
+SET menu_items "New File|Open File|Save File|Exit"
+SET selected 1
+
+WIN_PRINT 3 1 "Use arrow keys to select:"
+WIN_PRINT 3 2 ""
+WIN_MENU 3 $menu_items $selected
+
+WIN_PRINT 3 8 "Selected: Option $selected"
+WIN_PRINT_CENTER 3 10 "[ OK ]"
+
+# Wait for user
+ANSI_CURSOR_GOTO 22 1
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
+PUTS -NONEWLINE "Press ENTER to continue to progress demo..."
+ANSI_RESET
+GETS input
+
+# ==============================================================================
+# Demo 3: Progress Bar
+# ==============================================================================
+
+WIN_CLEAR_SCREEN
+
+# Create progress window
+WIN_CREATE 4 8 15 50 9 "Download Progress"
+WIN_SET_BORDER_STYLE 4 2
+WIN_SET_COLOR 4 $ANSI_FG_BRIGHT_WHITE $ANSI_BG_CYAN
+WIN_SET_BORDER_COLOR 4 $ANSI_FG_BRIGHT_BLUE $ANSI_BG_CYAN
+WIN_DRAW 4
+
+WIN_PRINT 4 1 "Downloading: example.tar.gz"
+WIN_PRINT 4 2 ""
+
+# Simulate download with progress bar
+FOR 0 TO 10 DO
+    SET i $__FOR
+    SET percent [EXPR $i * 10]
+    WIN_PROGRESS 4 3 $percent
+
+    # Show status
+    SET status "Status: Downloading... $percent%"
+    WIN_PRINT 4 5 $status
+
+    # Small delay (note: SLEEP not available in BCL, just show final)
+END
+
+WIN_PROGRESS 4 3 100
+WIN_PRINT 4 5 "Status: Complete!            "
+WIN_PRINT_CENTER 4 7 "[ Close ]"
+
+# Wait for user
+ANSI_CURSOR_GOTO 22 1
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
+PUTS -NONEWLINE "Press ENTER to continue to scrolling demo..."
+ANSI_RESET
+GETS input
+
+# ==============================================================================
+# Demo 4: Scrollable Content
+# ==============================================================================
+
+WIN_CLEAR_SCREEN
+
+# Create log window with scrollable content
+WIN_CREATE 5 3 10 60 15 "System Log"
+WIN_SET_BORDER_STYLE 5 0
+WIN_SET_COLOR 5 $ANSI_FG_BRIGHT_GREEN $ANSI_BG_BLACK
+WIN_SET_BORDER_COLOR 5 $ANSI_FG_BRIGHT_GREEN $ANSI_BG_BLACK
+WIN_DRAW 5
+
+# Add many lines to content buffer
+WIN_ADD_LINE 5 "[00:00:01] System initialized"
+WIN_ADD_LINE 5 "[00:00:02] Loading configuration..."
+WIN_ADD_LINE 5 "[00:00:03] Configuration loaded successfully"
+WIN_ADD_LINE 5 "[00:00:04] Starting network services..."
+WIN_ADD_LINE 5 "[00:00:05] Network services started"
+WIN_ADD_LINE 5 "[00:00:06] Mounting filesystems..."
+WIN_ADD_LINE 5 "[00:00:07] Filesystems mounted"
+WIN_ADD_LINE 5 "[00:00:08] Starting database..."
+WIN_ADD_LINE 5 "[00:00:09] Database connection established"
+WIN_ADD_LINE 5 "[00:00:10] Loading modules..."
+WIN_ADD_LINE 5 "[00:00:11] Module A loaded"
+WIN_ADD_LINE 5 "[00:00:12] Module B loaded"
+WIN_ADD_LINE 5 "[00:00:13] Module C loaded"
+WIN_ADD_LINE 5 "[00:00:14] All modules loaded"
+WIN_ADD_LINE 5 "[00:00:15] System ready"
+WIN_ADD_LINE 5 "[00:00:16] Waiting for connections..."
+
+# Display content
+WIN_REDRAW_CONTENT 5
+
+# Show scrolling instructions
+ANSI_CURSOR_GOTO 20 1
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "Scroll demo: Showing last 13 lines of 16 total"
+PUTS "In interactive mode, you could scroll with:"
+PUTS "  WIN_SCROLL 5 -1  (scroll up)"
+PUTS "  WIN_SCROLL 5 1   (scroll down)"
+
+# Wait for user
+ANSI_CURSOR_GOTO 24 1
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
+PUTS -NONEWLINE "Press ENTER to continue to dialog demo..."
+ANSI_RESET
+GETS input
+
+# ==============================================================================
+# Demo 5: Message Box and Buttons
+# ==============================================================================
+
+WIN_CLEAR_SCREEN
+
+# Show message box
+WIN_MESSAGE_BOX "File saved successfully!"
+
+# Create a form-like window with buttons
+WIN_CREATE 6 6 15 50 12 "User Registration"
+WIN_SET_BORDER_STYLE 6 1
+WIN_SET_COLOR 6 $ANSI_FG_BLACK $ANSI_BG_BRIGHT_WHITE
+WIN_SET_BORDER_COLOR 6 $ANSI_FG_BRIGHT_BLUE $ANSI_BG_BRIGHT_WHITE
+WIN_DRAW 6
+
+WIN_PRINT 6 1 "Username: _________________________"
+WIN_PRINT 6 3 "Email:    _________________________"
+WIN_PRINT 6 5 "Password: _________________________"
+WIN_PRINT 6 7 ""
+WIN_HLINE 6 7
+
+# Buttons
+WIN_BUTTON 6 9 8 " Submit "
+WIN_BUTTON 6 9 24 " Cancel "
+
+# Wait for user
+ANSI_CURSOR_GOTO 24 1
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
+PUTS -NONEWLINE "Press ENTER to continue to final demo..."
+ANSI_RESET
+GETS input
+
+# ==============================================================================
+# Demo 6: Complex Multi-Window Layout
+# ==============================================================================
+
+WIN_CLEAR_SCREEN
+
+# Title bar
+WIN_CREATE 7 1 1 78 3 ""
+WIN_SET_BORDER_STYLE 7 0
+WIN_SET_COLOR 7 $ANSI_FG_BLACK $ANSI_BG_BRIGHT_CYAN
+WIN_SET_BORDER_COLOR 7 $ANSI_FG_BRIGHT_CYAN $ANSI_BG_BRIGHT_CYAN
+WIN_DRAW 7
+WIN_PRINT_CENTER 7 1 "BCL Window Manager v2.0 - Advanced Demo"
+
+# Left sidebar
+WIN_CREATE 8 4 1 20 18 "Files"
+WIN_SET_BORDER_STYLE 8 0
+WIN_SET_COLOR 8 $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLUE
+WIN_SET_BORDER_COLOR 8 $ANSI_FG_BRIGHT_CYAN $ANSI_BG_BLUE
+WIN_DRAW 8
+WIN_PRINT 8 1 "  document.txt"
+WIN_PRINT 8 2 "  image.png"
+WIN_PRINT 8 3 "  script.bcl"
+WIN_PRINT 8 4 "  data.csv"
+
+# Main content area
+WIN_CREATE 9 4 22 56 18 "Editor"
+WIN_SET_BORDER_STYLE 9 0
+WIN_SET_COLOR 9 $ANSI_FG_BRIGHT_GREEN $ANSI_BG_BLACK
+WIN_SET_BORDER_COLOR 9 $ANSI_FG_BRIGHT_GREEN $ANSI_BG_BLACK
+WIN_DRAW 9
+WIN_PRINT 9 1 "#!/usr/bin/env bcl"
+WIN_PRINT 9 2 ""
+WIN_PRINT 9 3 "PROC HELLO DO"
+WIN_PRINT 9 4 "    PUTS \"Hello, World!\""
+WIN_PRINT 9 5 "END"
+WIN_PRINT 9 6 ""
+WIN_PRINT 9 7 "HELLO"
+WIN_PRINT 9 8 ""
+WIN_PRINT 9 10 "# This is a BCL script example"
+WIN_PRINT 9 11 "# Showing syntax highlighting simulation"
+
+# Status bar
+WIN_CREATE 10 22 1 78 3 ""
+WIN_SET_BORDER_STYLE 10 0
+WIN_SET_COLOR 10 $ANSI_FG_BLACK $ANSI_BG_BRIGHT_GREEN
+WIN_SET_BORDER_COLOR 10 $ANSI_FG_BRIGHT_GREEN $ANSI_BG_BRIGHT_GREEN
+WIN_DRAW 10
+WIN_PRINT 10 1 " Line 7, Col 1 | UTF-8 | BCL | Modified"
+
+# Final message
+ANSI_CURSOR_GOTO 24 1
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
+PUTS -NONEWLINE "Press ENTER to exit demo..."
+ANSI_RESET
+GETS input
+
+# ==============================================================================
+# Cleanup
+# ==============================================================================
+
+WIN_CLEANUP
+
+ANSI_CLEAR
+ANSI_CURSOR_HOME
+
+# Final message
+ANSI_SET_STYLE $ANSI_BOLD
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_GREEN $ANSI_BG_BLACK
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+PUTS "                    WINDOW Library v2.0 Demo Complete!"
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+PUTS ""
+PUTS "Features demonstrated:"
+PUTS "  ✓ Three border styles (single, double, rounded)"
+PUTS "  ✓ Unicode box-drawing characters"
+PUTS "  ✓ Interactive menus with selection"
+PUTS "  ✓ Progress bars"
+PUTS "  ✓ Scrollable content windows"
+PUTS "  ✓ Message boxes and dialogs"
+PUTS "  ✓ Buttons and form elements"
+PUTS "  ✓ Complex multi-window layouts"
+PUTS "  ✓ Global arrays working correctly!"
+PUTS ""
+PUTS "All windows persist correctly thanks to the new array global system."
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+ANSI_RESET
+PUTS ""

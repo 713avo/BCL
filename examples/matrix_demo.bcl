@@ -1,0 +1,223 @@
+#!/usr/bin/env bcl
+################################################################################
+# MATRIX Library Demonstration
+# Shows MATLAB-style matrix operations using the new global array system
+################################################################################
+
+SOURCE "lib/MATRIX.BLB"
+SOURCE "lib/ANSI.BLB"
+
+ANSI_CLEAR
+ANSI_CURSOR_HOME
+
+# Header
+ANSI_SET_STYLE $ANSI_BOLD
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_CYAN $ANSI_BG_BLACK
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+PUTS "                    BCL MATRIX Library v2.0 Demo"
+PUTS "              MATLAB-Style Matrix Operations with Global Arrays"
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+ANSI_RESET
+PUTS ""
+
+# ==============================================================================
+# Demo 1: Matrix Creation
+# ==============================================================================
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "\n[1] Matrix Creation Methods"
+ANSI_RESET
+
+PUTS "\n  Creating 3x3 zero matrix..."
+MAT_ZEROS Z 3 3
+MAT_PRINT Z
+
+PUTS "\n  Creating 3x3 identity matrix..."
+MAT_EYE I 3
+MAT_PRINT I
+
+PUTS "\n  Creating 3x3 ones matrix..."
+MAT_ONES O 3 3
+MAT_PRINT O
+
+PUTS "\n  Creating matrix from list..."
+MAT_FROM_LIST A 2 2 "1 2 3 4"
+PUTS "  MAT_FROM_LIST A 2 2 \"1 2 3 4\""
+MAT_PRINT A
+
+# ==============================================================================
+# Demo 2: Matrix Operations
+# ==============================================================================
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "\n\n[2] Matrix Operations"
+ANSI_RESET
+
+# Create two matrices for operations
+MAT_FROM_LIST M1 2 2 "1 2 3 4"
+MAT_FROM_LIST M2 2 2 "5 6 7 8"
+
+PUTS "\n  Matrix M1:"
+MAT_PRINT M1
+
+PUTS "\n  Matrix M2:"
+MAT_PRINT M2
+
+# Addition
+PUTS "\n  M1 + M2 = "
+MAT_ADD M1 M2 M_ADD
+MAT_PRINT M_ADD
+
+# Subtraction
+PUTS "\n  M1 - M2 = "
+MAT_SUB M1 M2 M_SUB
+MAT_PRINT M_SUB
+
+# Matrix multiplication
+PUTS "\n  M1 * M2 (matrix multiplication) = "
+MAT_MUL M1 M2 M_MUL
+MAT_PRINT M_MUL
+
+# Scalar multiplication
+PUTS "\n  M1 * 2 (scalar multiplication) = "
+MAT_SCALAR_MUL M1 2 M_SCALAR
+MAT_PRINT M_SCALAR
+
+# Element-wise multiplication
+PUTS "\n  M1 .* M2 (element-wise) = "
+MAT_ELEM_MUL M1 M2 M_ELEM
+MAT_PRINT M_ELEM
+
+# ==============================================================================
+# Demo 3: Matrix Analysis
+# ==============================================================================
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "\n\n[3] Matrix Analysis Functions"
+ANSI_RESET
+
+MAT_FROM_LIST X 3 3 "1 2 3 4 5 6 7 8 9"
+PUTS "\n  Matrix X:"
+MAT_PRINT X
+
+# Sum
+MAT_SUM X sum_result
+PUTS "  SUM(X) = $sum_result"
+
+# Mean
+MAT_MEAN X mean_result
+PUTS "  MEAN(X) = $mean_result"
+
+# Min and Max
+MAT_MIN X min_result
+MAT_MAX X max_result
+PUTS "  MIN(X) = $min_result"
+PUTS "  MAX(X) = $max_result"
+
+# Trace (2x2 matrix)
+MAT_TRACE M1 trace_result
+PUTS "\n  TRACE(M1) = $trace_result"
+
+# Determinant (2x2 only)
+MAT_DET_2X2 M1 det_result
+PUTS "  DET(M1) = $det_result"
+
+# ==============================================================================
+# Demo 4: Transpose
+# ==============================================================================
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "\n\n[4] Matrix Transpose"
+ANSI_RESET
+
+MAT_FROM_LIST R 2 3 "1 2 3 4 5 6"
+PUTS "\n  Original matrix R (2x3):"
+MAT_PRINT R
+
+PUTS "\n  Transpose of R (3x2):"
+MAT_TRANSPOSE R R_T
+MAT_PRINT R_T
+
+# ==============================================================================
+# Demo 5: Row and Column Extraction
+# ==============================================================================
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "\n\n[5] Row and Column Extraction"
+ANSI_RESET
+
+MAT_FROM_LIST D 3 3 "1 2 3 4 5 6 7 8 9"
+PUTS "\n  Matrix D:"
+MAT_PRINT D
+
+PUTS "\n  Row 1 of D:"
+MAT_GET_ROW D 1 row_data
+FOREACH val IN $row_data DO
+    PUTS -NONEWLINE "  $val"
+END
+PUTS ""
+
+PUTS "\n  Column 2 of D:"
+MAT_GET_COL D 2 col_data
+FOREACH val IN $col_data DO
+    PUTS -NONEWLINE "  $val"
+END
+PUTS ""
+
+# ==============================================================================
+# Demo 6: Practical Example - Linear System
+# ==============================================================================
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "\n\n[6] Practical Example: Computing (A + I) * B"
+ANSI_RESET
+
+# Create coefficient matrix A
+MAT_FROM_LIST A_sys 2 2 "2 1 1 3"
+PUTS "\n  Coefficient matrix A:"
+MAT_PRINT A_sys
+
+# Create identity matrix I
+MAT_EYE I_sys 2
+PUTS "\n  Identity matrix I:"
+MAT_PRINT I_sys
+
+# Compute A + I
+MAT_ADD A_sys I_sys A_plus_I
+PUTS "\n  A + I ="
+MAT_PRINT A_plus_I
+
+# Create vector B
+MAT_FROM_LIST B_sys 2 2 "1 0 0 1"
+PUTS "\n  Matrix B:"
+MAT_PRINT B_sys
+
+# Compute (A + I) * B
+MAT_MUL A_plus_I B_sys result_sys
+PUTS "\n  (A + I) * B ="
+MAT_PRINT result_sys
+
+# ==============================================================================
+# Demo 7: Random Matrices
+# ==============================================================================
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "\n\n[7] Random Matrix Generation"
+ANSI_RESET
+
+PUTS "\n  Random 3x3 matrix (values 0-99):"
+MAT_RAND RAND_MAT 3 3 100
+MAT_PRINT RAND_MAT
+
+# ==============================================================================
+# Footer
+# ==============================================================================
+
+ANSI_SET_STYLE $ANSI_BOLD
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_GREEN $ANSI_BG_BLACK
+PUTS "\n═══════════════════════════════════════════════════════════════════════════"
+PUTS "                         Demo Complete!"
+PUTS "  All matrix operations work correctly with the new global array system"
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+ANSI_RESET
+PUTS ""

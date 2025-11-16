@@ -1,11 +1,19 @@
 # BCL - Basic Command Language
 
-[![Version](https://img.shields.io/badge/version-1.5.1-blue.svg)](https://github.com/yourusername/bcl)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/yourusername/bcl)
 [![Language](https://img.shields.io/badge/language-C99-green.svg)](https://en.wikipedia.org/wiki/C99)
 [![License](https://img.shields.io/badge/license-pending-lightgrey.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-lightgrey.svg)](README.md)
 
 **BCL (Basic Command Language)** is a lightweight, standalone scripting language interpreter inspired by Tcl 8.x but with a more readable BASIC-like syntax. Designed to be simple, portable, and complete with zero external dependencies.
+
+## What's New in v2.0
+
+🎉 **Array Global Support** - Arrays now work correctly with GLOBAL in procedures
+🎨 **Full Unicode Support** - UTF-8 escape sequences (`\uXXXX`, `\UXXXXXXXX`) for box drawing and symbols
+📊 **MATRIX Library** - New MATLAB-style matrix operations library with 21 functions
+🖼️ **Enhanced WINDOW Library** - Complete rewrite with Unicode borders, menus, progress bars, and scrolling
+✨ **Enhanced ANSI Library** - 60+ Unicode character constants for terminal graphics
 
 ## Features
 
@@ -16,7 +24,10 @@
 ✅ **Interactive REPL** - Command history and multi-line editing
 ✅ **Case-Insensitive** - Commands work in any case
 ✅ **Dynamic** - Everything is a string, evaluated dynamically
-✅ **Documentation** - Complete manuals in English and Spanish (263 pages total)
+✅ **Unicode Support** - Full UTF-8 with escape sequences for symbols and box drawing (v2.0+)
+✅ **Array Global System** - Arrays persist correctly across procedure boundaries (v2.0+)
+✅ **Standard Libraries** - MATRIX, WINDOW, and ANSI libraries for advanced functionality (v2.0+)
+✅ **Documentation** - Complete manuals, man pages, and LLM-optimized reference
 
 ## Quick Start
 
@@ -213,10 +224,26 @@ BCL/
 │   └── bcl_commands.h     # Command declarations
 ├── bin/                    # Compiled binary
 │   └── bcl                # BCL interpreter (generated)
+├── lib/                    # Standard libraries (v2.0+)
+│   ├── ANSI.BLB           # Terminal control & Unicode graphics
+│   ├── WINDOW.BLB         # Window management system
+│   └── MATRIX.BLB         # MATLAB-style matrix operations
 ├── docs/                   # Documentation
 │   ├── manual-eng/        # English manual (131 pages)
-│   └── manual-es/         # Spanish manual (132 pages)
+│   ├── manual-es/         # Spanish manual (132 pages)
+│   ├── man_llm.md         # LLM-optimized reference (v2.0)
+│   ├── PROPUESTA_*.md     # Array system proposals
+│   └── LICENSE.txt        # License information
+├── man/                    # Unix manual pages (v1.6+)
+│   ├── bcl.1              # Main manual page
+│   └── bcl-*.1            # Command category pages
+├── tests/                  # Test suite
+│   ├── test_*.bcl         # Unit tests
+│   └── run_tests.sh       # Test runner
 ├── examples/               # Example BCL scripts
+│   ├── matrix_demo.bcl    # MATRIX library demo (v2.0)
+│   ├── window_demo_v2.bcl # WINDOW library demo (v2.0)
+│   └── *.bcl              # Other examples
 ├── Makefile               # Build system
 ├── ChangeLog.txt          # Version history
 ├── README.md              # This file
@@ -234,6 +261,23 @@ Both manuals include:
 - 50+ practical examples
 - Beginner-friendly tutorials
 - Advanced topics (arrays, binary data, regex)
+
+### Unix Man Pages
+BCL includes comprehensive Unix-style manual pages:
+```bash
+man -l man/bcl.1              # Main BCL manual
+man -l man/bcl-variables.1    # Variables and data
+man -l man/bcl-control.1      # Control flow
+# ... 15 category pages total
+```
+
+### LLM-Optimized Reference
+For AI-assisted code generation:
+- **[docs/man_llm.md](docs/man_llm.md)** - RAG-optimized complete language reference
+- Includes all 62 commands with examples
+- Standard libraries documentation (MATRIX, WINDOW, ANSI)
+- Array global system explained
+- Unicode escape sequences reference
 
 ### Building Manuals from Source
 
@@ -321,6 +365,7 @@ make test
 
 ## Version History
 
+- **v2.0.0** (2025-11-16) - Array global system, Unicode support, MATRIX/WINDOW/ANSI libraries
 - **v1.5.1** (2025-10-22) - ARRAY and BINARY commands, dual-language manuals
 - **v1.6.0** (2025-10-21) - REGEXP/REGSUB standalone, Complete manual
 - **v1.5.0** (2025-10-21) - REPL rewrite, system commands
@@ -328,16 +373,84 @@ make test
 
 See [ChangeLog.txt](ChangeLog.txt) for complete version history.
 
-## Future Plans (BCL 2.0)
+## Standard Libraries (v2.0+)
+
+### MATRIX.BLB - MATLAB-Style Matrix Operations
+Complete matrix library with 21 functions:
+```bcl
+SOURCE "lib/MATRIX.BLB"
+
+MAT_ZEROS A 3 3                     # Create 3x3 zero matrix
+MAT_EYE I 3                         # Create 3x3 identity matrix
+MAT_FROM_LIST B 2 2 "1 2 3 4"       # Create from list
+MAT_ADD A B C                        # C = A + B
+MAT_MUL A B D                        # D = A * B (matrix multiplication)
+MAT_TRANSPOSE A A_T                  # Transpose
+MAT_TRACE A tr                       # Trace (sum of diagonal)
+MAT_PRINT A                          # Pretty-print matrix
+```
+
+Functions: MAT_CREATE, MAT_ZEROS, MAT_ONES, MAT_EYE, MAT_RAND, MAT_FROM_LIST, MAT_PRINT, MAT_ADD, MAT_SUB, MAT_MUL, MAT_SCALAR_MUL, MAT_ELEM_MUL, MAT_TRANSPOSE, MAT_SUM, MAT_MEAN, MAT_MIN, MAT_MAX, MAT_TRACE, MAT_DET_2X2, MAT_COPY, MAT_FILL, MAT_GET_ROW, MAT_GET_COL
+
+### ANSI.BLB - Terminal Control & Unicode Graphics
+Terminal control with 60+ Unicode character constants:
+```bcl
+SOURCE "lib/ANSI.BLB"
+
+ANSI_CLEAR                                    # Clear screen
+ANSI_CURSOR_GOTO 10 20                       # Move cursor
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_CYAN $ANSI_BG_BLUE
+PUTS -NONEWLINE $ANSI_BOX_TL                 # ┌ (box corner)
+PUTS -NONEWLINE $ANSI_BOX_H                  # ─ (horizontal line)
+PUTS $ANSI_BOX_TR                            # ┐ (box corner)
+ANSI_RESET
+```
+
+Features:
+- 16 foreground colors, 16 background colors
+- Text styles (bold, italic, underline, etc.)
+- Box drawing characters (single, double, rounded)
+- Unicode symbols (arrows, checkmarks, blocks, spinners)
+- Cursor control, screen clearing
+
+### WINDOW.BLB - Advanced Window Management
+Terminal window management with global array persistence:
+```bcl
+SOURCE "lib/WINDOW.BLB"
+
+WIN_INIT                                      # Initialize system
+WIN_CREATE 0 5 10 50 15 "My Window"          # Create window
+WIN_SET_BORDER_STYLE 0 1                     # Double-line border
+WIN_SET_COLOR 0 $ANSI_FG_WHITE $ANSI_BG_BLUE
+WIN_DRAW 0                                    # Draw window
+
+WIN_PRINT 0 1 "Hello, World!"                # Print text
+WIN_PRINT_CENTER 0 3 "Centered text"         # Centered text
+WIN_PROGRESS 0 5 75                          # Progress bar (75%)
+WIN_MENU 0 "New|Open|Save|Exit" 1            # Menu with selection
+
+WIN_CLEANUP                                   # Cleanup on exit
+```
+
+Features:
+- Multiple windows with z-ordering
+- Three border styles (single, double, rounded)
+- Configurable colors (content and border)
+- Menus, progress bars, buttons
+- Scrollable content buffering
+- Window show/hide, move
+- Message boxes and dialogs
+
+## Future Plans
 
 Potential features for future versions:
 - Full PCRE2 regex support
 - Complete timezone support (IANA database)
 - Network module (sockets)
 - JSON/XML serialization
-- Full Unicode/UTF-8 support
 - Native dictionaries
 - Exception handling (try/catch)
+- More standard libraries (HTTP, JSON, etc.)
 
 ## Contributing
 
@@ -366,5 +479,5 @@ For questions or contributions, please open an issue on GitHub.
 
 **Thank you for using BCL!**
 
-*Generated: October 22, 2025*
-*BCL Interpreter Version: 1.5.1*
+*Generated: November 16, 2025*
+*BCL Interpreter Version: 2.0.0*

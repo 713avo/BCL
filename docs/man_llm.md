@@ -1,6 +1,6 @@
 # BCL Language Reference for LLM Code Generation
 
-**Version:** 1.5.1
+**Version:** 2.0.0
 **Purpose:** Complete reference optimized for RAG-based code generation
 **Target:** Large Language Models generating BCL code
 
@@ -87,6 +87,29 @@ SET simple hello                        # No quotes for simple strings
 SET phrase "Hello World"                # Quotes for strings with spaces
 SET path "/home/user/file.txt"         # Quotes for paths
 SET escaped "Line 1\nLine 2"           # Escape sequences work
+```
+
+### Escape Sequences
+```bcl
+# Standard escape sequences
+SET newline "Line 1\nLine 2"           # \n = newline
+SET tab "Col1\tCol2\tCol3"             # \t = tab
+SET backslash "Path\\File"             # \\ = backslash
+SET quote "Say \"Hello\""              # \" = double quote
+
+# Unicode escape sequences (v2.0+)
+SET box_corner "\u250C"                # \uXXXX = 4-digit Unicode (┌)
+SET emoji "\U0001F600"                 # \UXXXXXXXX = 8-digit Unicode (😀)
+SET arrow "\u2192"                     # → (right arrow)
+SET checkmark "\u2713"                 # ✓ (checkmark)
+
+# Common Unicode box drawing
+SET border_top "\u2500"                # ─ horizontal line
+SET border_left "\u2502"               # │ vertical line
+SET corner_tl "\u250C"                 # ┌ top-left
+SET corner_tr "\u2510"                 # ┐ top-right
+SET corner_bl "\u2514"                 # └ bottom-left
+SET corner_br "\u2518"                 # ┘ bottom-right
 ```
 
 ### Line Continuation
@@ -972,6 +995,80 @@ ARRAY UNSET arr a              # Removes arr(a)
 ARRAY UNSET arr                # Removes all elements
 ```
 
+### Array Global Scope (v2.0+)
+
+BCL 2.0 introduces automatic array global prefix detection. When you declare a variable as GLOBAL in a procedure, the system detects whether it's an array and automatically makes all elements with that prefix global.
+
+```bcl
+# Example 1: Creating array inside procedure
+PROC INIT_CONFIG DO
+    GLOBAL config               # Marks entire config(...) array as global
+    SET config(host) "localhost"
+    SET config(port) 8080
+    SET config(db) "mydb"
+END
+
+INIT_CONFIG
+PUTS $config(host)              # Works! Prints: localhost
+PUTS $config(port)              # Works! Prints: 8080
+```
+
+**How it works:**
+1. `GLOBAL config` checks if `config` exists as a scalar variable
+2. If not scalar, it marks the prefix `config(` as global
+3. All future assignments to `config(*)` go to global scope
+4. This works whether the array exists before or after the GLOBAL declaration
+
+```bcl
+# Example 2: Array exists before GLOBAL
+SET data(x) 10
+
+PROC MODIFY_DATA DO
+    GLOBAL data                 # Detects existing data(...) elements
+    SET data(y) 20             # Creates globally
+    INCR data(x)               # Modifies global value
+END
+
+MODIFY_DATA
+PUTS "$data(x) $data(y)"       # Prints: 11 20
+```
+
+```bcl
+# Example 3: Multiple arrays in one procedure
+PROC MATRIX_OP DO
+    GLOBAL A B C               # All three arrays are global
+    SET A(0,0) 1
+    SET B(0,0) 2
+    SET C(0,0) [EXPR $A(0,0) + $B(0,0)]
+END
+
+MATRIX_OP
+PUTS $C(0,0)                   # Prints: 3
+```
+
+```bcl
+# Example 4: Library pattern with dynamic GLOBAL
+PROC MAT_CREATE WITH name rows cols DO
+    GLOBAL _mat                # Metadata array is global
+    EVAL "GLOBAL $name"        # Data array is global (dynamic)
+
+    SET _mat($name.rows) $rows
+    SET _mat($name.cols) $cols
+
+    # Now all $name(...) elements will be global
+    SET $name(0,0) 0
+END
+
+MAT_CREATE M 3 3
+PUTS $_mat(M.rows)             # Prints: 3
+PUTS $M(0,0)                   # Prints: 0
+```
+
+**Important notes:**
+- If a scalar variable exists with the same name, GLOBAL marks only the scalar (not the array)
+- Array indices can contain any characters: dots, commas, etc.
+- Useful for libraries that manage window, matrix, or configuration data
+
 ### Iterating Over Arrays
 ```bcl
 SET scores(Alice) 95
@@ -1608,6 +1705,558 @@ PUTS "Procedure body: $body"
 
 ---
 
+## Standard Libraries
+
+BCL includes powerful standard libraries for terminal graphics, window management, and matrix operations.
+
+### MATRIX Library (MATRIX.BLB)
+
+MATLAB-style matrix operations with full global array support.
+
+#### Usage
+```bcl
+SOURCE "lib/MATRIX.BLB"
+```
+
+#### Matrix Creation Functions
+
+**MAT_CREATE** - Create matrix metadata
+```bcl
+MAT_CREATE M 3 4                # Create 3x4 matrix M (metadata only)
+PUTS $_mat(M.rows)              # Prints: 3
+PUTS $_mat(M.cols)              # Prints: 4
+```
+
+**MAT_ZEROS** - Create zero matrix
+```bcl
+MAT_ZEROS Z 3 3                 # Create 3x3 matrix of zeros
+PUTS $Z(0,0)                    # Prints: 0
+PUTS $Z(2,2)                    # Prints: 0
+```
+
+**MAT_ONES** - Create ones matrix
+```bcl
+MAT_ONES O 2 3                  # Create 2x3 matrix of ones
+MAT_PRINT O
+# Output:
+# Matrix O (2 x 3):
+#   [  1.0000  1.0000  1.0000 ]
+#   [  1.0000  1.0000  1.0000 ]
+```
+
+**MAT_EYE** - Create identity matrix
+```bcl
+MAT_EYE I 3                     # Create 3x3 identity matrix
+MAT_PRINT I
+# Output:
+# Matrix I (3 x 3):
+#   [  1.0000  0.0000  0.0000 ]
+#   [  0.0000  1.0000  0.0000 ]
+#   [  0.0000  0.0000  1.0000 ]
+```
+
+**MAT_FROM_LIST** - Create from flat list
+```bcl
+MAT_FROM_LIST A 2 2 "1 2 3 4"
+MAT_PRINT A
+# Output:
+# Matrix A (2 x 2):
+#   [  1.0000  2.0000 ]
+#   [  3.0000  4.0000 ]
+```
+
+**MAT_RAND** - Create random matrix
+```bcl
+MAT_RAND R 2 2 100              # 2x2 matrix with random values 0-99
+MAT_PRINT R
+```
+
+#### Matrix Operations
+
+**MAT_ADD** - Matrix addition
+```bcl
+MAT_FROM_LIST A 2 2 "1 2 3 4"
+MAT_FROM_LIST B 2 2 "5 6 7 8"
+MAT_ADD A B C                   # C = A + B
+MAT_PRINT C
+# Output:
+# Matrix C (2 x 2):
+#   [  6.0000  8.0000 ]
+#   [ 10.0000 12.0000 ]
+```
+
+**MAT_SUB** - Matrix subtraction
+```bcl
+MAT_SUB A B D                   # D = A - B
+```
+
+**MAT_MUL** - Matrix multiplication
+```bcl
+MAT_FROM_LIST A 2 2 "1 2 3 4"
+MAT_FROM_LIST B 2 2 "5 6 7 8"
+MAT_MUL A B C                   # C = A * B (matrix multiplication)
+MAT_PRINT C
+# Output:
+# Matrix C (2 x 2):
+#   [ 19.0000 22.0000 ]
+#   [ 43.0000 50.0000 ]
+```
+
+**MAT_SCALAR_MUL** - Scalar multiplication
+```bcl
+MAT_FROM_LIST A 2 2 "1 2 3 4"
+MAT_SCALAR_MUL A 2 B            # B = A * 2
+MAT_PRINT B
+# Output:
+# Matrix B (2 x 2):
+#   [  2.0000  4.0000 ]
+#   [  6.0000  8.0000 ]
+```
+
+**MAT_ELEM_MUL** - Element-wise multiplication
+```bcl
+MAT_ELEM_MUL A B C              # C(i,j) = A(i,j) * B(i,j)
+```
+
+**MAT_TRANSPOSE** - Matrix transpose
+```bcl
+MAT_FROM_LIST A 2 3 "1 2 3 4 5 6"
+MAT_TRANSPOSE A A_T             # A_T is 3x2
+MAT_PRINT A_T
+```
+
+#### Matrix Analysis
+
+**MAT_SUM** - Sum of all elements
+```bcl
+MAT_FROM_LIST A 2 2 "1 2 3 4"
+MAT_SUM A total                 # total = 10
+PUTS "Sum: $total"
+```
+
+**MAT_MEAN** - Mean of all elements
+```bcl
+MAT_MEAN A average              # average = 2.5
+PUTS "Mean: $average"
+```
+
+**MAT_MIN** / **MAT_MAX** - Minimum/maximum element
+```bcl
+MAT_MIN A min_val
+MAT_MAX A max_val
+PUTS "Range: $min_val to $max_val"
+```
+
+**MAT_TRACE** - Trace (sum of diagonal)
+```bcl
+MAT_TRACE A tr
+PUTS "Trace: $tr"
+```
+
+**MAT_DET_2X2** - Determinant (2x2 only)
+```bcl
+MAT_DET_2X2 A det
+PUTS "Determinant: $det"
+```
+
+#### Matrix Utilities
+
+**MAT_PRINT** - Print formatted matrix
+```bcl
+MAT_PRINT M                     # Pretty-print matrix
+```
+
+**MAT_COPY** - Copy matrix
+```bcl
+MAT_COPY A B                    # B = copy of A
+```
+
+**MAT_FILL** - Fill with value
+```bcl
+MAT_FILL M 42                   # Set all elements to 42
+```
+
+**MAT_GET_ROW** / **MAT_GET_COL** - Extract row/column
+```bcl
+MAT_GET_ROW A 0 row_data        # row_data = list of row 0 elements
+MAT_GET_COL A 1 col_data        # col_data = list of column 1 elements
+```
+
+### ANSI Library (ANSI.BLB)
+
+Terminal control and Unicode graphics.
+
+#### Usage
+```bcl
+SOURCE "lib/ANSI.BLB"
+```
+
+#### Color Constants
+
+**Foreground Colors**
+```bcl
+ANSI_FG_BLACK, ANSI_FG_RED, ANSI_FG_GREEN, ANSI_FG_YELLOW
+ANSI_FG_BLUE, ANSI_FG_MAGENTA, ANSI_FG_CYAN, ANSI_FG_WHITE
+
+ANSI_FG_BRIGHT_BLACK, ANSI_FG_BRIGHT_RED, ANSI_FG_BRIGHT_GREEN
+ANSI_FG_BRIGHT_YELLOW, ANSI_FG_BRIGHT_BLUE, ANSI_FG_BRIGHT_MAGENTA
+ANSI_FG_BRIGHT_CYAN, ANSI_FG_BRIGHT_WHITE
+```
+
+**Background Colors**
+```bcl
+ANSI_BG_BLACK, ANSI_BG_RED, ANSI_BG_GREEN, ANSI_BG_YELLOW
+ANSI_BG_BLUE, ANSI_BG_MAGENTA, ANSI_BG_CYAN, ANSI_BG_WHITE
+
+ANSI_BG_BRIGHT_BLACK, ANSI_BG_BRIGHT_RED, ANSI_BG_BRIGHT_GREEN
+ANSI_BG_BRIGHT_YELLOW, ANSI_BG_BRIGHT_BLUE, ANSI_BG_BRIGHT_MAGENTA
+ANSI_BG_BRIGHT_CYAN, ANSI_BG_BRIGHT_WHITE
+```
+
+#### Unicode Box Drawing Characters (v2.0)
+
+**Single Line**
+```bcl
+ANSI_BOX_TL    # ┌ top-left
+ANSI_BOX_TR    # ┐ top-right
+ANSI_BOX_BL    # └ bottom-left
+ANSI_BOX_BR    # ┘ bottom-right
+ANSI_BOX_H     # ─ horizontal
+ANSI_BOX_V     # │ vertical
+```
+
+**Double Line**
+```bcl
+ANSI_BOX_D_TL  # ╔ top-left
+ANSI_BOX_D_TR  # ╗ top-right
+ANSI_BOX_D_BL  # ╚ bottom-left
+ANSI_BOX_D_BR  # ╝ bottom-right
+ANSI_BOX_D_H   # ═ horizontal
+ANSI_BOX_D_V   # ║ vertical
+```
+
+**Rounded**
+```bcl
+ANSI_BOX_R_TL  # ╭ top-left
+ANSI_BOX_R_TR  # ╮ top-right
+ANSI_BOX_R_BL  # ╰ bottom-left
+ANSI_BOX_R_BR  # ╯ bottom-right
+```
+
+**Other Unicode Characters**
+```bcl
+ANSI_BLOCK_FULL   # █ full block
+ANSI_BLOCK_LIGHT  # ░ light shade
+ANSI_BLOCK_MEDIUM # ▒ medium shade
+ANSI_BLOCK_DARK   # ▓ dark shade
+
+ANSI_ARROW_UP     # ↑
+ANSI_ARROW_DOWN   # ↓
+ANSI_ARROW_LEFT   # ←
+ANSI_ARROW_RIGHT  # →
+
+ANSI_CHECKMARK    # ✓
+ANSI_CROSSMARK    # ✗
+ANSI_BULLET       # •
+ANSI_STAR         # ★
+
+ANSI_SPIN_0       # | spinner frames
+ANSI_SPIN_1       # /
+ANSI_SPIN_2       # -
+ANSI_SPIN_3       # \
+```
+
+#### Terminal Control Functions
+
+**ANSI_CLEAR** - Clear screen
+```bcl
+ANSI_CLEAR
+```
+
+**ANSI_CURSOR_GOTO** - Move cursor
+```bcl
+ANSI_CURSOR_GOTO 10 20          # Move to row 10, column 20
+```
+
+**ANSI_CURSOR_HOME** - Move to top-left
+```bcl
+ANSI_CURSOR_HOME
+```
+
+**ANSI_CURSOR_HIDE** / **ANSI_CURSOR_SHOW**
+```bcl
+ANSI_CURSOR_HIDE
+# ... do work ...
+ANSI_CURSOR_SHOW
+```
+
+**ANSI_SET_COLOR** - Set foreground and background
+```bcl
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLUE
+PUTS "Colored text"
+ANSI_RESET
+```
+
+**ANSI_SET_STYLE** - Set text style
+```bcl
+# Style constants:
+# ANSI_BOLD, ANSI_DIM, ANSI_ITALIC, ANSI_UNDERLINE
+# ANSI_BLINK, ANSI_REVERSE, ANSI_HIDDEN
+
+ANSI_SET_STYLE $ANSI_BOLD
+PUTS "Bold text"
+ANSI_RESET
+```
+
+**ANSI_RESET** - Reset all formatting
+```bcl
+ANSI_RESET
+```
+
+**Example: Colored Box**
+```bcl
+SOURCE "lib/ANSI.BLB"
+
+ANSI_CLEAR
+ANSI_CURSOR_GOTO 5 10
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_CYAN $ANSI_BG_BLACK
+
+# Draw box
+PUTS -NONEWLINE $ANSI_BOX_TL
+FOR 0 TO 38 DO
+    PUTS -NONEWLINE $ANSI_BOX_H
+END
+PUTS $ANSI_BOX_TR
+
+ANSI_CURSOR_GOTO 6 10
+PUTS -NONEWLINE $ANSI_BOX_V
+ANSI_CURSOR_GOTO 6 50
+PUTS $ANSI_BOX_V
+
+ANSI_CURSOR_GOTO 7 10
+PUTS -NONEWLINE $ANSI_BOX_BL
+FOR 0 TO 38 DO
+    PUTS -NONEWLINE $ANSI_BOX_H
+END
+PUTS $ANSI_BOX_BR
+
+ANSI_RESET
+```
+
+### WINDOW Library (WINDOW.BLB)
+
+Advanced window management with Unicode borders and global array persistence.
+
+#### Usage
+```bcl
+SOURCE "lib/WINDOW.BLB"    # Automatically sources ANSI.BLB
+WIN_INIT                   # Initialize window system
+```
+
+#### Window Creation
+
+**WIN_CREATE** - Create a window
+```bcl
+WIN_CREATE id row col width height title
+# id:     Window identifier (0-9)
+# row:    Top-left row position
+# col:    Top-left column position
+# width:  Window width (including border)
+# height: Window height (including border)
+# title:  Window title string
+
+# Example:
+WIN_CREATE 0 5 10 40 10 "My Window"
+WIN_DRAW 0
+```
+
+**WIN_DRAW** - Draw window with current settings
+```bcl
+WIN_DRAW 0
+```
+
+#### Window Styling
+
+**WIN_SET_BORDER_STYLE** - Set border type
+```bcl
+WIN_SET_BORDER_STYLE id style
+# style: 0 = single line (┌─┐)
+#        1 = double line (╔═╗)
+#        2 = rounded     (╭─╮)
+
+WIN_SET_BORDER_STYLE 0 1      # Double line border
+```
+
+**WIN_SET_COLOR** - Set window content colors
+```bcl
+WIN_SET_COLOR id fg bg
+
+WIN_SET_COLOR 0 $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLUE
+```
+
+**WIN_SET_BORDER_COLOR** - Set border colors
+```bcl
+WIN_SET_BORDER_COLOR id fg bg
+
+WIN_SET_BORDER_COLOR 0 $ANSI_FG_BRIGHT_CYAN $ANSI_BG_BLUE
+```
+
+#### Window Content
+
+**WIN_PRINT** - Print text at row
+```bcl
+WIN_PRINT id row text
+
+WIN_PRINT 0 1 "Hello, World!"
+WIN_PRINT 0 2 "Line 2"
+```
+
+**WIN_PRINT_CENTER** - Print centered text
+```bcl
+WIN_PRINT_CENTER id row text
+
+WIN_PRINT_CENTER 0 5 "Centered Text"
+```
+
+**WIN_CLEAR** - Clear window content
+```bcl
+WIN_CLEAR 0
+```
+
+#### Window State
+
+**WIN_HIDE** / **WIN_SHOW** - Hide/show window
+```bcl
+WIN_HIDE 0
+# ... window is hidden ...
+WIN_SHOW 0        # Redraws automatically
+```
+
+**WIN_MOVE** - Move window
+```bcl
+WIN_MOVE id new_row new_col
+
+WIN_MOVE 0 10 20
+WIN_DRAW 0        # Redraw at new position
+```
+
+#### Advanced Features
+
+**WIN_MENU** - Draw menu with selection
+```bcl
+SET items "Option 1|Option 2|Option 3|Exit"
+SET selected 1
+
+WIN_MENU 0 $items $selected
+# Displays menu with item 1 highlighted
+```
+
+**WIN_PROGRESS** - Draw progress bar
+```bcl
+WIN_PROGRESS id row percent
+
+FOR 0 TO 10 DO
+    SET pct [EXPR $__FOR * 10]
+    WIN_PROGRESS 0 3 $pct
+END
+```
+
+**WIN_BUTTON** - Draw button
+```bcl
+WIN_BUTTON id row col label
+
+WIN_BUTTON 0 8 10 " OK "
+WIN_BUTTON 0 8 20 " Cancel "
+```
+
+**WIN_HLINE** - Draw horizontal line
+```bcl
+WIN_HLINE 0 5      # Draw line at row 5
+```
+
+**WIN_MESSAGE_BOX** - Simple message dialog
+```bcl
+WIN_MESSAGE_BOX "Operation completed successfully!"
+```
+
+#### Scrollable Content
+
+**WIN_ADD_LINE** - Add line to content buffer
+```bcl
+WIN_ADD_LINE 0 "Line 1"
+WIN_ADD_LINE 0 "Line 2"
+WIN_ADD_LINE 0 "Line 3"
+# ... many more lines ...
+```
+
+**WIN_REDRAW_CONTENT** - Display buffered content
+```bcl
+WIN_REDRAW_CONTENT 0       # Shows visible lines
+```
+
+**WIN_SCROLL** - Scroll content
+```bcl
+WIN_SCROLL id direction
+# direction: -1 = scroll up, 1 = scroll down
+
+WIN_SCROLL 0 1             # Scroll down one line
+```
+
+#### System Management
+
+**WIN_CLEAR_SCREEN** - Clear entire screen
+```bcl
+WIN_CLEAR_SCREEN
+```
+
+**WIN_CLEANUP** - Cleanup and restore terminal
+```bcl
+WIN_CLEANUP                # Call before exiting
+```
+
+#### Complete Example
+```bcl
+#!/usr/bin/env bcl
+SOURCE "lib/WINDOW.BLB"
+
+WIN_INIT
+
+# Create main window
+WIN_CREATE 0 3 5 60 15 "Application Title"
+WIN_SET_BORDER_STYLE 0 1
+WIN_SET_COLOR 0 $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLUE
+WIN_SET_BORDER_COLOR 0 $ANSI_FG_BRIGHT_CYAN $ANSI_BG_BLUE
+WIN_DRAW 0
+
+# Add content
+WIN_PRINT_CENTER 0 2 "Welcome to BCL Windows"
+WIN_PRINT 0 4 "  Select an option:"
+WIN_PRINT 0 5 ""
+
+# Menu
+SET menu "New|Open|Save|Exit"
+WIN_MENU 0 $menu 1
+
+# Progress bar
+WIN_PRINT 0 10 "  Loading..."
+WIN_PROGRESS 0 11 75
+
+# Buttons
+WIN_HLINE 0 12
+WIN_BUTTON 0 13 15 " OK "
+WIN_BUTTON 0 13 30 " Cancel "
+
+# Wait for input
+ANSI_CURSOR_GOTO 24 1
+PUTS -NONEWLINE "Press ENTER..."
+GETS input
+
+# Cleanup
+WIN_CLEANUP
+```
+
+---
+
 ## Common Patterns
 
 ### File Processing Line-by-Line
@@ -2195,7 +2844,51 @@ EXIT 0
 10. **Test patterns before using in conditionals**
     - Use simple test first: `IF [REGEXP pattern $text]`
 
+11. **Use GLOBAL with arrays in procedures (v2.0+)**
+    - `GLOBAL arrayname` marks entire array as global
+    - Works with both existing and new arrays
+    - Essential for library procedures that create arrays
+
+12. **Use Unicode for better terminal graphics (v2.0+)**
+    - `\uXXXX` for 4-digit Unicode (e.g., `"\u250C"` = ┌)
+    - `\UXXXXXXXX` for 8-digit Unicode (e.g., `"\U0001F600"` = 😀)
+    - ANSI.BLB provides 60+ Unicode constants for box drawing
+
+13. **Use standard libraries for common tasks**
+    - `SOURCE "lib/MATRIX.BLB"` for matrix operations
+    - `SOURCE "lib/WINDOW.BLB"` for terminal UI
+    - `SOURCE "lib/ANSI.BLB"` for terminal control
+
+---
+
+## What's New in v2.0
+
+### Array Global Prefix System
+- Arrays now work correctly with GLOBAL in procedures
+- Single `GLOBAL arrayname` declaration makes all array elements global
+- Critical for libraries that manage shared data structures
+- See "Array Global Scope" section for details
+
+### Unicode Support
+- Full UTF-8 Unicode escape sequences: `\uXXXX` and `\UXXXXXXXX`
+- ANSI library includes 60+ Unicode character constants
+- Box drawing characters (single, double, rounded styles)
+- Symbols: arrows, checkmarks, blocks, spinners
+- See "Escape Sequences" section for details
+
+### Enhanced Standard Libraries
+- **MATRIX.BLB v2.0.0** - New MATLAB-style matrix library
+  - 21 functions for creation, operations, and analysis
+  - Works correctly with global arrays
+- **ANSI.BLB v2.0.0** - Unicode graphics support
+  - 60+ Unicode character constants
+  - Box drawing, arrows, blocks, symbols
+- **WINDOW.BLB v2.0.0** - Complete rewrite
+  - Unicode borders (single, double, rounded)
+  - Menus, progress bars, buttons, scrolling
+  - All windows persist correctly with global arrays
+
 ---
 
 **End of BCL Language Reference for LLM Code Generation**
-**Version 1.5.1 | Complete specification for RAG-based code generation**
+**Version 2.0.0 | Now with Array Global Support, Unicode, and Enhanced Libraries**

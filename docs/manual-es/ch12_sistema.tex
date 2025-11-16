@@ -382,12 +382,14 @@ backup_file "important.txt"
 
 \subsection{ENV - Acceder a Variables de Entorno}
 
-\cmd{ENV} lee variables de entorno del sistema operativo.
+\cmd{ENV} lee variables de entorno del sistema operativo. Si la variable de entorno solicitada no existe, ENV devuelve una cadena vacía (no un error).
 
 \textbf{Sintaxis:}
 \begin{lstlisting}[language=BCL]
 ENV variable_name
 \end{lstlisting}
+
+\textbf{Valor de retorno:} El valor de la variable de entorno, o cadena vacía si no está configurada.
 
 \begin{examplebox}[title=Leer Variables de Entorno]
 \begin{lstlisting}[language=BCL]
@@ -405,7 +407,7 @@ PUTS "PATH: $path"
 
 # Check if a variable exists
 SET editor [ENV EDITOR]
-IF [STRING LENGTH $editor] > 0 THEN
+IF ![STRING EQUAL $editor ""] THEN
   PUTS "Default editor: $editor"
 ELSE
   PUTS "No EDITOR set, using vi"
@@ -427,13 +429,13 @@ Default editor: vim
 PROC get_temp_dir DO
   # Try different environment variables
   SET temp [ENV TMPDIR]
-  IF [STRING LENGTH $temp] = 0 THEN
+  IF [STRING EQUAL $temp ""] THEN
     SET temp [ENV TEMP]
   END
-  IF [STRING LENGTH $temp] = 0 THEN
+  IF [STRING EQUAL $temp ""] THEN
     SET temp [ENV TMP]
   END
-  IF [STRING LENGTH $temp] = 0 THEN
+  IF [STRING EQUAL $temp ""] THEN
     SET temp "/tmp"  # Default for Unix
   END
   RETURN $temp

@@ -84,6 +84,18 @@ Empty string length: 0
 La longitud incluye espacios y puntuación. "hi!" tiene longitud 3, no 2.
 \end{tipbox}
 
+\begin{warningbox}
+\textbf{Problema Conocido (solo REPL):} Existe un error de fallo de segmentación conocido al usar \cmd{STRING LENGTH} en el REPL interactivo (no en scripts). Este problema ocurre en ciertos contextos con sustitución de comandos.
+
+\textbf{Solución alternativa:} Usa \cmd{STRING EQUAL} para verificar cadenas vacías en su lugar:
+\begin{lstlisting}[language=BCL]
+# En lugar de: IF [STRING LENGTH $str] > 0 THEN
+# Usa:         IF ![STRING EQUAL $str ""] THEN
+\end{lstlisting}
+
+Este problema solo afecta al REPL interactivo -- los scripts que usan STRING LENGTH funcionan correctamente.
+\end{warningbox}
+
 \subsection{STRING INDEX - Obtener Caracteres Individuales}
 
 \cmd{STRING INDEX} extrae un carácter de una posición específica.

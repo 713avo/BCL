@@ -52,6 +52,11 @@ IF [REGEXP "Cat" $text] THEN
 ELSE
   PUTS "'Cat' not found (wrong case)"
 END
+
+# Usa la opción NOCASE para coincidencia insensible a mayúsculas
+IF [REGEXP "Cat" $text NOCASE] THEN
+  PUTS "Found 'Cat' (case-insensitive)"
+END
 \end{lstlisting}
 
 \textbf{Salida:}
@@ -59,8 +64,16 @@ END
 Found 'cat' in the text
 Found 'mat' in the text
 'Cat' not found (wrong case)
+Found 'Cat' (case-insensitive)
 \end{verbatim}
 \end{examplebox}
+
+\begin{tipbox}
+Usa la opción \texttt{NOCASE} para hacer que los patrones coincidan sin importar mayúsculas/minúsculas. Coloca \texttt{NOCASE} después del argumento de texto:
+\begin{lstlisting}[language=BCL]
+REGEXP pattern text NOCASE
+\end{lstlisting}
+\end{tipbox}
 
 \subsection{Caracteres Especiales - Los Comodines}
 
@@ -420,10 +433,8 @@ Domain: example.com
 \toprule
 \textbf{Opción} & \textbf{Descripción} \\
 \midrule
-\texttt{-nocase} & Coincidencia insensible a mayúsculas/minúsculas \\
-\texttt{-line} & Tratar cadena como múltiples líneas (\^{} y \$ coinciden con inicio/fin de línea) \\
-\texttt{-lineanchor} & Similar a -line \\
-\texttt{-expanded} & Ignorar espacios en blanco en patrón (para legibilidad) \\
+\texttt{NOCASE} & Coincidencia insensible a mayúsculas/minúsculas \\
+\texttt{ALL} & Contar/coincidir todas las ocurrencias (devuelve contador) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -432,23 +443,29 @@ Domain: example.com
 \begin{lstlisting}[language=BCL]
 SET text "Hello World"
 
-# Case-sensitive (won't match)
+# Sensible a mayúsculas (no coincide)
 IF [REGEXP "hello" $text] THEN
   PUTS "Found (sensitive)"
 ELSE
   PUTS "Not found (sensitive)"
 END
 
-# Case-insensitive (will match)
-IF [REGEXP -nocase "hello" $text] THEN
+# Insensible a mayúsculas (coincide)
+IF [REGEXP "hello" $text NOCASE] THEN
   PUTS "Found (insensitive)"
 END
+
+# Contar todas las ocurrencias
+SET text2 "foo bar foo baz foo"
+SET count [REGEXP "foo" $text2 ALL]
+PUTS "Encontrado 'foo' $count veces"
 \end{lstlisting}
 
 \textbf{Salida:}
 \begin{verbatim}
 Not found (sensitive)
 Found (insensitive)
+Encontrado 'foo' 3 veces
 \end{verbatim}
 \end{examplebox}
 
@@ -458,8 +475,10 @@ Found (insensitive)
 
 \textbf{Sintaxis:}
 \begin{lstlisting}[language=BCL]
-REGSUB pattern string replacement         # Replace first match
-REGSUB pattern string replacement ALL     # Replace all matches
+REGSUB pattern string replacement                # Reemplazar primera coincidencia
+REGSUB pattern string replacement ALL            # Reemplazar todas las coincidencias
+REGSUB pattern string replacement NOCASE         # Insensible a mayúsculas
+REGSUB pattern string replacement ALL NOCASE     # Ambas opciones
 \end{lstlisting}
 
 \subsection{Reemplazo Básico}

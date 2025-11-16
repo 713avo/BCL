@@ -65,6 +65,11 @@ SET last [LINDEX $names 3]
 PUTS "First: $first"
 PUTS "Second: $second"
 PUTS "Last: $last"
+
+# Para obtener el último elemento, calcular el índice
+SET len [LLENGTH $names]
+SET last_elem [LINDEX $names [EXPR $len - 1]]
+PUTS "Último elemento: $last_elem"
 \end{lstlisting}
 
 \textbf{Salida:}
@@ -72,8 +77,13 @@ PUTS "Last: $last"
 First: Alice
 Second: Bob
 Last: Diana
+Último elemento: Diana
 \end{verbatim}
 \end{examplebox}
+
+\begin{notebox}
+\textbf{Limitación:} Los índices negativos (ej., \texttt{-1} para el último elemento) no están actualmente soportados. Usa \cmd{LLENGTH} e índices positivos como se muestra arriba.
+\end{notebox}
 
 \subsection{LRANGE: Obtener Sublista}
 
@@ -121,18 +131,37 @@ END
 
 \subsection{LAPPEND: Agregar al Final}
 
+\cmd{LAPPEND} modifica la variable en el lugar agregando elementos a ella. La variable se actualiza directamente y el nuevo valor también se devuelve.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}[language=BCL]
+LAPPEND varname elemento ?elemento ...?
+\end{lstlisting}
+
+\textbf{Nota:} A diferencia de algunos comandos de lista, LAPPEND modifica la variable directamente -- no necesitas reasignar el resultado.
+
 \begin{examplebox}[title=Agregar a Listas]
 \begin{lstlisting}[language=BCL]
 SET fruits [LIST apple banana]
-SET fruits [LAPPEND $fruits cherry]
-SET fruits [LAPPEND $fruits date elderberry]
+
+# LAPPEND modifica fruits directamente
+LAPPEND fruits cherry
+LAPPEND fruits date elderberry
 
 PUTS $fruits
+# Salida: apple banana cherry date elderberry
+
+# También puedes capturar el valor de retorno si es necesario
+SET result [LAPPEND fruits fig]
+PUTS "Devuelto: $result"
+PUTS "Variable: $fruits"
 \end{lstlisting}
 
 \textbf{Salida:}
 \begin{verbatim}
 apple banana cherry date elderberry
+Devuelto: apple banana cherry date elderberry fig
+Variable: apple banana cherry date elderberry fig
 \end{verbatim}
 \end{examplebox}
 
@@ -245,7 +274,7 @@ SET shopping_list [LIST]
 
 PROC add_item WITH item DO
   GLOBAL shopping_list
-  SET shopping_list [LAPPEND $shopping_list $item]
+  LAPPEND shopping_list $item
   PUTS "Added: $item"
 END
 

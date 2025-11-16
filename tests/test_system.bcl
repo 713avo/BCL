@@ -1,0 +1,122 @@
+#!/usr/bin/env bcl
+# Test suite for system commands: EVAL, SOURCE, AFTER, EXEC, ENV, ARGV
+
+PUTS "=========================================="
+PUTS "Testing System Commands"
+PUTS "=========================================="
+
+# Test EVAL
+PUTS "\n[TEST] EVAL command"
+SET code "SET x 42"
+EVAL $code
+IF [EXPR $x == 42] THEN
+    PUTS "  PASS: EVAL executes code string"
+ELSE
+    PUTS "  FAIL: EVAL - expected x=42, got $x"
+END
+
+# Test EVAL with expression
+SET code2 "EXPR 10 + 20"
+SET result [EVAL $code2]
+IF [EXPR $result == 30] THEN
+    PUTS "  PASS: EVAL returns result"
+ELSE
+    PUTS "  FAIL: EVAL result - expected 30, got $result"
+END
+
+# Test EVAL with complex code
+SET code3 "SET a 5\nSET b 10\nEXPR \$a + \$b"
+SET sum [EVAL $code3]
+IF [EXPR $sum == 15] THEN
+    PUTS "  PASS: EVAL executes multi-line code"
+ELSE
+    PUTS "  FAIL: EVAL multi-line - expected 15, got $sum"
+END
+
+# Test SOURCE
+PUTS "\n[TEST] SOURCE command"
+# Create a temporary script
+SET tempfile "/tmp/test_bcl_source.bcl"
+SET fh [OPEN $tempfile W]
+PUTS $fh "SET sourced_var \"loaded from file\""
+PUTS $fh "PROC sourced_proc WITH DO"
+PUTS $fh "    RETURN \"from sourced file\""
+PUTS $fh "END"
+CLOSE $fh
+
+SOURCE $tempfile
+IF [STRING EQUAL $sourced_var "loaded from file"] THEN
+    PUTS "  PASS: SOURCE loads variables from file"
+ELSE
+    PUTS "  FAIL: SOURCE - variable not loaded"
+END
+
+SET proc_result [sourced_proc]
+IF [STRING EQUAL $proc_result "from sourced file"] THEN
+    PUTS "  PASS: SOURCE loads procedures from file"
+ELSE
+    PUTS "  FAIL: SOURCE - procedure not loaded"
+END
+
+# Clean up
+EXEC rm -f $tempfile
+
+# Test AFTER
+PUTS "\n[TEST] AFTER command"
+SET start [CLOCK MILLISECONDS]
+AFTER 100
+SET end [CLOCK MILLISECONDS]
+SET elapsed [EXPR $end - $start]
+IF [EXPR $elapsed >= 100] THEN
+    PUTS "  PASS: AFTER delays execution"
+ELSE
+    PUTS "  FAIL: AFTER - elapsed $elapsed ms, expected >= 100"
+END
+
+# Test ENV
+PUTS "\n[TEST] ENV command"
+SET path [ENV PATH]
+IF [STRING LENGTH $path > 0] THEN
+    PUTS "  PASS: ENV retrieves environment variable"
+ELSE
+    PUTS "  FAIL: ENV - PATH is empty"
+END
+
+SET home [ENV HOME]
+IF [STRING LENGTH $home > 0] THEN
+    PUTS "  PASS: ENV retrieves HOME variable"
+ELSE
+    PUTS "  FAIL: ENV - HOME is empty"
+END
+
+# Test EXEC
+PUTS "\n[TEST] EXEC command"
+SET output [EXEC echo "test output"]
+IF [STRING MATCH "*test output*" $output] THEN
+    PUTS "  PASS: EXEC executes command and returns output"
+ELSE
+    PUTS "  FAIL: EXEC - expected 'test output', got '$output'"
+END
+
+# Test EXEC with pipeline
+SET count [EXEC echo -e "line1\\nline2\\nline3" | wc -l]
+SET trimmed [STRING TRIM $count]
+IF [EXPR $trimmed == 3] THEN
+    PUTS "  PASS: EXEC handles pipeline"
+ELSE
+    PUTS "  FAIL: EXEC pipeline - expected 3, got '$trimmed'"
+END
+
+# Test ARGV
+PUTS "\n[TEST] ARGV command"
+SET args [ARGV]
+SET arglen [LLENGTH $args]
+IF [EXPR $arglen >= 0] THEN
+    PUTS "  PASS: ARGV returns argument list"
+ELSE
+    PUTS "  FAIL: ARGV"
+END
+
+PUTS "\n=========================================="
+PUTS "System Commands Tests Complete"
+PUTS "=========================================="

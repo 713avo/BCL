@@ -1,0 +1,102 @@
+#!/usr/bin/env bcl
+# Test suite for BINARY command (FORMAT and SCAN)
+
+PUTS "=========================================="
+PUTS "Testing BINARY Commands"
+PUTS "=========================================="
+
+# Test BINARY FORMAT with integers
+PUTS "\n[TEST] BINARY FORMAT - integers"
+SET data [BINARY FORMAT c 65]
+SET len [STRING LENGTH $data]
+IF [EXPR $len == 1] THEN
+    PUTS "  PASS: BINARY FORMAT creates single byte"
+ELSE
+    PUTS "  FAIL: BINARY FORMAT - expected length 1, got $len"
+END
+
+# Test BINARY FORMAT with multiple values
+PUTS "\n[TEST] BINARY FORMAT - multiple values"
+SET data2 [BINARY FORMAT ccc 65 66 67]
+SET len2 [STRING LENGTH $data2]
+IF [EXPR $len2 == 3] THEN
+    PUTS "  PASS: BINARY FORMAT with multiple values"
+ELSE
+    PUTS "  FAIL: BINARY FORMAT multiple - expected length 3, got $len2"
+END
+
+# Test BINARY SCAN with integers
+PUTS "\n[TEST] BINARY SCAN - integers"
+SET packed [BINARY FORMAT cc 65 66]
+BINARY SCAN $packed cc byte1 byte2
+IF [EXPR $byte1 == 65] THEN
+    IF [EXPR $byte2 == 66] THEN
+        PUTS "  PASS: BINARY SCAN extracts bytes correctly"
+    ELSE
+        PUTS "  FAIL: BINARY SCAN byte2 - expected 66, got $byte2"
+    END
+ELSE
+    PUTS "  FAIL: BINARY SCAN byte1 - expected 65, got $byte1"
+END
+
+# Test BINARY FORMAT with hex strings
+PUTS "\n[TEST] BINARY FORMAT - hex strings"
+SET hex_data [BINARY FORMAT H8 "deadbeef"]
+SET hexlen [STRING LENGTH $hex_data]
+IF [EXPR $hexlen == 4] THEN
+    PUTS "  PASS: BINARY FORMAT hex string (8 hex digits = 4 bytes)"
+ELSE
+    PUTS "  FAIL: BINARY FORMAT hex - expected length 4, got $hexlen"
+END
+
+# Test BINARY SCAN with hex
+PUTS "\n[TEST] BINARY SCAN - hex strings"
+SET packed_hex [BINARY FORMAT H8 "12345678"]
+BINARY SCAN $packed_hex H8 result
+IF [STRING EQUAL $result "12345678"] THEN
+    PUTS "  PASS: BINARY SCAN extracts hex correctly"
+ELSE
+    PUTS "  FAIL: BINARY SCAN hex - expected '12345678', got '$result'"
+END
+
+# Test BINARY FORMAT with strings
+PUTS "\n[TEST] BINARY FORMAT - strings"
+SET str_data [BINARY FORMAT a5 "hello"]
+SET strlen [STRING LENGTH $str_data]
+IF [EXPR $strlen == 5] THEN
+    PUTS "  PASS: BINARY FORMAT fixed-length string"
+ELSE
+    PUTS "  FAIL: BINARY FORMAT string - expected length 5, got $strlen"
+END
+
+# Test combined format
+PUTS "\n[TEST] BINARY FORMAT - combined format"
+SET combined [BINARY FORMAT ccH8 65 66 "deadbeef"]
+SET comblen [STRING LENGTH $combined]
+IF [EXPR $comblen == 6] THEN
+    PUTS "  PASS: BINARY FORMAT combined (2 bytes + 4 bytes hex = 6)"
+ELSE
+    PUTS "  FAIL: BINARY FORMAT combined - expected length 6, got $comblen"
+END
+
+# Test BINARY SCAN combined
+PUTS "\n[TEST] BINARY SCAN - combined format"
+SET data [BINARY FORMAT ccH8 65 66 "deadbeef"]
+BINARY SCAN $data ccH8 b1 b2 hexval
+IF [EXPR $b1 == 65] THEN
+    IF [EXPR $b2 == 66] THEN
+        IF [STRING EQUAL $hexval "deadbeef"] THEN
+            PUTS "  PASS: BINARY SCAN combined format"
+        ELSE
+            PUTS "  FAIL: BINARY SCAN hex part - got '$hexval'"
+        END
+    ELSE
+        PUTS "  FAIL: BINARY SCAN b2 - expected 66, got $b2"
+    END
+ELSE
+    PUTS "  FAIL: BINARY SCAN b1 - expected 65, got $b1"
+END
+
+PUTS "\n=========================================="
+PUTS "BINARY Commands Tests Complete"
+PUTS "=========================================="

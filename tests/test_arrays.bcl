@@ -1,0 +1,133 @@
+#!/usr/bin/env bcl
+# Test suite for ARRAY command (associative arrays)
+
+PUTS "=========================================="
+PUTS "Testing ARRAY Commands"
+PUTS "=========================================="
+
+# Test ARRAY SET and basic access
+PUTS "\n[TEST] ARRAY basic SET and access"
+SET config(host) "localhost"
+SET config(port) 8080
+SET config(timeout) 30
+
+IF [STRING EQUAL $config(host) "localhost"] THEN
+    PUTS "  PASS: Array element access"
+ELSE
+    PUTS "  FAIL: Array access - expected 'localhost', got '$config(host)'"
+END
+
+# Test ARRAY EXISTS
+PUTS "\n[TEST] ARRAY EXISTS"
+IF [ARRAY EXISTS config] THEN
+    PUTS "  PASS: ARRAY EXISTS detects array"
+ELSE
+    PUTS "  FAIL: ARRAY EXISTS should return true"
+END
+
+SET regularVar "not an array"
+IF [ARRAY EXISTS regularVar] THEN
+    PUTS "  FAIL: ARRAY EXISTS should be false for non-array"
+ELSE
+    PUTS "  PASS: ARRAY EXISTS false for non-array"
+END
+
+# Test ARRAY SIZE
+PUTS "\n[TEST] ARRAY SIZE"
+SET count [ARRAY SIZE config]
+IF [EXPR $count == 3] THEN
+    PUTS "  PASS: ARRAY SIZE returns correct count"
+ELSE
+    PUTS "  FAIL: ARRAY SIZE - expected 3, got $count"
+END
+
+# Test ARRAY NAMES
+PUTS "\n[TEST] ARRAY NAMES"
+SET keys [ARRAY NAMES config]
+SET keycount [LLENGTH $keys]
+IF [EXPR $keycount == 3] THEN
+    PUTS "  PASS: ARRAY NAMES returns all keys"
+ELSE
+    PUTS "  FAIL: ARRAY NAMES - expected 3 keys, got $keycount"
+END
+
+# Test ARRAY GET
+PUTS "\n[TEST] ARRAY GET"
+SET pairs [ARRAY GET config]
+SET pairlen [LLENGTH $pairs]
+IF [EXPR $pairlen == 6] THEN
+    PUTS "  PASS: ARRAY GET returns key-value pairs"
+ELSE
+    PUTS "  FAIL: ARRAY GET - expected 6 elements, got $pairlen"
+END
+
+# Test ARRAY SET from list
+PUTS "\n[TEST] ARRAY SET from list"
+SET data(a) "old"
+ARRAY SET data [LIST b 2 c 3 d 4]
+SET size [ARRAY SIZE data]
+IF [EXPR $size >= 3] THEN
+    PUTS "  PASS: ARRAY SET from list"
+ELSE
+    PUTS "  FAIL: ARRAY SET - expected size >= 3, got $size"
+END
+
+# Test ARRAY UNSET
+PUTS "\n[TEST] ARRAY UNSET"
+SET temp(x) 1
+SET temp(y) 2
+ARRAY UNSET temp
+IF [ARRAY EXISTS temp] THEN
+    PUTS "  FAIL: ARRAY UNSET should remove array"
+ELSE
+    PUTS "  PASS: ARRAY UNSET removes array"
+END
+
+# Test iteration with FOREACH
+PUTS "\n[TEST] ARRAY iteration with FOREACH"
+SET colors(red) "#FF0000"
+SET colors(green) "#00FF00"
+SET colors(blue) "#0000FF"
+
+SET itercount 0
+FOREACH key IN [ARRAY NAMES colors] DO
+    INCR itercount
+END
+
+IF [EXPR $itercount == 3] THEN
+    PUTS "  PASS: FOREACH iterates over array keys"
+ELSE
+    PUTS "  FAIL: FOREACH - expected 3 iterations, got $itercount"
+END
+
+# Test pattern matching in ARRAY NAMES
+PUTS "\n[TEST] ARRAY NAMES with pattern"
+SET server(http_port) 80
+SET server(https_port) 443
+SET server(ftp_port) 21
+SET server(name) "myserver"
+
+SET http_keys [ARRAY NAMES server "http*"]
+SET http_count [LLENGTH $http_keys]
+IF [EXPR $http_count >= 1] THEN
+    PUTS "  PASS: ARRAY NAMES with pattern filter"
+ELSE
+    PUTS "  FAIL: ARRAY NAMES pattern - got $http_count matches"
+END
+
+# Test complex values
+PUTS "\n[TEST] ARRAY with complex values"
+SET db(connection) "host=localhost;port=5432"
+SET db(users) [LIST alice bob charlie]
+
+SET userlist $db(users)
+SET usercount [LLENGTH $userlist]
+IF [EXPR $usercount == 3] THEN
+    PUTS "  PASS: Array can store lists as values"
+ELSE
+    PUTS "  FAIL: Array list value - expected 3 users, got $usercount"
+END
+
+PUTS "\n=========================================="
+PUTS "ARRAY Commands Tests Complete"
+PUTS "=========================================="

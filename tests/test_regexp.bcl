@@ -1,0 +1,153 @@
+#!/usr/bin/env bcl
+# Test suite for REGEXP and REGSUB commands
+
+PUTS "=========================================="
+PUTS "Testing REGEXP and REGSUB Commands"
+PUTS "=========================================="
+
+# Test REGEXP basic matching
+PUTS "\n[TEST] REGEXP - basic matching"
+IF [REGEXP "hello" "hello world"] THEN
+    PUTS "  PASS: REGEXP finds literal match"
+ELSE
+    PUTS "  FAIL: REGEXP should find 'hello'"
+END
+
+IF [REGEXP "xyz" "hello world"] THEN
+    PUTS "  FAIL: REGEXP should not find 'xyz'"
+ELSE
+    PUTS "  PASS: REGEXP no match"
+END
+
+# Test REGEXP with dot wildcard
+PUTS "\n[TEST] REGEXP - dot wildcard"
+IF [REGEXP "h.llo" "hello"] THEN
+    PUTS "  PASS: REGEXP dot wildcard matches any char"
+ELSE
+    PUTS "  FAIL: REGEXP dot wildcard"
+END
+
+# Test REGEXP with star quantifier
+PUTS "\n[TEST] REGEXP - star quantifier"
+IF [REGEXP "he*llo" "hllo"] THEN
+    PUTS "  PASS: REGEXP star matches zero occurrences"
+ELSE
+    PUTS "  FAIL: REGEXP star (zero)"
+END
+
+IF [REGEXP "he*llo" "hello"] THEN
+    PUTS "  PASS: REGEXP star matches one occurrence"
+ELSE
+    PUTS "  FAIL: REGEXP star (one)"
+END
+
+IF [REGEXP "he*llo" "heeello"] THEN
+    PUTS "  PASS: REGEXP star matches multiple occurrences"
+ELSE
+    PUTS "  FAIL: REGEXP star (multiple)"
+END
+
+# Test REGEXP with plus quantifier
+PUTS "\n[TEST] REGEXP - plus quantifier"
+IF [REGEXP "he+llo" "hello"] THEN
+    PUTS "  PASS: REGEXP plus matches one or more"
+ELSE
+    PUTS "  FAIL: REGEXP plus"
+END
+
+IF [REGEXP "he+llo" "hllo"] THEN
+    PUTS "  FAIL: REGEXP plus should require at least one"
+ELSE
+    PUTS "  PASS: REGEXP plus requires one occurrence"
+END
+
+# Test REGEXP with question quantifier
+PUTS "\n[TEST] REGEXP - question quantifier"
+IF [REGEXP "colou?r" "color"] THEN
+    PUTS "  PASS: REGEXP question (zero occurrences)"
+ELSE
+    PUTS "  FAIL: REGEXP question (zero)"
+END
+
+IF [REGEXP "colou?r" "colour"] THEN
+    PUTS "  PASS: REGEXP question (one occurrence)"
+ELSE
+    PUTS "  FAIL: REGEXP question (one)"
+END
+
+# Test REGEXP with anchors
+PUTS "\n[TEST] REGEXP - anchors"
+IF [REGEXP "^hello" "hello world"] THEN
+    PUTS "  PASS: REGEXP anchor ^ matches start"
+ELSE
+    PUTS "  FAIL: REGEXP anchor ^"
+END
+
+IF [REGEXP "world$" "hello world"] THEN
+    PUTS "  PASS: REGEXP anchor $ matches end"
+ELSE
+    PUTS "  FAIL: REGEXP anchor $"
+END
+
+IF [REGEXP "^hello$" "hello"] THEN
+    PUTS "  PASS: REGEXP both anchors match exact string"
+ELSE
+    PUTS "  FAIL: REGEXP both anchors"
+END
+
+# Test REGEXP NOCASE option
+PUTS "\n[TEST] REGEXP - NOCASE option"
+IF [REGEXP NOCASE "HELLO" "hello world"] THEN
+    PUTS "  PASS: REGEXP NOCASE ignores case"
+ELSE
+    PUTS "  FAIL: REGEXP NOCASE"
+END
+
+# Test REGSUB basic substitution
+PUTS "\n[TEST] REGSUB - basic substitution"
+SET result [REGSUB "world" "hello world" "BCL"]
+IF [STRING EQUAL $result "hello BCL"] THEN
+    PUTS "  PASS: REGSUB replaces pattern"
+ELSE
+    PUTS "  FAIL: REGSUB - expected 'hello BCL', got '$result'"
+END
+
+# Test REGSUB with ALL option
+PUTS "\n[TEST] REGSUB - ALL option"
+SET result [REGSUB ALL "o" "foo boo zoo" "X"]
+IF [STRING EQUAL $result "fXX bXX zXX"] THEN
+    PUTS "  PASS: REGSUB ALL replaces all occurrences"
+ELSE
+    PUTS "  FAIL: REGSUB ALL - expected 'fXX bXX zXX', got '$result'"
+END
+
+# Test REGSUB without ALL (first only)
+PUTS "\n[TEST] REGSUB - first occurrence only"
+SET result [REGSUB "o" "foo boo" "X"]
+IF [STRING EQUAL $result "fXo boo"] THEN
+    PUTS "  PASS: REGSUB replaces first occurrence only"
+ELSE
+    PUTS "  FAIL: REGSUB first - expected 'fXo boo', got '$result'"
+END
+
+# Test REGSUB NOCASE
+PUTS "\n[TEST] REGSUB - NOCASE option"
+SET result [REGSUB NOCASE "HELLO" "hello world" "hi"]
+IF [STRING EQUAL $result "hi world"] THEN
+    PUTS "  PASS: REGSUB NOCASE ignores case"
+ELSE
+    PUTS "  FAIL: REGSUB NOCASE - expected 'hi world', got '$result'"
+END
+
+# Test REGSUB with pattern
+PUTS "\n[TEST] REGSUB - with pattern"
+SET result [REGSUB "\\d+" "test123abc" "XXX"]
+IF [STRING MATCH "*XXX*" $result] THEN
+    PUTS "  PASS: REGSUB with digit pattern"
+ELSE
+    PUTS "  FAIL: REGSUB pattern - got '$result'"
+END
+
+PUTS "\n=========================================="
+PUTS "REGEXP and REGSUB Commands Tests Complete"
+PUTS "=========================================="

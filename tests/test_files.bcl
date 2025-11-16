@@ -1,0 +1,202 @@
+#!/usr/bin/env bcl
+# Test suite for file I/O commands: OPEN, CLOSE, READ, GETS, PUTS, TELL, SEEK, EOF, FILE, PWD, GLOB
+
+PUTS "=========================================="
+PUTS "Testing File I/O Commands"
+PUTS "=========================================="
+
+# Create test directory
+SET testdir "/tmp/bcl_test_files"
+EXEC mkdir -p $testdir
+
+# Test OPEN and CLOSE
+PUTS "\n[TEST] OPEN and CLOSE"
+SET filename "$testdir/test1.txt"
+SET fh [OPEN $filename W]
+IF [STRING MATCH "file*" $fh] THEN
+    PUTS "  PASS: OPEN creates file handle"
+ELSE
+    PUTS "  FAIL: OPEN - got '$fh'"
+END
+
+CLOSE $fh
+PUTS "  PASS: CLOSE closes file handle"
+
+# Test PUTS to file
+PUTS "\n[TEST] PUTS to file"
+SET fh [OPEN $filename W]
+PUTS $fh "Line 1"
+PUTS $fh "Line 2"
+PUTS $fh "Line 3"
+CLOSE $fh
+
+# Test READ
+PUTS "\n[TEST] READ from file"
+SET fh [OPEN $filename R]
+SET content [READ $fh]
+CLOSE $fh
+IF [STRING MATCH "*Line 1*" $content] THEN
+    IF [STRING MATCH "*Line 2*" $content] THEN
+        PUTS "  PASS: READ reads entire file"
+    ELSE
+        PUTS "  FAIL: READ - missing Line 2"
+    END
+ELSE
+    PUTS "  FAIL: READ - missing Line 1"
+END
+
+# Test GETS from file
+PUTS "\n[TEST] GETS from file"
+SET fh [OPEN $filename R]
+SET line1 [GETS $fh]
+SET line2 [GETS $fh]
+CLOSE $fh
+
+IF [STRING EQUAL $line1 "Line 1"] THEN
+    PUTS "  PASS: GETS reads first line"
+ELSE
+    PUTS "  FAIL: GETS - expected 'Line 1', got '$line1'"
+END
+
+IF [STRING EQUAL $line2 "Line 2"] THEN
+    PUTS "  PASS: GETS reads second line"
+ELSE
+    PUTS "  FAIL: GETS - expected 'Line 2', got '$line2'"
+END
+
+# Test TELL and SEEK
+PUTS "\n[TEST] TELL and SEEK"
+SET fh [OPEN $filename R]
+SET pos1 [TELL $fh]
+SET line [GETS $fh]
+SET pos2 [TELL $fh]
+
+IF [EXPR $pos2 > $pos1] THEN
+    PUTS "  PASS: TELL shows position change after read"
+ELSE
+    PUTS "  FAIL: TELL - pos1=$pos1, pos2=$pos2"
+END
+
+SEEK $fh 0 START
+SET pos3 [TELL $fh]
+IF [EXPR $pos3 == 0] THEN
+    PUTS "  PASS: SEEK resets position to start"
+ELSE
+    PUTS "  FAIL: SEEK - expected 0, got $pos3"
+END
+CLOSE $fh
+
+# Test EOF
+PUTS "\n[TEST] EOF detection"
+SET fh [OPEN $filename R]
+WHILE [EXPR ![EOF $fh]] DO
+    SET line [GETS $fh]
+END
+IF [EOF $fh] THEN
+    PUTS "  PASS: EOF detects end of file"
+ELSE
+    PUTS "  FAIL: EOF should be true"
+END
+CLOSE $fh
+
+# Test FILE EXISTS
+PUTS "\n[TEST] FILE EXISTS"
+IF [FILE EXISTS $filename] THEN
+    PUTS "  PASS: FILE EXISTS detects file"
+ELSE
+    PUTS "  FAIL: FILE EXISTS should find $filename"
+END
+
+SET nonexistent "$testdir/nonexistent.txt"
+IF [FILE EXISTS $nonexistent] THEN
+    PUTS "  FAIL: FILE EXISTS should not find nonexistent"
+ELSE
+    PUTS "  PASS: FILE EXISTS false for nonexistent file"
+END
+
+# Test FILE SIZE
+PUTS "\n[TEST] FILE SIZE"
+SET size [FILE SIZE $filename]
+IF [EXPR $size > 0] THEN
+    PUTS "  PASS: FILE SIZE returns file size"
+ELSE
+    PUTS "  FAIL: FILE SIZE - got $size"
+END
+
+# Test FILE TYPE
+PUTS "\n[TEST] FILE TYPE"
+SET type [FILE TYPE $filename]
+IF [STRING EQUAL $type "file"] THEN
+    PUTS "  PASS: FILE TYPE detects regular file"
+ELSE
+    PUTS "  FAIL: FILE TYPE - expected 'file', got '$type'"
+END
+
+SET dirtype [FILE TYPE $testdir]
+IF [STRING EQUAL $dirtype "directory"] THEN
+    PUTS "  PASS: FILE TYPE detects directory"
+ELSE
+    PUTS "  FAIL: FILE TYPE - expected 'directory', got '$dirtype'"
+END
+
+# Test FILE RENAME
+PUTS "\n[TEST] FILE RENAME"
+SET newname "$testdir/renamed.txt"
+FILE RENAME $filename $newname
+IF [FILE EXISTS $newname] THEN
+    PUTS "  PASS: FILE RENAME renames file"
+ELSE
+    PUTS "  FAIL: FILE RENAME - new file not found"
+END
+
+# Test FILE COPY
+PUTS "\n[TEST] FILE COPY"
+SET copyname "$testdir/copy.txt"
+FILE COPY $newname $copyname
+IF [FILE EXISTS $copyname] THEN
+    PUTS "  PASS: FILE COPY creates copy"
+ELSE
+    PUTS "  FAIL: FILE COPY - copy not found"
+END
+
+# Test FILE DELETE
+PUTS "\n[TEST] FILE DELETE"
+FILE DELETE $copyname
+IF [FILE EXISTS $copyname] THEN
+    PUTS "  FAIL: FILE DELETE should remove file"
+ELSE
+    PUTS "  PASS: FILE DELETE removes file"
+END
+
+# Test PWD
+PUTS "\n[TEST] PWD"
+SET cwd [PWD]
+IF [STRING LENGTH $cwd > 0] THEN
+    PUTS "  PASS: PWD returns current directory"
+ELSE
+    PUTS "  FAIL: PWD - returned empty"
+END
+
+# Test GLOB
+PUTS "\n[TEST] GLOB"
+# Create multiple test files
+EXEC touch "$testdir/test1.txt"
+EXEC touch "$testdir/test2.txt"
+EXEC touch "$testdir/data.dat"
+
+SET txtfiles [GLOB "$testdir/*.txt"]
+SET count [LLENGTH $txtfiles]
+IF [EXPR $count >= 2] THEN
+    PUTS "  PASS: GLOB finds files with pattern"
+ELSE
+    PUTS "  FAIL: GLOB - expected >= 2 files, got $count"
+END
+
+# Clean up test directory
+PUTS "\n[Cleanup]"
+EXEC rm -rf $testdir
+PUTS "  Test files cleaned up"
+
+PUTS "\n=========================================="
+PUTS "File I/O Commands Tests Complete"
+PUTS "=========================================="

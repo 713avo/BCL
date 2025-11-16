@@ -1,0 +1,53 @@
+#!/usr/bin/env bcl
+# Master test runner - executes all BCL test suites
+
+PUTS "========================================================================"
+PUTS "BCL Comprehensive Test Suite"
+PUTS "========================================================================"
+PUTS ""
+
+SET total_tests 0
+SET passed_tests 0
+SET failed_tests 0
+
+# Function to run a test file
+PROC run_test WITH testfile DO
+    GLOBAL total_tests passed_tests failed_tests
+
+    PUTS "Running: $testfile"
+    INCR total_tests
+
+    # Execute the test
+    SOURCE $testfile
+
+    PUTS ""
+END
+
+# Get current directory
+SET testdir "tests"
+
+# Run all test suites
+PUTS "Starting test execution..."
+PUTS ""
+
+run_test "$testdir/test_variables.bcl"
+run_test "$testdir/test_control_flow.bcl"
+run_test "$testdir/test_expressions.bcl"
+run_test "$testdir/test_lists.bcl"
+run_test "$testdir/test_strings.bcl"
+run_test "$testdir/test_arrays.bcl"
+run_test "$testdir/test_procedures.bcl"
+run_test "$testdir/test_binary.bcl"
+run_test "$testdir/test_format_scan.bcl"
+run_test "$testdir/test_regexp.bcl"
+run_test "$testdir/test_info_clock.bcl"
+run_test "$testdir/test_system.bcl"
+run_test "$testdir/test_files.bcl"
+
+PUTS "========================================================================"
+PUTS "Test Suites Executed: $total_tests"
+PUTS "========================================================================"
+PUTS ""
+PUTS "All test suites have been executed."
+PUTS "Review the output above for detailed results."
+PUTS ""

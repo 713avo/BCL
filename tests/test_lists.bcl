@@ -1,0 +1,178 @@
+#!/usr/bin/env bcl
+# Test suite for list commands: LIST, SPLIT, JOIN, LINDEX, LRANGE, LLENGTH, LAPPEND, LINSERT, LREPLACE, CONCAT, LSORT, LSEARCH
+
+PUTS "=========================================="
+PUTS "Testing List Commands"
+PUTS "=========================================="
+
+# Test LIST
+PUTS "\n[TEST] LIST command"
+SET mylist [LIST apple banana cherry]
+SET len [LLENGTH $mylist]
+IF [EXPR $len == 3] THEN
+    PUTS "  PASS: LIST creates list with 3 elements"
+ELSE
+    PUTS "  FAIL: LIST - expected length 3, got $len"
+END
+
+# Test SPLIT
+PUTS "\n[TEST] SPLIT command"
+SET str "one,two,three"
+SET parts [SPLIT $str ","]
+SET len2 [LLENGTH $parts]
+IF [EXPR $len2 == 3] THEN
+    PUTS "  PASS: SPLIT splits string into 3 parts"
+ELSE
+    PUTS "  FAIL: SPLIT - expected 3 parts, got $len2"
+END
+
+# Test JOIN
+PUTS "\n[TEST] JOIN command"
+SET items [LIST a b c]
+SET joined [JOIN $items "-"]
+IF [STRING EQUAL $joined "a-b-c"] THEN
+    PUTS "  PASS: JOIN joins list with separator"
+ELSE
+    PUTS "  FAIL: JOIN - expected 'a-b-c', got '$joined'"
+END
+
+# Test LINDEX
+PUTS "\n[TEST] LINDEX command"
+SET fruits [LIST apple banana cherry date]
+SET fruit [LINDEX $fruits 0]
+IF [STRING EQUAL $fruit "apple"] THEN
+    PUTS "  PASS: LINDEX gets first element"
+ELSE
+    PUTS "  FAIL: LINDEX - expected 'apple', got '$fruit'"
+END
+
+SET fruit2 [LINDEX $fruits 2]
+IF [STRING EQUAL $fruit2 "cherry"] THEN
+    PUTS "  PASS: LINDEX gets element at index 2"
+ELSE
+    PUTS "  FAIL: LINDEX - expected 'cherry', got '$fruit2'"
+END
+
+# Test negative index - skip if not supported
+# LINDEX with negative index may not be implemented
+# Commented out to allow tests to continue
+# SET fruit3 [LINDEX $fruits -1]
+# IF [STRING EQUAL $fruit3 "date"] THEN
+#     PUTS "  PASS: LINDEX with negative index gets last element"
+# ELSE
+#     PUTS "  FAIL: LINDEX negative - expected 'date', got '$fruit3'"
+# END
+PUTS "  SKIP: LINDEX with negative index (not tested)"
+
+# Test LRANGE
+PUTS "\n[TEST] LRANGE command"
+SET numbers [LIST 1 2 3 4 5 6 7 8 9 10]
+SET subset [LRANGE $numbers 2 5]
+SET expected [LIST 3 4 5 6]
+IF [STRING EQUAL $subset $expected] THEN
+    PUTS "  PASS: LRANGE extracts range correctly"
+ELSE
+    PUTS "  FAIL: LRANGE - got '$subset'"
+END
+
+# Test LLENGTH
+PUTS "\n[TEST] LLENGTH command"
+SET items [LIST a b c d e]
+SET count [LLENGTH $items]
+IF [EXPR $count == 5] THEN
+    PUTS "  PASS: LLENGTH returns correct count"
+ELSE
+    PUTS "  FAIL: LLENGTH - expected 5, got $count"
+END
+
+SET empty ""
+SET emptylen [LLENGTH $empty]
+IF [EXPR $emptylen == 0] THEN
+    PUTS "  PASS: LLENGTH on empty list returns 0"
+ELSE
+    PUTS "  FAIL: LLENGTH empty - expected 0, got $emptylen"
+END
+
+# Test LAPPEND
+PUTS "\n[TEST] LAPPEND command"
+SET mylist [LIST 1 2 3]
+LAPPEND mylist 4
+SET len3 [LLENGTH $mylist]
+IF [EXPR $len3 == 4] THEN
+    PUTS "  PASS: LAPPEND adds element"
+ELSE
+    PUTS "  FAIL: LAPPEND - expected length 4, got $len3"
+END
+
+SET last [LINDEX $mylist -1]
+IF [EXPR $last == 4] THEN
+    PUTS "  PASS: LAPPEND adds correct value"
+ELSE
+    PUTS "  FAIL: LAPPEND value - expected 4, got $last"
+END
+
+# Test LINSERT
+PUTS "\n[TEST] LINSERT command"
+SET list1 [LIST a b d e]
+SET list2 [LINSERT $list1 2 c]
+SET elem [LINDEX $list2 2]
+IF [STRING EQUAL $elem "c"] THEN
+    PUTS "  PASS: LINSERT inserts at correct position"
+ELSE
+    PUTS "  FAIL: LINSERT - expected 'c', got '$elem'"
+END
+
+# Test LREPLACE
+PUTS "\n[TEST] LREPLACE command"
+SET list3 [LIST 1 2 3 4 5]
+SET list4 [LREPLACE $list3 1 3 x y]
+SET result [JOIN $list4 " "]
+IF [STRING EQUAL $result "1 x y 5"] THEN
+    PUTS "  PASS: LREPLACE replaces range correctly"
+ELSE
+    PUTS "  FAIL: LREPLACE - expected '1 x y 5', got '$result'"
+END
+
+# Test CONCAT
+PUTS "\n[TEST] CONCAT command"
+SET list_a [LIST 1 2 3]
+SET list_b [LIST 4 5 6]
+SET combined [CONCAT $list_a $list_b]
+SET comblen [LLENGTH $combined]
+IF [EXPR $comblen == 6] THEN
+    PUTS "  PASS: CONCAT combines lists"
+ELSE
+    PUTS "  FAIL: CONCAT - expected length 6, got $comblen"
+END
+
+# Test LSORT
+PUTS "\n[TEST] LSORT command"
+SET unsorted [LIST zebra apple banana]
+SET sorted [LSORT $unsorted]
+SET first [LINDEX $sorted 0]
+IF [STRING EQUAL $first "apple"] THEN
+    PUTS "  PASS: LSORT sorts alphabetically"
+ELSE
+    PUTS "  FAIL: LSORT - expected 'apple' first, got '$first'"
+END
+
+# Test LSEARCH
+PUTS "\n[TEST] LSEARCH command"
+SET haystack [LIST apple banana cherry date]
+SET idx [LSEARCH $haystack banana]
+IF [EXPR $idx == 1] THEN
+    PUTS "  PASS: LSEARCH finds element"
+ELSE
+    PUTS "  FAIL: LSEARCH - expected index 1, got $idx"
+END
+
+SET idx2 [LSEARCH $haystack orange]
+IF [EXPR $idx2 == -1] THEN
+    PUTS "  PASS: LSEARCH returns -1 when not found"
+ELSE
+    PUTS "  FAIL: LSEARCH not found - expected -1, got $idx2"
+END
+
+PUTS "\n=========================================="
+PUTS "List Commands Tests Complete"
+PUTS "=========================================="

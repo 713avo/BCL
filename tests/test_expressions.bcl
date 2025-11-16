@@ -1,0 +1,192 @@
+#!/usr/bin/env bcl
+# Test suite for EXPR command - arithmetic and logical expressions
+
+PUTS "=========================================="
+PUTS "Testing EXPR Command"
+PUTS "=========================================="
+
+# Test basic arithmetic
+PUTS "\n[TEST] Basic arithmetic operations"
+SET r1 [EXPR 5 + 3]
+IF [EXPR $r1 == 8] THEN
+    PUTS "  PASS: Addition (5+3=8)"
+ELSE
+    PUTS "  FAIL: Addition - expected 8, got $r1"
+END
+
+SET r2 [EXPR 10 - 4]
+IF [EXPR $r2 == 6] THEN
+    PUTS "  PASS: Subtraction (10-4=6)"
+ELSE
+    PUTS "  FAIL: Subtraction - expected 6, got $r2"
+END
+
+SET r3 [EXPR 6 * 7]
+IF [EXPR $r3 == 42] THEN
+    PUTS "  PASS: Multiplication (6*7=42)"
+ELSE
+    PUTS "  FAIL: Multiplication - expected 42, got $r3"
+END
+
+SET r4 [EXPR 20 / 4]
+IF [EXPR $r4 == 5] THEN
+    PUTS "  PASS: Division (20/4=5)"
+ELSE
+    PUTS "  FAIL: Division - expected 5, got $r4"
+END
+
+SET r5 [EXPR 17 % 5]
+IF [EXPR $r5 == 2] THEN
+    PUTS "  PASS: Modulo (17%5=2)"
+ELSE
+    PUTS "  FAIL: Modulo - expected 2, got $r5"
+END
+
+# Test power operator
+PUTS "\n[TEST] Power operator"
+SET r6 [EXPR 2 ** 8]
+IF [EXPR $r6 == 256] THEN
+    PUTS "  PASS: Power (2**8=256)"
+ELSE
+    PUTS "  FAIL: Power - expected 256, got $r6"
+END
+
+# Test comparison operators
+PUTS "\n[TEST] Comparison operators"
+IF [EXPR 10 > 5] THEN
+    PUTS "  PASS: Greater than (10>5)"
+ELSE
+    PUTS "  FAIL: Greater than"
+END
+
+IF [EXPR 3 < 7] THEN
+    PUTS "  PASS: Less than (3<7)"
+ELSE
+    PUTS "  FAIL: Less than"
+END
+
+IF [EXPR 5 >= 5] THEN
+    PUTS "  PASS: Greater or equal (5>=5)"
+ELSE
+    PUTS "  FAIL: Greater or equal"
+END
+
+IF [EXPR 4 <= 9] THEN
+    PUTS "  PASS: Less or equal (4<=9)"
+ELSE
+    PUTS "  FAIL: Less or equal"
+END
+
+IF [EXPR 42 == 42] THEN
+    PUTS "  PASS: Equal (42==42)"
+ELSE
+    PUTS "  FAIL: Equal"
+END
+
+IF [EXPR 10 != 20] THEN
+    PUTS "  PASS: Not equal (10!=20)"
+ELSE
+    PUTS "  FAIL: Not equal"
+END
+
+# Test logical operators
+PUTS "\n[TEST] Logical operators"
+IF [EXPR 1 && 1] THEN
+    PUTS "  PASS: Logical AND (1 && 1)"
+ELSE
+    PUTS "  FAIL: Logical AND"
+END
+
+IF [EXPR 0 || 1] THEN
+    PUTS "  PASS: Logical OR (0 || 1)"
+ELSE
+    PUTS "  FAIL: Logical OR"
+END
+
+IF [EXPR !0] THEN
+    PUTS "  PASS: Logical NOT (!0)"
+ELSE
+    PUTS "  FAIL: Logical NOT"
+END
+
+# Test complex expressions
+PUTS "\n[TEST] Complex expressions"
+SET r7 [EXPR (5 + 3) * 2]
+IF [EXPR $r7 == 16] THEN
+    PUTS "  PASS: Parentheses precedence ((5+3)*2=16)"
+ELSE
+    PUTS "  FAIL: Parentheses - expected 16, got $r7"
+END
+
+SET r8 [EXPR 10 + 5 * 2]
+IF [EXPR $r8 == 20] THEN
+    PUTS "  PASS: Operator precedence (10+5*2=20)"
+ELSE
+    PUTS "  FAIL: Operator precedence - expected 20, got $r8"
+END
+
+# Test math functions
+PUTS "\n[TEST] Math functions"
+SET r9 [EXPR abs(-42)]
+IF [EXPR $r9 == 42] THEN
+    PUTS "  PASS: abs() function"
+ELSE
+    PUTS "  FAIL: abs() - expected 42, got $r9"
+END
+
+SET r10 [EXPR sqrt(16)]
+IF [EXPR $r10 == 4] THEN
+    PUTS "  PASS: sqrt() function"
+ELSE
+    PUTS "  FAIL: sqrt() - expected 4, got $r10"
+END
+
+SET r11 [EXPR min(5, 3, 9, 1)]
+IF [EXPR $r11 == 1] THEN
+    PUTS "  PASS: min() function"
+ELSE
+    PUTS "  FAIL: min() - expected 1, got $r11"
+END
+
+SET r12 [EXPR max(5, 3, 9, 1)]
+IF [EXPR $r12 == 9] THEN
+    PUTS "  PASS: max() function"
+ELSE
+    PUTS "  FAIL: max() - expected 9, got $r12"
+END
+
+SET r13 [EXPR floor(3.7)]
+IF [EXPR $r13 == 3] THEN
+    PUTS "  PASS: floor() function"
+ELSE
+    PUTS "  FAIL: floor() - expected 3, got $r13"
+END
+
+SET r14 [EXPR ceil(3.2)]
+IF [EXPR $r14 == 4] THEN
+    PUTS "  PASS: ceil() function"
+ELSE
+    PUTS "  FAIL: ceil() - expected 4, got $r14"
+END
+
+SET r15 [EXPR round(3.6)]
+IF [EXPR $r15 == 4] THEN
+    PUTS "  PASS: round() function"
+ELSE
+    PUTS "  FAIL: round() - expected 4, got $r15"
+END
+
+# Test with variables
+PUTS "\n[TEST] Expressions with variables"
+SET a 10
+SET b 20
+SET c [EXPR $a + $b]
+IF [EXPR $c == 30] THEN
+    PUTS "  PASS: Expression with variables"
+ELSE
+    PUTS "  FAIL: Variables - expected 30, got $c"
+END
+
+PUTS "\n=========================================="
+PUTS "EXPR Command Tests Complete"
+PUTS "=========================================="

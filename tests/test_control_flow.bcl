@@ -1,0 +1,206 @@
+#!/usr/bin/env bcl
+# Test suite for control flow commands: IF, WHILE, FOR, FOREACH, SWITCH, BREAK, CONTINUE, RETURN
+
+PUTS "=========================================="
+PUTS "Testing Control Flow Commands"
+PUTS "=========================================="
+
+# Test IF/THEN/ELSE
+PUTS "\n[TEST] IF/THEN/ELSE command"
+SET x 10
+IF [EXPR $x > 5] THEN
+    PUTS "  PASS: IF condition true"
+ELSE
+    PUTS "  FAIL: IF condition should be true"
+END
+
+SET y 3
+IF [EXPR $y > 5] THEN
+    PUTS "  FAIL: IF condition should be false"
+ELSE
+    PUTS "  PASS: IF condition false, ELSE executed"
+END
+
+# Test IF with ELSEIF
+SET score 75
+SET grade ""
+IF [EXPR $score >= 90] THEN
+    SET grade "A"
+ELSEIF [EXPR $score >= 80] THEN
+    SET grade "B"
+ELSEIF [EXPR $score >= 70] THEN
+    SET grade "C"
+ELSE
+    SET grade "F"
+END
+
+IF [STRING EQUAL $grade "C"] THEN
+    PUTS "  PASS: IF/ELSEIF chain works correctly"
+ELSE
+    PUTS "  FAIL: IF/ELSEIF - expected 'C', got '$grade'"
+END
+
+# Test WHILE loop
+PUTS "\n[TEST] WHILE loop"
+SET counter 0
+SET sum 0
+WHILE [EXPR $counter < 5] DO
+    INCR sum $counter
+    INCR counter
+END
+
+IF [EXPR $sum == 10] THEN
+    PUTS "  PASS: WHILE loop sum calculation (0+1+2+3+4=10)"
+ELSE
+    PUTS "  FAIL: WHILE loop - expected sum=10, got $sum"
+END
+
+# Test FOR loop
+PUTS "\n[TEST] FOR loop"
+SET total 0
+FOR 1 TO 5 DO
+    INCR total $__FOR
+END
+
+IF [EXPR $total == 15] THEN
+    PUTS "  PASS: FOR loop (1+2+3+4+5=15)"
+ELSE
+    PUTS "  FAIL: FOR loop - expected total=15, got $total"
+END
+
+# Test FOR with STEP
+SET result 0
+FOR 0 TO 10 STEP 2 DO
+    INCR result $__FOR
+END
+
+IF [EXPR $result == 30] THEN
+    PUTS "  PASS: FOR loop with STEP (0+2+4+6+8+10=30)"
+ELSE
+    PUTS "  FAIL: FOR with STEP - expected 30, got $result"
+END
+
+# Test FOREACH
+PUTS "\n[TEST] FOREACH loop"
+SET items [LIST apple banana cherry]
+SET count 0
+FOREACH item IN $items DO
+    INCR count
+END
+
+IF [EXPR $count == 3] THEN
+    PUTS "  PASS: FOREACH iterates over list"
+ELSE
+    PUTS "  FAIL: FOREACH - expected count=3, got $count"
+END
+
+# Test BREAK
+PUTS "\n[TEST] BREAK in loop"
+SET i 0
+WHILE [EXPR $i < 100] DO
+    INCR i
+    IF [EXPR $i == 5] THEN
+        BREAK
+    END
+END
+
+IF [EXPR $i == 5] THEN
+    PUTS "  PASS: BREAK exits loop correctly"
+ELSE
+    PUTS "  FAIL: BREAK - expected i=5, got $i"
+END
+
+# Test CONTINUE
+PUTS "\n[TEST] CONTINUE in loop"
+SET sum 0
+FOR 1 TO 10 DO
+    IF [EXPR $__FOR % 2 == 0] THEN
+        CONTINUE
+    END
+    INCR sum $__FOR
+END
+
+IF [EXPR $sum == 25] THEN
+    PUTS "  PASS: CONTINUE skips even numbers (1+3+5+7+9=25)"
+ELSE
+    PUTS "  FAIL: CONTINUE - expected sum=25, got $sum"
+END
+
+# Test SWITCH
+PUTS "\n[TEST] SWITCH/CASE"
+SET day "Tuesday"
+SET daynum 0
+
+SWITCH $day DO
+    CASE Monday
+        SET daynum 1
+    CASE Tuesday
+        SET daynum 2
+    CASE Wednesday
+        SET daynum 3
+    DEFAULT
+        SET daynum 0
+END
+
+IF [EXPR $daynum == 2] THEN
+    PUTS "  PASS: SWITCH/CASE matches correctly"
+ELSE
+    PUTS "  FAIL: SWITCH - expected daynum=2, got $daynum"
+END
+
+# Test SWITCH DEFAULT
+SET unknown "Friday"
+SET result "none"
+SWITCH $unknown DO
+    CASE Monday
+        SET result "Mon"
+    CASE Tuesday
+        SET result "Tue"
+    DEFAULT
+        SET result "default"
+END
+
+IF [STRING EQUAL $result "default"] THEN
+    PUTS "  PASS: SWITCH DEFAULT case works"
+ELSE
+    PUTS "  FAIL: SWITCH DEFAULT - expected 'default', got '$result'"
+END
+
+# Test RETURN in procedure
+PUTS "\n[TEST] RETURN from procedure"
+PROC add WITH a b DO
+    SET sum [EXPR $a + $b]
+    RETURN $sum
+END
+
+SET addresult [add 10 20]
+IF [EXPR $addresult == 30] THEN
+    PUTS "  PASS: RETURN returns value from procedure"
+ELSE
+    PUTS "  FAIL: RETURN - expected 30, got $addresult"
+END
+
+# Test early RETURN
+PROC checkPositive WITH n DO
+    IF [EXPR $n <= 0] THEN
+        RETURN "negative or zero"
+    END
+    RETURN "positive"
+END
+
+SET check1 [checkPositive -5]
+SET check2 [checkPositive 10]
+
+IF [STRING EQUAL $check1 "negative or zero"] THEN
+    IF [STRING EQUAL $check2 "positive"] THEN
+        PUTS "  PASS: Early RETURN works correctly"
+    ELSE
+        PUTS "  FAIL: Early RETURN - check2 failed"
+    END
+ELSE
+    PUTS "  FAIL: Early RETURN - check1 failed"
+END
+
+PUTS "\n=========================================="
+PUTS "Control Flow Commands Tests Complete"
+PUTS "=========================================="

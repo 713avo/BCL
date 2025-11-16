@@ -1,0 +1,180 @@
+#!/usr/bin/env bcl
+# Test suite for PROC command (procedures/functions)
+
+PUTS "=========================================="
+PUTS "Testing PROC Command"
+PUTS "=========================================="
+
+# Test simple procedure
+PUTS "\n[TEST] Simple procedure definition and call"
+PROC greet WITH name DO
+    RETURN "Hello, $name!"
+END
+
+SET greeting [greet "World"]
+IF [STRING EQUAL $greeting "Hello, World!"] THEN
+    PUTS "  PASS: Simple procedure works"
+ELSE
+    PUTS "  FAIL: Simple proc - expected 'Hello, World!', got '$greeting'"
+END
+
+# Test procedure with multiple parameters
+PUTS "\n[TEST] Procedure with multiple parameters"
+PROC add WITH a b DO
+    SET sum [EXPR $a + $b]
+    RETURN $sum
+END
+
+SET result [add 10 20]
+IF [EXPR $result == 30] THEN
+    PUTS "  PASS: Multiple parameters"
+ELSE
+    PUTS "  FAIL: Multiple params - expected 30, got $result"
+END
+
+# Test procedure with no parameters
+PUTS "\n[TEST] Procedure with no parameters"
+SET counter 0
+
+PROC increment WITH DO
+    GLOBAL counter
+    INCR counter
+END
+
+increment
+increment
+increment
+
+IF [EXPR $counter == 3] THEN
+    PUTS "  PASS: No-parameter procedure"
+ELSE
+    PUTS "  FAIL: No params - expected counter=3, got $counter"
+END
+
+# Test recursion
+PUTS "\n[TEST] Recursive procedure (factorial)"
+PROC factorial WITH n DO
+    IF [EXPR $n <= 1] THEN
+        RETURN 1
+    ELSE
+        SET prev [factorial [EXPR $n - 1]]
+        RETURN [EXPR $n * $prev]
+    END
+END
+
+SET fact5 [factorial 5]
+IF [EXPR $fact5 == 120] THEN
+    PUTS "  PASS: Recursive factorial (5! = 120)"
+ELSE
+    PUTS "  FAIL: Recursion - expected 120, got $fact5"
+END
+
+# Test local variable scope
+PUTS "\n[TEST] Local variable scope"
+SET x "global"
+
+PROC testScope WITH DO
+    SET x "local"
+    RETURN $x
+END
+
+SET result [testScope]
+IF [STRING EQUAL $result "local"] THEN
+    IF [STRING EQUAL $x "global"] THEN
+        PUTS "  PASS: Local variables don't affect global scope"
+    ELSE
+        PUTS "  FAIL: Global variable was modified"
+    END
+ELSE
+    PUTS "  FAIL: Procedure didn't use local variable"
+END
+
+# Test GLOBAL keyword
+PUTS "\n[TEST] GLOBAL keyword in procedure"
+SET globalVar "initial"
+
+PROC modifyGlobal WITH DO
+    GLOBAL globalVar
+    SET globalVar "modified"
+END
+
+modifyGlobal
+IF [STRING EQUAL $globalVar "modified"] THEN
+    PUTS "  PASS: GLOBAL allows modification of global variable"
+ELSE
+    PUTS "  FAIL: GLOBAL - expected 'modified', got '$globalVar'"
+END
+
+# Test procedure with complex logic
+PUTS "\n[TEST] Procedure with complex logic"
+PROC fibonacci WITH n DO
+    IF [EXPR $n <= 1] THEN
+        RETURN $n
+    ELSE
+        SET a [fibonacci [EXPR $n - 1]]
+        SET b [fibonacci [EXPR $n - 2]]
+        RETURN [EXPR $a + $b]
+    END
+END
+
+SET fib6 [fibonacci 6]
+IF [EXPR $fib6 == 8] THEN
+    PUTS "  PASS: Complex recursive logic (fibonacci)"
+ELSE
+    PUTS "  FAIL: Fibonacci - expected 8, got $fib6"
+END
+
+# Test procedure returning list
+PUTS "\n[TEST] Procedure returning list"
+PROC makeList WITH DO
+    SET result [LIST 1 2 3 4 5]
+    RETURN $result
+END
+
+SET mylist [makeList]
+SET len [LLENGTH $mylist]
+IF [EXPR $len == 5] THEN
+    PUTS "  PASS: Procedure can return list"
+ELSE
+    PUTS "  FAIL: List return - expected length 5, got $len"
+END
+
+# Test nested procedure calls
+PUTS "\n[TEST] Nested procedure calls"
+PROC double WITH n DO
+    RETURN [EXPR $n * 2]
+END
+
+PROC quadruple WITH n DO
+    SET doubled [double $n]
+    RETURN [double $doubled]
+END
+
+SET result [quadruple 5]
+IF [EXPR $result == 20] THEN
+    PUTS "  PASS: Nested procedure calls"
+ELSE
+    PUTS "  FAIL: Nested calls - expected 20, got $result"
+END
+
+# Test INFO PROCS
+PUTS "\n[TEST] INFO PROCS lists procedures"
+SET procs [INFO PROCS]
+IF [LSEARCH $procs "factorial" >= 0] THEN
+    PUTS "  PASS: INFO PROCS lists defined procedures"
+ELSE
+    PUTS "  FAIL: INFO PROCS doesn't list 'factorial'"
+END
+
+# Test INFO BODY
+PUTS "\n[TEST] INFO BODY returns procedure body"
+SET body [INFO BODY add]
+IF [STRING LENGTH $body > 0] THEN
+    PUTS "  PASS: INFO BODY returns procedure body"
+ELSE
+    PUTS "  FAIL: INFO BODY returned empty"
+END
+
+PUTS "\n=========================================="
+PUTS "PROC Command Tests Complete"
+PUTS "=========================================="

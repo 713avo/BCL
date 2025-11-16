@@ -1,0 +1,234 @@
+#!/usr/bin/env bcl
+# Test suite for STRING command with all subcommands
+
+PUTS "=========================================="
+PUTS "Testing STRING Commands"
+PUTS "=========================================="
+
+# Test STRING LENGTH
+PUTS "\n[TEST] STRING LENGTH"
+SET str "Hello"
+SET len [STRING LENGTH $str]
+IF [EXPR $len == 5] THEN
+    PUTS "  PASS: STRING LENGTH"
+ELSE
+    PUTS "  FAIL: STRING LENGTH - expected 5, got $len"
+END
+
+# Test STRING INDEX
+PUTS "\n[TEST] STRING INDEX"
+SET str "Hello"
+SET ch [STRING INDEX $str 0]
+IF [STRING EQUAL $ch "H"] THEN
+    PUTS "  PASS: STRING INDEX first char"
+ELSE
+    PUTS "  FAIL: STRING INDEX - expected 'H', got '$ch'"
+END
+
+SET ch2 [STRING INDEX $str 4]
+IF [STRING EQUAL $ch2 "o"] THEN
+    PUTS "  PASS: STRING INDEX last char"
+ELSE
+    PUTS "  FAIL: STRING INDEX - expected 'o', got '$ch2'"
+END
+
+# Test STRING RANGE
+PUTS "\n[TEST] STRING RANGE"
+SET str "Hello World"
+SET sub [STRING RANGE $str 0 4]
+IF [STRING EQUAL $sub "Hello"] THEN
+    PUTS "  PASS: STRING RANGE"
+ELSE
+    PUTS "  FAIL: STRING RANGE - expected 'Hello', got '$sub'"
+END
+
+# Test STRING TOUPPER
+PUTS "\n[TEST] STRING TOUPPER"
+SET str "hello"
+SET upper [STRING TOUPPER $str]
+IF [STRING EQUAL $upper "HELLO"] THEN
+    PUTS "  PASS: STRING TOUPPER"
+ELSE
+    PUTS "  FAIL: STRING TOUPPER - expected 'HELLO', got '$upper'"
+END
+
+# Test STRING TOLOWER
+PUTS "\n[TEST] STRING TOLOWER"
+SET str "WORLD"
+SET lower [STRING TOLOWER $str]
+IF [STRING EQUAL $lower "world"] THEN
+    PUTS "  PASS: STRING TOLOWER"
+ELSE
+    PUTS "  FAIL: STRING TOLOWER - expected 'world', got '$lower'"
+END
+
+# Test STRING TOTITLE
+PUTS "\n[TEST] STRING TOTITLE"
+SET str "hello world"
+SET title [STRING TOTITLE $str]
+IF [STRING EQUAL $title "Hello World"] THEN
+    PUTS "  PASS: STRING TOTITLE"
+ELSE
+    PUTS "  FAIL: STRING TOTITLE - expected 'Hello World', got '$title'"
+END
+
+# Test STRING COMPARE
+PUTS "\n[TEST] STRING COMPARE"
+SET cmp [STRING COMPARE "abc" "abc"]
+IF [EXPR $cmp == 0] THEN
+    PUTS "  PASS: STRING COMPARE equal strings"
+ELSE
+    PUTS "  FAIL: STRING COMPARE equal - expected 0, got $cmp"
+END
+
+SET cmp2 [STRING COMPARE "abc" "xyz"]
+IF [EXPR $cmp2 < 0] THEN
+    PUTS "  PASS: STRING COMPARE less than"
+ELSE
+    PUTS "  FAIL: STRING COMPARE less than"
+END
+
+# Test STRING EQUAL
+PUTS "\n[TEST] STRING EQUAL"
+IF [STRING EQUAL "test" "test"] THEN
+    PUTS "  PASS: STRING EQUAL true"
+ELSE
+    PUTS "  FAIL: STRING EQUAL true"
+END
+
+IF [STRING EQUAL "test" "other"] THEN
+    PUTS "  FAIL: STRING EQUAL should be false"
+ELSE
+    PUTS "  PASS: STRING EQUAL false"
+END
+
+# Test STRING MATCH
+PUTS "\n[TEST] STRING MATCH"
+IF [STRING MATCH "*.txt" "file.txt"] THEN
+    PUTS "  PASS: STRING MATCH with wildcard"
+ELSE
+    PUTS "  FAIL: STRING MATCH wildcard"
+END
+
+IF [STRING MATCH "test*" "testing"] THEN
+    PUTS "  PASS: STRING MATCH prefix"
+ELSE
+    PUTS "  FAIL: STRING MATCH prefix"
+END
+
+# Test STRING FIRST
+PUTS "\n[TEST] STRING FIRST"
+SET str "Hello World"
+SET pos [STRING FIRST "o" $str]
+IF [EXPR $pos == 4] THEN
+    PUTS "  PASS: STRING FIRST finds substring"
+ELSE
+    PUTS "  FAIL: STRING FIRST - expected 4, got $pos"
+END
+
+# Test STRING LAST
+PUTS "\n[TEST] STRING LAST"
+SET pos2 [STRING LAST "o" $str]
+IF [EXPR $pos2 == 7] THEN
+    PUTS "  PASS: STRING LAST finds last occurrence"
+ELSE
+    PUTS "  FAIL: STRING LAST - expected 7, got $pos2"
+END
+
+# Test STRING TRIM
+PUTS "\n[TEST] STRING TRIM"
+SET str "  hello  "
+SET trimmed [STRING TRIM $str]
+IF [STRING EQUAL $trimmed "hello"] THEN
+    PUTS "  PASS: STRING TRIM removes whitespace"
+ELSE
+    PUTS "  FAIL: STRING TRIM - expected 'hello', got '$trimmed'"
+END
+
+# Test STRING TRIMLEFT
+PUTS "\n[TEST] STRING TRIMLEFT"
+SET str "  hello  "
+SET left [STRING TRIMLEFT $str]
+IF [STRING EQUAL $left "hello  "] THEN
+    PUTS "  PASS: STRING TRIMLEFT"
+ELSE
+    PUTS "  FAIL: STRING TRIMLEFT - got '$left'"
+END
+
+# Test STRING TRIMRIGHT
+PUTS "\n[TEST] STRING TRIMRIGHT"
+SET str "  hello  "
+SET right [STRING TRIMRIGHT $str]
+IF [STRING EQUAL $right "  hello"] THEN
+    PUTS "  PASS: STRING TRIMRIGHT"
+ELSE
+    PUTS "  FAIL: STRING TRIMRIGHT - got '$right'"
+END
+
+# Test STRING REPEAT
+PUTS "\n[TEST] STRING REPEAT"
+SET rep [STRING REPEAT "x" 5]
+IF [STRING EQUAL $rep "xxxxx"] THEN
+    PUTS "  PASS: STRING REPEAT"
+ELSE
+    PUTS "  FAIL: STRING REPEAT - expected 'xxxxx', got '$rep'"
+END
+
+# Test STRING REPLACE
+PUTS "\n[TEST] STRING REPLACE"
+SET str "Hello World"
+SET replaced [STRING REPLACE $str 6 10 "BCL"]
+IF [STRING EQUAL $replaced "Hello BCL"] THEN
+    PUTS "  PASS: STRING REPLACE"
+ELSE
+    PUTS "  FAIL: STRING REPLACE - expected 'Hello BCL', got '$replaced'"
+END
+
+# Test STRING REVERSE
+PUTS "\n[TEST] STRING REVERSE"
+SET str "abc"
+SET rev [STRING REVERSE $str]
+IF [STRING EQUAL $rev "cba"] THEN
+    PUTS "  PASS: STRING REVERSE"
+ELSE
+    PUTS "  FAIL: STRING REVERSE - expected 'cba', got '$rev'"
+END
+
+# Test STRING CAT
+PUTS "\n[TEST] STRING CAT"
+SET cat [STRING CAT "Hello" " " "World"]
+IF [STRING EQUAL $cat "Hello World"] THEN
+    PUTS "  PASS: STRING CAT concatenates strings"
+ELSE
+    PUTS "  FAIL: STRING CAT - expected 'Hello World', got '$cat'"
+END
+
+# Test STRING IS
+PUTS "\n[TEST] STRING IS"
+IF [STRING IS DIGIT "12345"] THEN
+    PUTS "  PASS: STRING IS DIGIT true"
+ELSE
+    PUTS "  FAIL: STRING IS DIGIT should be true"
+END
+
+IF [STRING IS DIGIT "abc123"] THEN
+    PUTS "  FAIL: STRING IS DIGIT should be false"
+ELSE
+    PUTS "  PASS: STRING IS DIGIT false"
+END
+
+IF [STRING IS ALPHA "abcXYZ"] THEN
+    PUTS "  PASS: STRING IS ALPHA true"
+ELSE
+    PUTS "  FAIL: STRING IS ALPHA should be true"
+END
+
+IF [STRING IS ALNUM "abc123"] THEN
+    PUTS "  PASS: STRING IS ALNUM true"
+ELSE
+    PUTS "  FAIL: STRING IS ALNUM should be true"
+END
+
+PUTS "\n=========================================="
+PUTS "STRING Commands Tests Complete"
+PUTS "=========================================="

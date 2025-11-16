@@ -1,0 +1,118 @@
+#!/usr/bin/env bcl
+# Test suite for variable commands: SET, UNSET, INCR, APPEND, GLOBAL
+
+PUTS "=========================================="
+PUTS "Testing Variable Commands"
+PUTS "=========================================="
+
+# Test SET
+PUTS "\n[TEST] SET command"
+SET x 10
+SET result [SET x]
+IF [EXPR $result == 10] THEN
+    PUTS "  PASS: SET retrieves value correctly"
+ELSE
+    PUTS "  FAIL: SET retrieval - expected 10, got $result"
+END
+
+SET message "Hello World"
+IF [STRING EQUAL $message "Hello World"] THEN
+    PUTS "  PASS: SET string value"
+ELSE
+    PUTS "  FAIL: SET string value"
+END
+
+# Test UNSET
+PUTS "\n[TEST] UNSET command"
+SET temp 123
+UNSET temp
+IF [INFO EXISTS temp] THEN
+    PUTS "  FAIL: UNSET did not remove variable"
+ELSE
+    PUTS "  PASS: UNSET removed variable"
+END
+
+# Test INCR
+PUTS "\n[TEST] INCR command"
+SET counter 5
+INCR counter
+IF [EXPR $counter == 6] THEN
+    PUTS "  PASS: INCR by 1"
+ELSE
+    PUTS "  FAIL: INCR by 1 - expected 6, got $counter"
+END
+
+SET counter 10
+INCR counter 5
+IF [EXPR $counter == 15] THEN
+    PUTS "  PASS: INCR by 5"
+ELSE
+    PUTS "  FAIL: INCR by 5 - expected 15, got $counter"
+END
+
+SET counter 20
+INCR counter -3
+IF [EXPR $counter == 17] THEN
+    PUTS "  PASS: INCR by negative value"
+ELSE
+    PUTS "  FAIL: INCR by negative - expected 17, got $counter"
+END
+
+# Test INCR on non-existent variable
+UNSET newvar
+INCR newvar
+IF [EXPR $newvar == 1] THEN
+    PUTS "  PASS: INCR on non-existent variable"
+ELSE
+    PUTS "  FAIL: INCR on non-existent variable - expected 1, got $newvar"
+END
+
+# Test APPEND
+PUTS "\n[TEST] APPEND command"
+SET str "Hello"
+APPEND str " " "World"
+IF [STRING EQUAL $str "Hello World"] THEN
+    PUTS "  PASS: APPEND multiple values"
+ELSE
+    PUTS "  FAIL: APPEND - expected 'Hello World', got '$str'"
+END
+
+UNSET newstr
+APPEND newstr "First"
+IF [STRING EQUAL $newstr "First"] THEN
+    PUTS "  PASS: APPEND to non-existent variable"
+ELSE
+    PUTS "  FAIL: APPEND to non-existent - expected 'First', got '$newstr'"
+END
+
+# Test GLOBAL (in procedure context)
+PUTS "\n[TEST] GLOBAL command"
+SET globalVar "global value"
+
+PROC testGlobal WITH DO
+    GLOBAL globalVar
+    SET globalVar "modified in proc"
+END
+
+testGlobal
+IF [STRING EQUAL $globalVar "modified in proc"] THEN
+    PUTS "  PASS: GLOBAL allows modification of global variable"
+ELSE
+    PUTS "  FAIL: GLOBAL - expected 'modified in proc', got '$globalVar'"
+END
+
+# Test local variable without GLOBAL
+PROC testLocal WITH DO
+    SET localVar "local value"
+END
+
+testLocal
+IF [INFO EXISTS localVar] THEN
+    PUTS "  FAIL: Local variable leaked to global scope"
+ELSE
+    PUTS "  PASS: Local variable stays in procedure scope"
+END
+
+PUTS "\n=========================================="
+PUTS "Variable Commands Tests Complete"
+PUTS "=========================================="

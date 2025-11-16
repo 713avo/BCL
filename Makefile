@@ -36,7 +36,7 @@ TARGET = $(BIN_DIR)/$(PROJECT)
 # REGLAS PRINCIPALES
 #######################################################################
 
-.PHONY: all clean debug release test run help dirs
+.PHONY: all clean debug release test test-all run help dirs
 
 # Por defecto: release
 all: release
@@ -107,6 +107,55 @@ test: release
 	@echo ""
 	@echo "✓ Test completado"
 
+# Comprehensive test suite
+test-all: release
+	@echo "════════════════════════════════════════════════════════════"
+	@echo " BCL Comprehensive Test Suite"
+	@echo "════════════════════════════════════════════════════════════"
+	@echo ""
+	@echo "Running test_variables.bcl..."
+	@$(TARGET) tests/test_variables.bcl
+	@echo ""
+	@echo "Running test_control_flow.bcl..."
+	@$(TARGET) tests/test_control_flow.bcl
+	@echo ""
+	@echo "Running test_expressions.bcl..."
+	@$(TARGET) tests/test_expressions.bcl
+	@echo ""
+	@echo "Running test_lists.bcl..."
+	@$(TARGET) tests/test_lists.bcl
+	@echo ""
+	@echo "Running test_strings.bcl..."
+	@$(TARGET) tests/test_strings.bcl
+	@echo ""
+	@echo "Running test_arrays.bcl..."
+	@$(TARGET) tests/test_arrays.bcl
+	@echo ""
+	@echo "Running test_procedures.bcl..."
+	@$(TARGET) tests/test_procedures.bcl
+	@echo ""
+	@echo "Running test_binary.bcl..."
+	@$(TARGET) tests/test_binary.bcl
+	@echo ""
+	@echo "Running test_format_scan.bcl..."
+	@$(TARGET) tests/test_format_scan.bcl
+	@echo ""
+	@echo "Running test_regexp.bcl..."
+	@$(TARGET) tests/test_regexp.bcl
+	@echo ""
+	@echo "Running test_info_clock.bcl..."
+	@$(TARGET) tests/test_info_clock.bcl
+	@echo ""
+	@echo "Running test_system.bcl..."
+	@$(TARGET) tests/test_system.bcl
+	@echo ""
+	@echo "Running test_files.bcl..."
+	@$(TARGET) tests/test_files.bcl
+	@echo ""
+	@echo "════════════════════════════════════════════════════════════"
+	@echo " All test suites completed!"
+	@echo "════════════════════════════════════════════════════════════"
+
 #######################################################################
 # LIMPIEZA
 #######################################################################
@@ -147,6 +196,7 @@ help:
 	@echo ""
 	@echo "Testing:"
 	@echo "  make test         - Ejecutar test básico"
+	@echo "  make test-all     - Ejecutar suite completa de tests"
 	@echo "  make run          - Ejecutar REPL"
 	@echo "  make run-example  - Ejecutar script demo"
 	@echo ""

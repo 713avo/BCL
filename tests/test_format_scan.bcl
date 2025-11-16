@@ -1,0 +1,115 @@
+#!/usr/bin/env bcl
+# Test suite for FORMAT and SCAN commands
+
+PUTS "=========================================="
+PUTS "Testing FORMAT and SCAN Commands"
+PUTS "=========================================="
+
+# Test FORMAT with string
+PUTS "\n[TEST] FORMAT - string formatting"
+SET result [FORMAT "Hello, %s!" "World"]
+IF [STRING EQUAL $result "Hello, World!"] THEN
+    PUTS "  PASS: FORMAT with %s"
+ELSE
+    PUTS "  FAIL: FORMAT - expected 'Hello, World!', got '$result'"
+END
+
+# Test FORMAT with integer
+PUTS "\n[TEST] FORMAT - integer formatting"
+SET result [FORMAT "Number: %d" 42]
+IF [STRING EQUAL $result "Number: 42"] THEN
+    PUTS "  PASS: FORMAT with %d"
+ELSE
+    PUTS "  FAIL: FORMAT - expected 'Number: 42', got '$result'"
+END
+
+# Test FORMAT with float
+PUTS "\n[TEST] FORMAT - float formatting"
+SET result [FORMAT "Pi: %.2f" 3.14159]
+IF [STRING MATCH "Pi: 3.14*" $result] THEN
+    PUTS "  PASS: FORMAT with %.2f"
+ELSE
+    PUTS "  FAIL: FORMAT float - got '$result'"
+END
+
+# Test FORMAT with hex
+PUTS "\n[TEST] FORMAT - hexadecimal formatting"
+SET result [FORMAT "Hex: 0x%x" 255]
+IF [STRING EQUAL $result "Hex: 0xff"] THEN
+    PUTS "  PASS: FORMAT with %x"
+ELSE
+    PUTS "  FAIL: FORMAT hex - expected 'Hex: 0xff', got '$result'"
+END
+
+# Test FORMAT with multiple values
+PUTS "\n[TEST] FORMAT - multiple values"
+SET result [FORMAT "%s: %d years old" "Alice" 25]
+IF [STRING EQUAL $result "Alice: 25 years old"] THEN
+    PUTS "  PASS: FORMAT with multiple values"
+ELSE
+    PUTS "  FAIL: FORMAT multiple - got '$result'"
+END
+
+# Test FORMAT with width specifier
+PUTS "\n[TEST] FORMAT - width specifier"
+SET result [FORMAT "%5d" 42]
+IF [STRING LENGTH $result >= 5] THEN
+    PUTS "  PASS: FORMAT with width specifier"
+ELSE
+    PUTS "  FAIL: FORMAT width - got '$result'"
+END
+
+# Test SCAN with string
+PUTS "\n[TEST] SCAN - parse string"
+SCAN "Hello, World!" "Hello, %s" name
+IF [STRING EQUAL $name "World!"] THEN
+    PUTS "  PASS: SCAN extracts string"
+ELSE
+    PUTS "  FAIL: SCAN - expected 'World!', got '$name'"
+END
+
+# Test SCAN with integer
+PUTS "\n[TEST] SCAN - parse integer"
+SCAN "Age: 42" "Age: %d" age
+IF [EXPR $age == 42] THEN
+    PUTS "  PASS: SCAN extracts integer"
+ELSE
+    PUTS "  FAIL: SCAN - expected 42, got $age"
+END
+
+# Test SCAN with multiple values
+PUTS "\n[TEST] SCAN - multiple values"
+SCAN "Name: Alice, Age: 25" "Name: %s Age: %d" person years
+IF [STRING EQUAL $person "Alice,"] THEN
+    IF [EXPR $years == 25] THEN
+        PUTS "  PASS: SCAN extracts multiple values"
+    ELSE
+        PUTS "  FAIL: SCAN years - expected 25, got $years"
+    END
+ELSE
+    PUTS "  FAIL: SCAN person - expected 'Alice,', got '$person'"
+END
+
+# Test SCAN with float
+PUTS "\n[TEST] SCAN - parse float"
+SCAN "Pi = 3.14159" "Pi = %f" pi
+IF [EXPR $pi > 3.14 && $pi < 3.15] THEN
+    PUTS "  PASS: SCAN extracts float"
+ELSE
+    PUTS "  FAIL: SCAN float - got $pi"
+END
+
+# Test FORMAT/SCAN round-trip
+PUTS "\n[TEST] FORMAT/SCAN round-trip"
+SET original "Test Data"
+SET formatted [FORMAT "Data: %s" $original]
+SCAN $formatted "Data: %s" extracted
+IF [STRING EQUAL $extracted $original] THEN
+    PUTS "  PASS: FORMAT/SCAN round-trip"
+ELSE
+    PUTS "  FAIL: Round-trip - expected '$original', got '$extracted'"
+END
+
+PUTS "\n=========================================="
+PUTS "FORMAT and SCAN Commands Tests Complete"
+PUTS "=========================================="

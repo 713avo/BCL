@@ -1,0 +1,188 @@
+\documentclass[11pt,a4paper,twoside]{book}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{makeidx}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+
+% Geometry
+\geometry{
+    a4paper,
+    left=3cm,
+    right=2.5cm,
+    top=3cm,
+    bottom=3cm
+}
+
+% Headers and footers
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\thepage}
+\fancyhead[RE]{\leftmark}
+\fancyhead[LO]{\rightmark}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Hyperref configuration
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdftitle={BCL Standard Libraries Reference},
+    pdfauthor={BCL Development Team},
+    pdfsubject={BCL Programming Language Libraries},
+    pdfkeywords={BCL, programming, libraries, ANSI, WINDOW, MATRIX, CALCULUS}
+}
+
+% Listings configuration for BCL code
+\definecolor{bclkeyword}{RGB}{0,0,255}
+\definecolor{bclstring}{RGB}{163,21,21}
+\definecolor{bclcomment}{RGB}{0,128,0}
+\definecolor{bclnumber}{RGB}{128,0,128}
+\definecolor{bclbackground}{RGB}{248,248,248}
+
+\lstdefinelanguage{BCL}{
+    keywords={PROC, END, WITH, DO, SET, GLOBAL, IF, THEN, ELSE, ELSEIF,
+              WHILE, FOR, TO, FROM, FOREACH, IN, SWITCH, CASE, DEFAULT,
+              BREAK, CONTINUE, RETURN, EXIT, PUTS, GETS, OPEN, CLOSE,
+              READ, WRITE, SOURCE, EVAL, EXPR, LIST, SPLIT, JOIN, ARRAY,
+              STRING, FILE, REGEXP, REGSUB, FORMAT, SCAN, INCR, APPEND,
+              UNSET, INFO, CLOCK, AFTER, EXEC, ENV, ARGV, BINARY,
+              LINDEX, LRANGE, LLENGTH, LAPPEND, LINSERT, LREPLACE,
+              CONCAT, LSORT, LSEARCH},
+    sensitive=false,
+    morecomment=[l]{\#},
+    morestring=[b]",
+    morestring=[b]',
+}
+
+\lstset{
+    language=BCL,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{bclkeyword}\bfseries,
+    stringstyle=\color{bclstring},
+    commentstyle=\color{bclcomment}\itshape,
+    numberstyle=\tiny\color{bclnumber},
+    numbers=left,
+    stepnumber=1,
+    numbersep=8pt,
+    backgroundcolor=\color{bclbackground},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    frame=single,
+    framerule=0.5pt,
+    rulecolor=\color{black!30},
+    tabsize=4,
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=true,
+    escapeinside={(*@}{@*)},
+    xleftmargin=17pt,
+    xrightmargin=5pt,
+    aboveskip=10pt,
+    belowskip=10pt,
+}
+
+% Custom command boxes
+\newtcolorbox{notebox}{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    title=Nota
+}
+
+\newtcolorbox{warningbox}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    title=Advertencia
+}
+
+\newtcolorbox{examplebox}{
+    colback=green!5!white,
+    colframe=green!45!black,
+    title=Ejemplo
+}
+
+% Title formatting
+\titleformat{\chapter}[display]
+    {\normalfont\huge\bfseries}
+    {\chaptertitlename\ \thechapter}
+    {20pt}
+    {\Huge}
+
+% Make index
+\makeindex
+
+\begin{document}
+
+% Title page
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Huge\bfseries BCL\\[0.5cm]}
+    {\LARGE Librerías Estándar\\[0.3cm]}
+    {\Large Referencia Completa}
+
+    \vspace{2cm}
+
+    {\large Versión 2.0.0}
+
+    \vspace{1cm}
+
+    \includegraphics[width=0.4\textwidth]{logo.png}
+    \vspace{1cm}
+
+    {\large\itshape BCL Development Team}
+
+    \vfill
+
+    {\large Noviembre 2025}
+
+\end{titlepage}
+
+% Copyright page
+\newpage
+\thispagestyle{empty}
+\vspace*{\fill}
+\begin{center}
+    \textbf{BCL Standard Libraries Reference}\\
+    Version 2.0.0\\
+    \vspace{0.5cm}
+
+    Copyright \textcopyright\ 2025 BCL Development Team\\
+    \vspace{0.5cm}
+
+    Este documento describe las librerías estándar del lenguaje de programación BCL.\\
+    \vspace{0.5cm}
+
+    Para más información, visite:\\
+    \url{https://github.com/yourusername/bcl}
+\end{center}
+\vspace*{\fill}
+
+% Table of contents
+\tableofcontents
+
+% Chapters
+\input{chapters/introduction}
+\input{chapters/ansi}
+\input{chapters/window}
+\input{chapters/matrix}
+\input{chapters/calculus}
+\input{chapters/appendix}
+
+% Index
+\printindex
+
+\end{document}

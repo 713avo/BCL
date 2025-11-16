@@ -1,0 +1,169 @@
+\chapter{Introducción}
+\label{ch:introduction}
+
+\section{Acerca de este documento}
+
+Este manual describe las librerías estándar incluidas en BCL (Basic Command Language) versión 2.0 y posteriores. Las librerías estándar proporcionan funcionalidad avanzada para:
+
+\begin{itemize}
+    \item Control de terminal y gráficos ANSI
+    \item Gestión de ventanas en terminal
+    \item Operaciones matriciales estilo MATLAB
+    \item Cálculo numérico y análisis matemático
+\end{itemize}
+
+\section{Requisitos}
+
+\subsection{Versión de BCL}
+
+Todas las librerías descritas en este documento requieren BCL versión 2.0.0 o superior. Esta versión incluye mejoras fundamentales:
+
+\begin{itemize}
+    \item \textbf{Sistema de arrays globales}: Los arrays ahora funcionan correctamente con la declaración \texttt{GLOBAL} en procedimientos
+    \item \textbf{Soporte Unicode completo}: Secuencias de escape \texttt{\textbackslash uXXXX} y \texttt{\textbackslash UXXXXXXXX} para UTF-8
+    \item \textbf{Librerías mejoradas}: ANSI y WINDOW completamente reescritas, MATRIX y CALCULUS nuevas
+\end{itemize}
+
+\subsection{Terminal compatible}
+
+Para aprovechar las funcionalidades de ANSI y WINDOW, se requiere un emulador de terminal que soporte:
+
+\begin{itemize}
+    \item Secuencias de escape ANSI
+    \item Codificación UTF-8
+    \item Caracteres Unicode box-drawing
+    \item Colores de 16 bits (8 básicos + 8 brillantes)
+\end{itemize}
+
+Terminales recomendadas: xterm, gnome-terminal, konsole, iTerm2, Windows Terminal.
+
+\section{Instalación}
+
+Las librerías estándar se incluyen en la distribución de BCL en el directorio \texttt{lib/}:
+
+\begin{lstlisting}[language=bash, numbers=none]
+BCL/
+└── lib/
+    ├── ANSI.BLB       # Terminal control y gráficos
+    ├── WINDOW.BLB     # Gestión de ventanas
+    ├── MATRIX.BLB     # Operaciones matriciales
+    └── CALCULUS.BLB   # Cálculo numérico
+\end{lstlisting}
+
+No se requiere instalación adicional. Las librerías están listas para usar mediante el comando \texttt{SOURCE}.
+
+\section{Uso básico}
+
+\subsection{Cargar una librería}
+
+Para utilizar una librería en un script BCL, use el comando \texttt{SOURCE}:
+
+\begin{lstlisting}
+#!/usr/bin/env bcl
+
+SOURCE "lib/ANSI.BLB"
+SOURCE "lib/WINDOW.BLB"
+SOURCE "lib/MATRIX.BLB"
+SOURCE "lib/CALCULUS.BLB"
+\end{lstlisting}
+
+\begin{notebox}
+Las rutas de las librerías son relativas al directorio de trabajo actual. Si ejecuta scripts desde otros directorios, ajuste la ruta según sea necesario.
+\end{notebox}
+
+\subsection{Arrays globales en procedimientos}
+
+\begin{warningbox}
+\textbf{Importante}: Debido a limitaciones actuales de BCL, los arrays utilizados por las librerías MATRIX y algunas funciones de otras librerías deben declararse como \texttt{GLOBAL} cuando se usen dentro de procedimientos.
+\end{warningbox}
+
+Ejemplo correcto:
+
+\begin{lstlisting}
+PROC MI_FUNCION DO
+    GLOBAL M A B resultado    # Declarar arrays como globales
+    MAT_ZEROS M 3 3
+    MAT_ADD A B resultado
+END
+\end{lstlisting}
+
+Ejemplo incorrecto (no funcionará):
+
+\begin{lstlisting}
+PROC MI_FUNCION DO
+    # Falta GLOBAL - los arrays no persistirán
+    MAT_ZEROS M 3 3          # ERROR
+    MAT_ADD A B resultado    # ERROR
+END
+\end{lstlisting}
+
+\section{Convenciones}
+
+\subsection{Nomenclatura}
+
+Todas las funciones de librería siguen estas convenciones:
+
+\begin{itemize}
+    \item \textbf{Prefijo por librería}: Las funciones se agrupan por prefijo
+        \begin{itemize}
+            \item \texttt{ANSI\_}: Librería ANSI
+            \item \texttt{WIN\_}: Librería WINDOW
+            \item \texttt{MAT\_}: Librería MATRIX
+            \item \texttt{CALC\_}: Librería CALCULUS
+        \end{itemize}
+    \item \textbf{Mayúsculas}: Todas las funciones en mayúsculas (aunque BCL es case-insensitive)
+    \item \textbf{Guión bajo}: Separador de palabras en nombres compuestos
+\end{itemize}
+
+\subsection{Parámetros}
+
+\begin{itemize}
+    \item \textbf{Entrada}: Parámetros que la función lee
+    \item \textbf{Salida}: Parámetros donde la función escribe resultados (usualmente el último parámetro)
+    \item \textbf{Opcionales}: Marcados con \texttt{[opcional]} en la documentación
+\end{itemize}
+
+\subsection{Códigos de ejemplo}
+
+Los ejemplos de código en este manual están formateados para claridad:
+
+\begin{examplebox}
+Ejemplo de código con resultado:
+\begin{lstlisting}
+SET a 5
+SET b 3
+SET suma [EXPR $a + $b]
+PUTS "Suma: $suma"
+\end{lstlisting}
+
+Salida:
+\begin{verbatim}
+Suma: 8
+\end{verbatim}
+\end{examplebox}
+
+\section{Estructura del documento}
+
+Este manual está organizado en los siguientes capítulos:
+
+\begin{description}
+    \item[Capítulo 2: ANSI] Control de terminal, colores, cursores y caracteres Unicode
+    \item[Capítulo 3: WINDOW] Sistema de ventanas en terminal con menús y controles
+    \item[Capítulo 4: MATRIX] Operaciones matriciales estilo MATLAB
+    \item[Capítulo 5: CALCULUS] Cálculo numérico: derivadas, integrales, métodos numéricos
+    \item[Apéndices] Referencia rápida, tablas de funciones y ejemplos completos
+\end{description}
+
+\section{Soporte y contribuciones}
+
+Para reportar problemas, sugerir mejoras o contribuir al desarrollo de las librerías:
+
+\begin{itemize}
+    \item \textbf{GitHub}: \url{https://github.com/yourusername/bcl}
+    \item \textbf{Documentación}: \texttt{docs/man\_llm.md}
+    \item \textbf{Ejemplos}: Carpeta \texttt{examples/}
+\end{itemize}
+
+\section{Licencia}
+
+Las librerías estándar de BCL se distribuyen bajo la misma licencia que el intérprete BCL. Consulte el archivo \texttt{LICENSE.txt} para más detalles.

@@ -1,0 +1,207 @@
+#!/usr/bin/env bcl
+################################################################################
+# CALCULUS Library Demonstration
+# Shows numerical calculus operations: derivatives, integrals, ODEs, roots
+################################################################################
+
+SOURCE "lib/CALCULUS.BLB"
+SOURCE "lib/ANSI.BLB"
+
+ANSI_CLEAR
+ANSI_CURSOR_HOME
+
+# Header
+ANSI_SET_STYLE $ANSI_BOLD
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_MAGENTA $ANSI_BG_BLACK
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+PUTS "                    BCL CALCULUS Library v1.0 Demo"
+PUTS "              Numerical Calculus: Derivatives, Integrals, ODEs, Roots"
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+ANSI_RESET
+PUTS ""
+
+# ==============================================================================
+# Demo 1: Numerical Derivatives
+# ==============================================================================
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "\n[1] Numerical Derivatives"
+ANSI_RESET
+
+PUTS "\n  f(x) = x² → f'(x) = 2x"
+CALC_DERIV_CENTRAL "$x * $x" 3.0 0.0001 deriv
+PUTS "  f'(3) ≈ $deriv (expected: 6.0)"
+
+PUTS "\n  f(x) = x³ → f''(x) = 6x"
+CALC_DERIV2 "$x * $x * $x" 2.0 0.001 deriv2
+PUTS "  f''(2) ≈ $deriv2 (expected: 12.0)"
+
+# ==============================================================================
+# Demo 2: Numerical Integration
+# ==============================================================================
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "\n\n[2] Numerical Integration"
+ANSI_RESET
+
+PUTS "\n  ∫₀¹ x² dx = 1/3 ≈ 0.333333"
+CALC_INTEGRATE_TRAP "$x * $x" 0 1 100 area_trap
+PUTS "  Trapezoidal: $area_trap"
+
+CALC_INTEGRATE_SIMPSON "$x * $x" 0 1 100 area_simp
+PUTS "  Simpson:     $area_simp (more accurate)"
+
+PUTS "\n  ∫₀^π sin(x) dx = 2.0"
+CALC_INTEGRATE_SIMPSON "sin($x)" 0 $CALC_PI 100 area_sin
+PUTS "  Result: $area_sin"
+
+# ==============================================================================
+# Demo 3: Differential Equations
+# ==============================================================================
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "\n\n[3] Solving ODEs: dy/dx = y, y(0) = 1"
+ANSI_RESET
+PUTS "  Exact solution: y = e^x"
+
+PROC SOLVE_ODE_DEMO DO
+    GLOBAL EULER_X EULER_Y RK4_X RK4_Y
+
+    # Euler method
+    CALC_EULER "$y" 0 1 0.1 10
+
+    # RK4 method
+    CALC_RK4 "$y" 0 1 0.1 10
+
+    # Compare at x=1.0 (should be e ≈ 2.71828)
+    PUTS "\n  At x=1.0 (expected: e ≈ 2.71828):"
+    PUTS "    Euler: $EULER_Y(10)"
+    PUTS "    RK4:   $RK4_Y(10) (more accurate)"
+END
+
+SOLVE_ODE_DEMO
+
+# ==============================================================================
+# Demo 4: Root Finding
+# ==============================================================================
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "\n\n[4] Finding Roots"
+ANSI_RESET
+
+PUTS "\n  Find √2 by solving x² - 2 = 0"
+CALC_NEWTON "$x*$x - 2" "2*$x" 1.0 1e-8 100 root_newton
+PUTS "  Newton-Raphson: $root_newton (expected: 1.41421356...)"
+
+CALC_BISECTION "$x*$x - 2" 1.0 2.0 1e-8 100 root_bisect
+PUTS "  Bisection:      $root_bisect"
+
+PUTS "\n  Find root of x³ - x - 1 = 0"
+CALC_SECANT "$x*$x*$x - $x - 1" 1.0 2.0 1e-6 100 root_cubic
+PUTS "  Secant method: $root_cubic (expected: 1.324718...)"
+
+# ==============================================================================
+# Demo 5: Polynomial Operations
+# ==============================================================================
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "\n\n[5] Polynomial Operations"
+ANSI_RESET
+
+PROC POLY_DEMO DO
+    GLOBAL coeffs POLY_ROOT1 POLY_ROOT2 POLY_DISCRIMINANT
+
+    # P(x) = 1 + 2x + 3x²
+    SET coeffs(0) 1
+    SET coeffs(1) 2
+    SET coeffs(2) 3
+
+    CALC_POLY_EVAL 2 5.0 result
+    PUTS "\n  P(x) = 1 + 2x + 3x²"
+    PUTS "  P(5) = $result (expected: 1 + 10 + 75 = 86)"
+
+    # Quadratic roots: x² - 5x + 6 = 0
+    # Roots: x = 2, x = 3
+    CALC_POLY_ROOTS_QUAD 1 -5 6
+    PUTS "\n  Roots of x² - 5x + 6 = 0:"
+    PUTS "  x₁ = $POLY_ROOT1 (expected: 2)"
+    PUTS "  x₂ = $POLY_ROOT2 (expected: 3)"
+END
+
+POLY_DEMO
+
+# ==============================================================================
+# Demo 6: Series and Limits
+# ==============================================================================
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "\n\n[6] Series and Limits"
+ANSI_RESET
+
+PUTS "\n  Approximate π²/6 using Σ(1/n²) from n=1 to 1000"
+CALC_SERIES_SUM "1.0 / ($n * $n)" 1 1000 sum
+SET pi_sq_6 $sum
+SET pi_approx [EXPR sqrt($pi_sq_6 * 6.0)]
+PUTS "  Series sum: $sum"
+PUTS "  π ≈ $pi_approx (expected: 3.14159...)"
+
+PUTS "\n  lim(x→0) sin(x)/x = 1"
+CALC_LIMIT "sin($x) / $x" 0 limit
+PUTS "  Limit ≈ $limit"
+
+# ==============================================================================
+# Demo 7: Utility Functions
+# ==============================================================================
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "\n\n[7] Utility Functions"
+ANSI_RESET
+
+CALC_FACTORIAL 5 fact
+PUTS "\n  5! = $fact (expected: 120)"
+
+CALC_COMBINATION 10 3 comb
+PUTS "  C(10,3) = $comb (expected: 120)"
+
+CALC_GCD 48 18 gcd
+PUTS "  GCD(48,18) = $gcd (expected: 6)"
+
+# ==============================================================================
+# Demo 8: Complex Example - Function Analysis
+# ==============================================================================
+
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
+PUTS "\n\n[8] Complete Function Analysis: f(x) = x³ - 3x² + 2x"
+ANSI_RESET
+
+PUTS "\n  Finding critical points (where f'(x) = 0)..."
+PUTS "  f'(x) = 3x² - 6x + 2"
+
+# Find roots of derivative
+CALC_NEWTON "3*$x*$x - 6*$x + 2" "6*$x - 6" 0.5 1e-6 100 crit1
+CALC_NEWTON "3*$x*$x - 6*$x + 2" "6*$x - 6" 1.5 1e-6 100 crit2
+PUTS "  Critical point 1: x ≈ $crit1"
+PUTS "  Critical point 2: x ≈ $crit2"
+
+# Check second derivative to classify
+CALC_DERIV2 "$x*$x*$x - 3*$x*$x + 2*$x" $crit1 0.001 d2_1
+CALC_DERIV2 "$x*$x*$x - 3*$x*$x + 2*$x" $crit2 0.001 d2_2
+PUTS "  f''($crit1) ≈ $d2_1"
+PUTS "  f''($crit2) ≈ $d2_2"
+
+# Calculate area under curve
+CALC_INTEGRATE_SIMPSON "$x*$x*$x - 3*$x*$x + 2*$x" 0 2 100 area_curve
+PUTS "\n  Area under curve [0,2]: $area_curve"
+
+# ==============================================================================
+# Footer
+# ==============================================================================
+
+ANSI_SET_STYLE $ANSI_BOLD
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_GREEN $ANSI_BG_BLACK
+PUTS "\n═══════════════════════════════════════════════════════════════════════════"
+PUTS "                         Demo Complete!"
+PUTS "  All numerical calculus functions demonstrated successfully"
+PUTS "═══════════════════════════════════════════════════════════════════════════"
+ANSI_RESET
+PUTS ""

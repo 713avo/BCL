@@ -4,11 +4,23 @@
 # Version: 2.0.0
 # Date: 2025-11-16
 # Description: Complete matrix operations library with MATLAB-style syntax.
-#              Now fully functional with BCL's improved array global system.
 #              Matrices stored as: matrixname(row,col)
 #              Metadata stored as: _mat(matrixname.rows), _mat(matrixname.cols)
-# Usage: SOURCE "lib/MATRIX.BLB"
-# Requires: BCL 1.6+ with array global prefix support
+#
+# IMPORTANT - Usage in Procedures:
+#   Due to current BCL limitations, matrix arrays must be declared as GLOBAL
+#   when used inside procedures. Example:
+#
+#   PROC MY_FUNCTION DO
+#       GLOBAL M A B result    # Declare ALL matrices as global
+#       MAT_ZEROS M 3 3
+#       MAT_ADD A B result
+#   END
+#
+#   At global scope, GLOBAL is not needed:
+#   MAT_ZEROS M 3 3            # Works directly
+#
+# Requires: BCL 2.0+ with array global prefix support
 ################################################################################
 
 # ==============================================================================

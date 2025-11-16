@@ -1,0 +1,120 @@
+\chapter{MATRIX - Operaciones Matriciales}
+\label{ch:matrix}
+
+\section{Introducción}
+
+Librería de operaciones matriciales estilo MATLAB para BCL.
+
+\begin{warningbox}
+\textbf{Importante}: Las matrices deben declararse como \texttt{GLOBAL} en procedimientos.
+
+\begin{lstlisting}
+PROC MI_FUNCION DO
+    GLOBAL M A B resultado    # Obligatorio
+    MAT_ZEROS M 3 3
+END
+\end{lstlisting}
+\end{warningbox}
+
+\begin{lstlisting}
+SOURCE "lib/MATRIX.BLB"
+\end{lstlisting}
+
+\section{Creación de Matrices}
+
+\begin{lstlisting}
+MAT_ZEROS name rows cols              # Matriz de ceros
+MAT_ONES name rows cols               # Matriz de unos
+MAT_EYE name size                     # Matriz identidad
+MAT_RAND name rows cols max           # Matriz aleatoria [0,max]
+MAT_FROM_LIST name rows cols data     # Desde lista plana
+\end{lstlisting}
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+GLOBAL M I A
+
+MAT_ZEROS M 3 3                       # M = 3x3 de ceros
+MAT_EYE I 3                           # I = identidad 3x3
+MAT_FROM_LIST A 2 2 "1 2 3 4"         # A = [[1,2],[3,4]]
+\end{lstlisting}
+
+\section{Operaciones}
+
+\begin{lstlisting}
+MAT_ADD A B C                         # C = A + B
+MAT_SUB A B C                         # C = A - B
+MAT_MUL A B C                         # C = A * B (multiplicación matricial)
+MAT_SCALAR_MUL A k B                  # B = k * A
+MAT_ELEM_MUL A B C                    # C = A .* B (elemento a elemento)
+MAT_TRANSPOSE A A_T                   # A_T = A'
+\end{lstlisting}
+
+\section{Análisis}
+
+\begin{lstlisting}
+MAT_SUM A total                       # Suma de todos los elementos
+MAT_MEAN A promedio                   # Promedio
+MAT_MIN A minimo                      # Valor mínimo
+MAT_MAX A maximo                      # Valor máximo
+MAT_TRACE A traza                     # Traza (suma diagonal)
+MAT_DET_2X2 A det                     # Determinante (solo 2x2)
+\end{lstlisting}
+
+\section{Utilidades}
+
+\begin{lstlisting}
+MAT_PRINT name                        # Imprimir matriz formateada
+MAT_COPY src dst                      # Copiar matriz
+MAT_FILL name value                   # Llenar con valor
+MAT_GET_ROW name row result           # Extraer fila
+MAT_GET_COL name col result           # Extraer columna
+\end{lstlisting}
+
+\section{Ejemplo Completo}
+
+\begin{lstlisting}
+#!/usr/bin/env bcl
+SOURCE "lib/MATRIX.BLB"
+
+PROC MATRIZ_DEMO DO
+    GLOBAL A B C I resultado
+
+    # Crear matrices
+    MAT_FROM_LIST A 2 2 "1 2 3 4"
+    MAT_FROM_LIST B 2 2 "5 6 7 8"
+    MAT_EYE I 2
+
+    # Operaciones
+    PUTS "A:"
+    MAT_PRINT A
+    PUTS "\nB:"
+    MAT_PRINT B
+
+    MAT_ADD A B C
+    PUTS "\nA + B:"
+    MAT_PRINT C
+
+    MAT_MUL A B C
+    PUTS "\nA * B:"
+    MAT_PRINT C
+
+    # Análisis
+    MAT_TRACE A tr
+    MAT_DET_2X2 A det
+    PUTS "\nTr(A) = $tr"
+    PUTS "Det(A) = $det"
+END
+
+MATRIZ_DEMO
+\end{lstlisting}
+
+\section{Almacenamiento}
+
+Las matrices se almacenan en el array global \texttt{\_mat}:
+
+\begin{itemize}
+    \item Metadata: \texttt{\_mat(name.rows)}, \texttt{\_mat(name.cols)}
+    \item Elementos: \texttt{name(i,j)} donde i=fila, j=columna
+    \item Índices base-0
+\end{itemize}

@@ -1,0 +1,261 @@
+\appendix
+
+\chapter{Referencia Rápida}
+
+\section{Resumen de Librerías}
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Librería} & \textbf{Archivo} & \textbf{Funciones} \\
+\hline
+ANSI & ANSI.BLB & Control terminal, colores, Unicode \\
+WINDOW & WINDOW.BLB & Ventanas, menús, widgets \\
+MATRIX & MATRIX.BLB & Operaciones matriciales \\
+CALCULUS & CALCULUS.BLB & Cálculo numérico \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Tabla de Funciones por Librería}
+
+\subsection{ANSI (21 constantes + funciones)}
+
+\textbf{Control:} CLEAR, CURSOR\_HOME, CURSOR\_GOTO, CURSOR\_HIDE, CURSOR\_SHOW, RESET
+
+\textbf{Colores:} 16 FG + 16 BG, SET\_COLOR, SET\_STYLE
+
+\textbf{Unicode:} 60+ caracteres (box drawing, flechas, símbolos)
+
+\subsection{WINDOW (26 funciones)}
+
+CREATE, DRAW, PRINT, PRINT\_CENTER, SET\_COLOR, SET\_BORDER\_STYLE, SET\_BORDER\_COLOR, CLEAR, HIDE, SHOW, MOVE, MENU, PROGRESS, BUTTON, HLINE, MESSAGE\_BOX, ADD\_LINE, REDRAW\_CONTENT, SCROLL, CLEANUP, INIT
+
+\subsection{MATRIX (23 funciones)}
+
+CREATE, ZEROS, ONES, EYE, RAND, FROM\_LIST, PRINT, ADD, SUB, MUL, SCALAR\_MUL, ELEM\_MUL, TRANSPOSE, SUM, MEAN, MIN, MAX, TRACE, DET\_2X2, COPY, FILL, GET\_ROW, GET\_COL
+
+\subsection{CALCULUS (27 funciones)}
+
+\textbf{Derivadas:} DERIV\_FORWARD, DERIV\_BACKWARD, DERIV\_CENTRAL, DERIV2
+
+\textbf{Integración:} INTEGRATE\_TRAP, INTEGRATE\_SIMPSON, INTEGRATE\_MIDPOINT
+
+\textbf{EDOs:} EULER, RK2, RK4
+
+\textbf{Raíces:} NEWTON, BISECTION, SECANT
+
+\textbf{Polinomios:} POLY\_EVAL, POLY\_ROOTS\_QUAD
+
+\textbf{Series:} LIMIT, SERIES\_SUM
+
+\textbf{Utilidades:} FACTORIAL, COMBINATION, GCD
+
+\section{Caracteres Unicode Box Drawing}
+
+\begin{center}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Estilo} & \textbf{Horizontal} & \textbf{Vertical} & \textbf{Esquinas} \\
+\hline
+Simple & ─ & │ & ┌ ┐ └ ┘ \\
+Doble & ═ & ║ & ╔ ╗ ╚ ╝ \\
+Redondeado & ─ & │ & ╭ ╮ ╰ ╯ \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Valores Predeterminados}
+
+\begin{lstlisting}
+# CALCULUS
+CALC_EPSILON = 1e-6
+CALC_MAX_ITER = 1000
+CALC_PI = 3.14159265358979323846
+CALC_E = 2.71828182845904523536
+
+# WINDOW
+WIN_COUNT = 0 (incremental)
+\end{lstlisting}
+
+\chapter{Ejemplos Adicionales}
+
+\section{Gráfico de Función con Ventanas}
+
+\begin{lstlisting}
+#!/usr/bin/env bcl
+SOURCE "lib/WINDOW.BLB"
+SOURCE "lib/CALCULUS.BLB"
+
+WIN_INIT
+
+# Ventana para gráfico
+WIN_CREATE 0 2 2 76 22 "Gráfico de f(x) = sin(x)"
+WIN_SET_BORDER_STYLE 0 1
+WIN_DRAW 0
+
+# Generar puntos
+PROC GENERATE_PLOT DO
+    GLOBAL RK4_X RK4_Y
+    # Usar RK4 para resolver dy/dx = cos(x), y(0)=0
+    # Solución: y = sin(x)
+    CALC_RK4 "cos($x)" 0 0 0.1 63
+
+    FOR 0 TO 62 DO
+        SET i $__FOR
+        SET x $RK4_X($i)
+        SET y $RK4_Y($i)
+
+        # Escalar a coordenadas de ventana
+        SET row [EXPR 11 - int($y * 10)]
+        SET col [EXPR 2 + $i]
+
+        IF [EXPR $row >= 1 && $row <= 20] THEN
+            ANSI_CURSOR_GOTO [EXPR $row + 2] [EXPR $col + 2]
+            PUTS -NONEWLINE "*"
+        END
+    END
+END
+
+GENERATE_PLOT
+
+ANSI_CURSOR_GOTO 24 1
+PUTS -NONEWLINE "Presione ENTER..."
+GETS input
+
+WIN_CLEANUP
+\end{lstlisting}
+
+\section{Calculadora Matricial Interactiva}
+
+\begin{lstlisting}
+#!/usr/bin/env bcl
+SOURCE "lib/WINDOW.BLB"
+SOURCE "lib/MATRIX.BLB"
+
+PROC CALC_MATRIX_INTERACTIVE DO
+    GLOBAL M1 M2 result
+
+    WIN_INIT
+
+    # Ventana principal
+    WIN_CREATE 0 2 5 70 20 "Calculadora Matricial"
+    WIN_SET_BORDER_STYLE 0 1
+    WIN_DRAW 0
+
+    # Crear matrices de ejemplo
+    MAT_FROM_LIST M1 2 2 "1 2 3 4"
+    MAT_FROM_LIST M2 2 2 "5 6 7 8"
+
+    WIN_PRINT 0 1 "Matriz A:"
+    WIN_PRINT 0 2 "  [1 2]"
+    WIN_PRINT 0 3 "  [3 4]"
+
+    WIN_PRINT 0 5 "Matriz B:"
+    WIN_PRINT 0 6 "  [5 6]"
+    WIN_PRINT 0 7 "  [7 8]"
+
+    # Menú de operaciones
+    WIN_PRINT 0 9 "Operación:"
+    SET ops "A+B|A-B|A*B|Det(A)|Salir"
+    WIN_MENU 0 $ops 1
+
+    # Realizar operación (simplificado - selección fija)
+    MAT_ADD M1 M2 result
+    WIN_PRINT 0 14 "Resultado (A+B):"
+    WIN_PRINT 0 15 "  [6 8]"
+    WIN_PRINT 0 16 "  [10 12]"
+
+    WIN_HLINE 0 17
+    WIN_BUTTON 0 18 25 " Calcular "
+
+    ANSI_CURSOR_GOTO 24 1
+    PUTS -NONEWLINE "Presione ENTER..."
+    GETS input
+
+    WIN_CLEANUP
+END
+
+CALC_MATRIX_INTERACTIVE
+\end{lstlisting}
+
+\chapter{Solución de Problemas}
+
+\section{Errores Comunes}
+
+\subsection{Arrays no persisten en procedimientos}
+
+\textbf{Error:} "no such variable"
+
+\textbf{Solución:} Declarar arrays como GLOBAL
+
+\begin{lstlisting}
+PROC MAL DO
+    MAT_ZEROS M 3 3    # ERROR
+END
+
+PROC BIEN DO
+    GLOBAL M           # CORRECTO
+    MAT_ZEROS M 3 3
+END
+\end{lstlisting}
+
+\subsection{Terminal no muestra Unicode}
+
+\textbf{Síntoma:} Caracteres extraños en lugar de box drawing
+
+\textbf{Solución:}
+\begin{enumerate}
+    \item Verificar terminal soporta UTF-8
+    \item Configurar locale: \texttt{export LANG=es\_ES.UTF-8}
+    \item Usar terminal moderna (xterm, gnome-terminal, etc.)
+\end{enumerate}
+
+\subsection{Métodos numéricos no convergen}
+
+\textbf{Solución:}
+\begin{itemize}
+    \item Verificar condiciones iniciales
+    \item Ajustar tolerancia (\texttt{CALC\_EPSILON})
+    \item Aumentar iteraciones máximas
+    \item Verificar que la función tiene raíz/solución
+\end{itemize}
+
+\section{Optimización}
+
+\subsection{Performance de Matrices}
+
+Para matrices grandes, considerar:
+\begin{itemize}
+    \item Usar operaciones elemento a elemento cuando sea posible
+    \item Evitar copias innecesarias
+    \item BCL no está optimizado para matrices masivas ($>100 \times 100$)
+\end{itemize}
+
+\subsection{Integración Numérica}
+
+\begin{itemize}
+    \item Simpson es más preciso que trapecio
+    \item Para misma precisión, Simpson requiere menos puntos
+    \item Elegir \texttt{n} según precisión deseada
+\end{itemize}
+
+\section{Recursos Adicionales}
+
+\begin{itemize}
+    \item \textbf{Documentación principal:} \texttt{docs/man\_llm.md}
+    \item \textbf{Ejemplos:} Carpeta \texttt{examples/}
+    \item \textbf{Tests:} Carpeta \texttt{tests/}
+    \item \textbf{Código fuente:} \texttt{lib/*.BLB}
+\end{itemize}
+
+\vspace{2cm}
+
+\begin{center}
+\textbf{Fin del Manual de Librerías BCL v2.0}
+
+\vspace{1cm}
+
+Para más información, visite:\\
+\url{https://github.com/yourusername/bcl}
+\end{center}

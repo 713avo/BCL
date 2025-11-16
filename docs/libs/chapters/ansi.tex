@@ -1,0 +1,131 @@
+\chapter{ANSI - Control de Terminal}
+\label{ch:ansi}
+
+\section{Introducción}
+
+La librería ANSI proporciona control completo del terminal mediante secuencias de escape ANSI y caracteres Unicode para gráficos.
+
+\begin{lstlisting}
+SOURCE "lib/ANSI.BLB"
+\end{lstlisting}
+
+\section{Control de Pantalla}
+
+\begin{lstlisting}
+ANSI_CLEAR              # Limpiar pantalla
+ANSI_CURSOR_HOME        # Cursor a (1,1)
+ANSI_CURSOR_GOTO 10 20  # Mover cursor a fila 10, col 20
+ANSI_CURSOR_HIDE        # Ocultar cursor
+ANSI_CURSOR_SHOW        # Mostrar cursor
+ANSI_RESET             # Reset total de formato
+\end{lstlisting}
+
+\section{Colores}
+
+\subsection{Constantes de Color}
+
+\textbf{Foreground (texto):}
+\begin{itemize}
+    \item \texttt{ANSI\_FG\_BLACK}, \texttt{ANSI\_FG\_RED}, \texttt{ANSI\_FG\_GREEN}, \texttt{ANSI\_FG\_YELLOW}
+    \item \texttt{ANSI\_FG\_BLUE}, \texttt{ANSI\_FG\_MAGENTA}, \texttt{ANSI\_FG\_CYAN}, \texttt{ANSI\_FG\_WHITE}
+    \item Versiones brillantes: \texttt{ANSI\_FG\_BRIGHT\_*}
+\end{itemize}
+
+\textbf{Background (fondo):}
+\begin{itemize}
+    \item \texttt{ANSI\_BG\_*} (mismo esquema)
+\end{itemize}
+
+\subsection{Uso}
+
+\begin{lstlisting}
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_CYAN $ANSI_BG_BLUE
+PUTS "Texto colorido"
+ANSI_RESET
+\end{lstlisting}
+
+\section{Caracteres Unicode v2.0}
+
+\subsection{Box Drawing - Línea Simple}
+
+\begin{center}
+\begin{tabular}{|l|l|c|}
+\hline
+\textbf{Constante} & \textbf{Descripción} & \textbf{Carácter} \\
+\hline
+\texttt{ANSI\_BOX\_TL} & Esquina superior izquierda & ┌ \\
+\texttt{ANSI\_BOX\_TR} & Esquina superior derecha & ┐ \\
+\texttt{ANSI\_BOX\_BL} & Esquina inferior izquierda & └ \\
+\texttt{ANSI\_BOX\_BR} & Esquina inferior derecha & ┘ \\
+\texttt{ANSI\_BOX\_H} & Línea horizontal & ─ \\
+\texttt{ANSI\_BOX\_V} & Línea vertical & │ \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Box Drawing - Línea Doble}
+
+\begin{lstlisting}
+ANSI_BOX_D_TL    # ╔
+ANSI_BOX_D_TR    # ╗
+ANSI_BOX_D_BL    # ╚
+ANSI_BOX_D_BR    # ╝
+ANSI_BOX_D_H     # ═
+ANSI_BOX_D_V     # ║
+\end{lstlisting}
+
+\subsection{Box Drawing - Redondeado}
+
+\begin{lstlisting}
+ANSI_BOX_R_TL    # ╭
+ANSI_BOX_R_TR    # ╮
+ANSI_BOX_R_BL    # ╰
+ANSI_BOX_R_BR    # ╯
+\end{lstlisting}
+
+\subsection{Otros Símbolos}
+
+\begin{lstlisting}
+ANSI_ARROW_UP, ANSI_ARROW_DOWN, ANSI_ARROW_LEFT, ANSI_ARROW_RIGHT
+ANSI_CHECKMARK   # ✓
+ANSI_CROSSMARK   # ✗
+ANSI_BULLET      # •
+ANSI_STAR        # ★
+ANSI_BLOCK_FULL, ANSI_BLOCK_LIGHT, ANSI_BLOCK_MEDIUM, ANSI_BLOCK_DARK
+\end{lstlisting}
+
+\section{Ejemplo: Dibujar Caja}
+
+\begin{lstlisting}
+SOURCE "lib/ANSI.BLB"
+
+ANSI_CLEAR
+ANSI_CURSOR_GOTO 5 10
+ANSI_SET_COLOR $ANSI_FG_BRIGHT_CYAN $ANSI_BG_BLACK
+
+# Línea superior
+PUTS -NONEWLINE $ANSI_BOX_TL
+FOR 0 TO 38 DO
+    PUTS -NONEWLINE $ANSI_BOX_H
+END
+PUTS $ANSI_BOX_TR
+
+# Líneas laterales
+FOR 6 TO 14 DO
+    SET row $__FOR
+    ANSI_CURSOR_GOTO $row 10
+    PUTS -NONEWLINE $ANSI_BOX_V
+    ANSI_CURSOR_GOTO $row 50
+    PUTS $ANSI_BOX_V
+END
+
+# Línea inferior
+ANSI_CURSOR_GOTO 15 10
+PUTS -NONEWLINE $ANSI_BOX_BL
+FOR 0 TO 38 DO
+    PUTS -NONEWLINE $ANSI_BOX_H
+END
+PUTS $ANSI_BOX_BR
+
+ANSI_RESET
+\end{lstlisting}

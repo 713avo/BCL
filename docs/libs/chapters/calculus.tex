@@ -1,0 +1,473 @@
+\chapter{CALCULUS - Cálculo Numérico}
+\label{ch:calculus}
+
+\section{Introducción}
+
+La librería CALCULUS proporciona un conjunto completo de funciones para cálculo numérico, incluyendo:
+
+\begin{itemize}
+    \item Derivadas numéricas (diferencias finitas)
+    \item Integración numérica (trapecio, Simpson, punto medio)
+    \item Resolución de ecuaciones diferenciales ordinarias (Euler, Runge-Kutta)
+    \item Búsqueda de raíces (Newton-Raphson, bisección, secante)
+    \item Operaciones con polinomios
+    \item Cálculo de límites y series
+\end{itemize}
+
+\begin{notebox}
+Esta librería implementa métodos numéricos estándar con precisión configurable. Para aplicaciones que requieren alta precisión, ajuste los parámetros \texttt{CALC\_EPSILON} y \texttt{CALC\_MAX\_ITER}.
+\end{notebox}
+
+\section{Carga y configuración}
+
+\begin{lstlisting}
+SOURCE "lib/CALCULUS.BLB"
+
+# Configuración opcional
+SET CALC_EPSILON 1e-8        # Tolerancia (default: 1e-6)
+SET CALC_MAX_ITER 5000       # Max iteraciones (default: 1000)
+
+# Constantes disponibles
+PUTS $CALC_PI                # π ≈ 3.14159...
+PUTS $CALC_E                 # e ≈ 2.71828...
+\end{lstlisting}
+
+\section{Derivadas Numéricas}
+
+\subsection{CALC\_DERIV\_FORWARD}
+
+Calcula la derivada usando diferencias finitas hacia adelante:
+\[
+f'(x) \approx \frac{f(x+h) - f(x)}{h}
+\]
+
+\textbf{Sintaxis:}
+\begin{lstlisting}
+CALC_DERIV_FORWARD expr x h result
+\end{lstlisting}
+
+\textbf{Parámetros:}
+\begin{itemize}
+    \item \texttt{expr}: Expresión de la función (debe usar variable \texttt{\$x})
+    \item \texttt{x}: Punto donde calcular la derivada
+    \item \texttt{h}: Paso (típicamente 0.001 a 0.00001)
+    \item \texttt{result}: Variable donde almacenar el resultado
+\end{itemize}
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+# Derivada de f(x) = x^2 en x=3
+# f'(x) = 2x, entonces f'(3) = 6
+CALC_DERIV_FORWARD "$x * $x" 3.0 0.001 deriv
+PUTS "f'(3) ≈ $deriv"
+# Output: f'(3) ≈ 6.001
+\end{lstlisting}
+
+\subsection{CALC\_DERIV\_CENTRAL}
+
+Derivada con diferencias centrales (más precisa):
+\[
+f'(x) \approx \frac{f(x+h) - f(x-h)}{2h}
+\]
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+# Derivada de sin(x) en x=π/2
+# d/dx[sin(x)] = cos(x), cos(π/2) = 0
+SET x_val [EXPR $CALC_PI / 2.0]
+CALC_DERIV_CENTRAL "sin($x)" $x_val 0.0001 deriv
+PUTS "cos(π/2) ≈ $deriv"
+# Output: cos(π/2) ≈ 0.000000
+\end{lstlisting}
+
+\subsection{CALC\_DERIV2}
+
+Segunda derivada usando diferencias finitas:
+\[
+f''(x) \approx \frac{f(x+h) - 2f(x) + f(x-h)}{h^2}
+\]
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+# Segunda derivada de x^3
+# f(x) = x^3, f''(x) = 6x, f''(2) = 12
+CALC_DERIV2 "$x * $x * $x" 2.0 0.001 deriv2
+PUTS "f''(2) ≈ $deriv2"
+# Output: f''(2) ≈ 12.000
+\end{lstlisting}
+
+\section{Integración Numérica}
+
+\subsection{CALC\_INTEGRATE\_TRAP}
+
+Integración por regla del trapecio:
+\[
+\int_a^b f(x)dx \approx \frac{h}{2}\left[f(a) + 2\sum_{i=1}^{n-1}f(x_i) + f(b)\right]
+\]
+
+\textbf{Sintaxis:}
+\begin{lstlisting}
+CALC_INTEGRATE_TRAP expr a b n result
+\end{lstlisting}
+
+\textbf{Parámetros:}
+\begin{itemize}
+    \item \texttt{expr}: Expresión del integrando
+    \item \texttt{a}, \texttt{b}: Límites de integración
+    \item \texttt{n}: Número de subintervalos (mayor = más preciso)
+    \item \texttt{result}: Variable resultado
+\end{itemize}
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+# Integral de x^2 de 0 a 1
+# ∫₀¹ x² dx = [x³/3]₀¹ = 1/3 ≈ 0.333333
+CALC_INTEGRATE_TRAP "$x * $x" 0 1 100 area
+PUTS "Área = $area"
+# Output: Área = 0.333333
+\end{lstlisting}
+
+\subsection{CALC\_INTEGRATE\_SIMPSON}
+
+Regla de Simpson (más precisa que trapecio):
+\[
+\int_a^b f(x)dx \approx \frac{h}{3}\left[f(a) + 4\sum f_{odd} + 2\sum f_{even} + f(b)\right]
+\]
+
+\textbf{Nota:} \texttt{n} debe ser par. Si es impar, se incrementa automáticamente.
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+# Integral de sin(x) de 0 a π
+# ∫₀^π sin(x) dx = [-cos(x)]₀^π = 2
+CALC_INTEGRATE_SIMPSON "sin($x)" 0 $CALC_PI 100 result
+PUTS "Resultado = $result"
+# Output: Resultado ≈ 2.000000
+\end{lstlisting}
+
+\subsection{Comparación de métodos}
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Método} & \textbf{Precisión} & \textbf{Uso recomendado} \\
+\hline
+Trapecio & $O(h^2)$ & Integrales simples, n grande \\
+Simpson & $O(h^4)$ & Mayor precisión, funciones suaves \\
+Punto medio & $O(h^2)$ & Similar a trapecio \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Ecuaciones Diferenciales}
+
+\subsection{CALC\_EULER}
+
+Método de Euler para resolver EDOs de la forma $dy/dx = f(x,y)$.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}
+PROC MY_SOLVER DO
+    GLOBAL EULER_X EULER_Y    # Arrays de resultados
+    CALC_EULER expr x0 y0 h n
+END
+\end{lstlisting}
+
+\textbf{Parámetros:}
+\begin{itemize}
+    \item \texttt{expr}: Expresión $f(x,y)$ (usa variables \texttt{\$x} e \texttt{\$y})
+    \item \texttt{x0}, \texttt{y0}: Condición inicial $y(x_0) = y_0$
+    \item \texttt{h}: Paso de integración
+    \item \texttt{n}: Número de pasos
+\end{itemize}
+
+\textbf{Resultado:} Arrays globales \texttt{EULER\_X(i)} y \texttt{EULER\_Y(i)} con \texttt{i=0..n}
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+# Resolver dy/dx = y, y(0) = 1
+# Solución exacta: y = e^x
+PROC SOLVE_EXPONENTIAL DO
+    GLOBAL EULER_X EULER_Y
+    CALC_EULER "$y" 0 1 0.1 10
+
+    # Imprimir resultados
+    FOR 0 TO 10 DO
+        SET i $__FOR
+        PUTS "x=$EULER_X($i), y=$EULER_Y($i)"
+    END
+END
+SOLVE_EXPONENTIAL
+\end{lstlisting}
+
+\subsection{CALC\_RK4}
+
+Método de Runge-Kutta de 4º orden (alta precisión).
+
+\begin{notebox}
+RK4 es significativamente más preciso que Euler para el mismo paso \texttt{h}. Recomendado para problemas que requieren alta exactitud.
+\end{notebox}
+
+\textbf{Sintaxis:}
+\begin{lstlisting}
+PROC MY_SOLVER DO
+    GLOBAL RK4_X RK4_Y
+    CALC_RK4 expr x0 y0 h n
+END
+\end{lstlisting}
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+# Resolver dy/dx = -2xy, y(0) = 1
+# (Decaimiento Gaussiano)
+PROC SOLVE_GAUSSIAN DO
+    GLOBAL RK4_X RK4_Y
+    CALC_RK4 "-2 * $x * $y" 0 1 0.1 20
+
+    # Valor final
+    PUTS "y(2.0) ≈ $RK4_Y(20)"
+END
+SOLVE_GAUSSIAN
+\end{lstlisting}
+
+\section{Búsqueda de Raíces}
+
+\subsection{CALC\_NEWTON}
+
+Método de Newton-Raphson para encontrar raíces.
+
+\textbf{Fórmula:}
+\[
+x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}
+\]
+
+\textbf{Sintaxis:}
+\begin{lstlisting}
+CALC_NEWTON f_expr df_expr x0 tol max_iter result
+\end{lstlisting}
+
+\textbf{Parámetros:}
+\begin{itemize}
+    \item \texttt{f\_expr}: Expresión de $f(x)$
+    \item \texttt{df\_expr}: Expresión de $f'(x)$
+    \item \texttt{x0}: Estimación inicial
+    \item \texttt{tol}: Tolerancia (ej. 1e-6)
+    \item \texttt{max\_iter}: Máximo de iteraciones
+    \item \texttt{result}: Variable resultado
+\end{itemize}
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+# Encontrar √2 resolviendo x^2 - 2 = 0
+CALC_NEWTON "$x*$x - 2" "2*$x" 1.0 1e-8 100 root
+PUTS "√2 ≈ $root"
+# Output: √2 ≈ 1.41421356
+\end{lstlisting}
+
+\subsection{CALC\_BISECTION}
+
+Método de la bisección (más robusto, convergencia garantizada).
+
+\textbf{Requisito:} $f(a) \cdot f(b) < 0$ (signos opuestos).
+
+\textbf{Sintaxis:}
+\begin{lstlisting}
+CALC_BISECTION expr a b tol max_iter result
+\end{lstlisting}
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+# Encontrar raíz de cos(x) en [0, π/2]
+CALC_BISECTION "cos($x)" 0 [EXPR $CALC_PI/2] 1e-6 100 root
+PUTS "Raíz ≈ $root"
+# Output: Raíz ≈ 1.570796 (π/2)
+\end{lstlisting}
+
+\subsection{CALC\_SECANT}
+
+Método de la secante (no requiere derivada).
+
+\textbf{Fórmula:}
+\[
+x_{n+1} = x_n - f(x_n)\frac{x_n - x_{n-1}}{f(x_n) - f(x_{n-1})}
+\]
+
+\textbf{Sintaxis:}
+\begin{lstlisting}
+CALC_SECANT expr x0 x1 tol max_iter result
+\end{lstlisting}
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+# Encontrar raíz de x^3 - x - 1 = 0
+CALC_SECANT "$x*$x*$x - $x - 1" 1.0 2.0 1e-6 100 root
+PUTS "Raíz ≈ $root"
+# Output: Raíz ≈ 1.324718
+\end{lstlisting}
+
+\subsection{Comparación de métodos}
+
+\begin{center}
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Método} & \textbf{Convergencia} & \textbf{Derivada} & \textbf{Robustez} \\
+\hline
+Newton & Cuadrática & Requiere & Media \\
+Bisección & Lineal & No requiere & Alta \\
+Secante & Superlineal & No requiere & Media \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Polinomios}
+
+\subsection{CALC\_POLY\_EVAL}
+
+Evalúa polinomio usando el método de Horner.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}
+PROC EVAL_POLYNOMIAL DO
+    GLOBAL coeffs
+    SET coeffs(0) 1     # a₀
+    SET coeffs(1) 2     # a₁
+    SET coeffs(2) 3     # a₂
+    # P(x) = 1 + 2x + 3x²
+
+    CALC_POLY_EVAL 2 5.0 result
+    PUTS "P(5) = $result"
+    # P(5) = 1 + 2(5) + 3(25) = 86
+END
+\end{lstlisting}
+
+\subsection{CALC\_POLY\_ROOTS\_QUAD}
+
+Encuentra raíces de ecuación cuadrática $ax^2 + bx + c = 0$.
+
+\textbf{Sintaxis:}
+\begin{lstlisting}
+PROC FIND_ROOTS DO
+    GLOBAL POLY_ROOT1 POLY_ROOT2 POLY_DISCRIMINANT
+    CALC_POLY_ROOTS_QUAD a b c
+END
+\end{lstlisting}
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+# Resolver x^2 - 5x + 6 = 0
+# Raíces: x = 2, x = 3
+PROC SOLVE_QUADRATIC DO
+    GLOBAL POLY_ROOT1 POLY_ROOT2 POLY_DISCRIMINANT
+    CALC_POLY_ROOTS_QUAD 1 -5 6
+    PUTS "x₁ = $POLY_ROOT1"
+    PUTS "x₂ = $POLY_ROOT2"
+END
+SOLVE_QUADRATIC
+\end{lstlisting}
+
+\section{Series y Límites}
+
+\subsection{CALC\_SERIES\_SUM}
+
+Calcula suma de serie $\sum_{n=start}^{end} f(n)$.
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+# Aproximar π²/6 con serie: Σ(1/n²) n=1 to ∞
+CALC_SERIES_SUM "1.0 / ($n * $n)" 1 10000 sum
+SET pi_sq_6 [EXPR $sum]
+SET pi_approx [EXPR sqrt($pi_sq_6 * 6.0)]
+PUTS "π ≈ $pi_approx"
+\end{lstlisting}
+
+\subsection{CALC\_LIMIT}
+
+Estimación numérica de límites.
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+# lim(x→0) sin(x)/x = 1
+CALC_LIMIT "sin($x) / $x" 0 limit
+PUTS "límite = $limit"
+# Output: límite ≈ 1.000000
+\end{lstlisting}
+
+\section{Funciones Utilidad}
+
+\subsection{CALC\_FACTORIAL}
+
+\begin{lstlisting}
+CALC_FACTORIAL 5 result
+PUTS "5! = $result"
+# Output: 5! = 120
+\end{lstlisting}
+
+\subsection{CALC\_COMBINATION}
+
+Calcula combinaciones $C(n,k) = \frac{n!}{k!(n-k)!}$.
+
+\begin{lstlisting}
+CALC_COMBINATION 10 3 result
+PUTS "C(10,3) = $result"
+# Output: C(10,3) = 120
+\end{lstlisting}
+
+\subsection{CALC\_GCD}
+
+Máximo común divisor (algoritmo de Euclides).
+
+\begin{lstlisting}
+CALC_GCD 48 18 result
+PUTS "GCD(48,18) = $result"
+# Output: GCD(48,18) = 6
+\end{lstlisting}
+
+\section{Ejemplo Completo: Análisis de Función}
+
+\begin{lstlisting}
+#!/usr/bin/env bcl
+SOURCE "lib/CALCULUS.BLB"
+
+# Analizar f(x) = x³ - 3x² + 2x
+PUTS "Análisis de f(x) = x³ - 3x² + 2x"
+PUTS "================================="
+
+# 1. Encontrar derivada en x=1
+CALC_DERIV_CENTRAL "$x*$x*$x - 3*$x*$x + 2*$x" 1.0 0.0001 deriv
+PUTS "f'(1) = $deriv"
+
+# 2. Calcular segunda derivada en x=1
+CALC_DERIV2 "$x*$x*$x - 3*$x*$x + 2*$x" 1.0 0.0001 deriv2
+PUTS "f''(1) = $deriv2"
+
+# 3. Encontrar raíz cerca de x=2
+CALC_NEWTON "$x*$x*$x - 3*$x*$x + 2*$x" \
+            "3*$x*$x - 6*$x + 2" 2.0 1e-8 100 root
+PUTS "Raíz encontrada: x = $root"
+
+# 4. Calcular área bajo la curva [0,1]
+CALC_INTEGRATE_SIMPSON "$x*$x*$x - 3*$x*$x + 2*$x" \
+                        0 1 100 area
+PUTS "Área [0,1] = $area"
+
+PUTS "================================="
+\end{lstlisting}
+
+\section{Notas de Precisión}
+
+\begin{warningbox}
+Los métodos numéricos tienen limitaciones inherentes:
+\begin{itemize}
+    \item \textbf{Error de redondeo}: Acumulado en operaciones flotantes
+    \item \textbf{Error de truncamiento}: Por aproximación de derivadas/integrales
+    \item \textbf{Convergencia}: No garantizada para todos los problemas
+\end{itemize}
+
+Recomendaciones:
+\begin{itemize}
+    \item Usar pasos pequeños (\texttt{h}) para derivadas/integrales
+    \item Verificar convergencia en métodos iterativos
+    \item Comparar resultados con diferentes parámetros
+    \item Para alta precisión, considerar librerías especializadas
+\end{itemize}
+\end{warningbox}

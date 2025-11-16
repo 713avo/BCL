@@ -1,0 +1,624 @@
+################################################################################
+# CALCULUS.BLB - Numerical Calculus Library for BCL
+################################################################################
+# Version: 1.0.0
+# Date: 2025-11-16
+# Description: Comprehensive numerical calculus library implementing:
+#              - Numerical derivatives (forward, backward, central)
+#              - Numerical integration (trapezoidal, Simpson, Romberg)
+#              - Differential equation solvers (Euler, RK2, RK4)
+#              - Root finding (Newton-Raphson, Bisection, Secant)
+#              - Limits and sequences
+#              - Polynomial operations
+#
+# IMPORTANT - Usage in Procedures:
+#   Functions that use arrays require GLOBAL declarations. Example:
+#
+#   PROC MY_FUNCTION DO
+#       GLOBAL points coeffs    # Declare arrays as global
+#       CALC_POLY_EVAL coeffs 2.5 result
+#   END
+#
+# Requires: BCL 2.0+
+################################################################################
+
+PUTS "CALCULUS Library v1.0.0 loaded - Numerical calculus functions available"
+
+# ==============================================================================
+# CONFIGURATION AND CONSTANTS
+# ==============================================================================
+
+# Default tolerance for numerical methods
+SET CALC_EPSILON 1e-6
+
+# Default maximum iterations
+SET CALC_MAX_ITER 1000
+
+# Mathematical constants
+SET CALC_PI 3.14159265358979323846
+SET CALC_E 2.71828182845904523536
+
+# ==============================================================================
+# NUMERICAL DERIVATIVES
+# ==============================================================================
+
+# CALC_DERIV_FORWARD - Forward difference derivative
+# df/dx ≈ (f(x+h) - f(x)) / h
+# Usage: CALC_DERIV_FORWARD expr x h result
+# Example: CALC_DERIV_FORWARD "$x * $x" 3.0 0.001 deriv
+PROC CALC_DERIV_FORWARD WITH expr x h result_var DO
+    # Evaluate f(x)
+    EVAL "SET fx \[EXPR $expr\]"
+
+    # Evaluate f(x+h)
+    SET x_plus_h [EXPR $x + $h]
+    SET x $x_plus_h
+    EVAL "SET fxh \[EXPR $expr\]"
+
+    # Calculate derivative
+    SET deriv [EXPR ($fxh - $fx) / $h]
+    EVAL "SET $result_var $deriv"
+END
+
+# CALC_DERIV_BACKWARD - Backward difference derivative
+# df/dx ≈ (f(x) - f(x-h)) / h
+# Usage: CALC_DERIV_BACKWARD expr x h result
+PROC CALC_DERIV_BACKWARD WITH expr x h result_var DO
+    # Evaluate f(x)
+    EVAL "SET fx \[EXPR $expr\]"
+
+    # Evaluate f(x-h)
+    SET x_minus_h [EXPR $x - $h]
+    SET x $x_minus_h
+    EVAL "SET fxmh \[EXPR $expr\]"
+
+    # Calculate derivative
+    SET deriv [EXPR ($fx - $fxmh) / $h]
+    EVAL "SET $result_var $deriv"
+END
+
+# CALC_DERIV_CENTRAL - Central difference derivative (more accurate)
+# df/dx ≈ (f(x+h) - f(x-h)) / (2h)
+# Usage: CALC_DERIV_CENTRAL expr x h result
+PROC CALC_DERIV_CENTRAL WITH expr x h result_var DO
+    # Evaluate f(x+h)
+    SET x_plus_h [EXPR $x + $h]
+    SET x $x_plus_h
+    EVAL "SET fxh \[EXPR $expr\]"
+
+    # Evaluate f(x-h)
+    SET x_minus_h [EXPR $x - ($h * 2)]
+    SET x $x_minus_h
+    EVAL "SET fxmh \[EXPR $expr\]"
+
+    # Calculate derivative
+    SET deriv [EXPR ($fxh - $fxmh) / (2.0 * $h)]
+    EVAL "SET $result_var $deriv"
+END
+
+# CALC_DERIV2 - Second derivative
+# d²f/dx² ≈ (f(x+h) - 2f(x) + f(x-h)) / h²
+# Usage: CALC_DERIV2 expr x h result
+PROC CALC_DERIV2 WITH expr x h result_var DO
+    # Evaluate f(x+h)
+    SET x_plus_h [EXPR $x + $h]
+    SET x_temp $x
+    SET x $x_plus_h
+    EVAL "SET fxh \[EXPR $expr\]"
+
+    # Evaluate f(x)
+    SET x $x_temp
+    EVAL "SET fx \[EXPR $expr\]"
+
+    # Evaluate f(x-h)
+    SET x_minus_h [EXPR $x - $h]
+    SET x $x_minus_h
+    EVAL "SET fxmh \[EXPR $expr\]"
+
+    # Calculate second derivative
+    SET h_sq [EXPR $h * $h]
+    SET deriv2 [EXPR ($fxh - 2.0 * $fx + $fxmh) / $h_sq]
+    EVAL "SET $result_var $deriv2"
+END
+
+# ==============================================================================
+# NUMERICAL INTEGRATION
+# ==============================================================================
+
+# CALC_INTEGRATE_TRAP - Trapezoidal rule integration
+# ∫f(x)dx ≈ h/2 * (f(a) + 2*Σf(xi) + f(b))
+# Usage: CALC_INTEGRATE_TRAP expr a b n result
+# Example: CALC_INTEGRATE_TRAP "$x * $x" 0 1 100 area
+PROC CALC_INTEGRATE_TRAP WITH expr a b n result_var DO
+    SET h [EXPR ($b - $a) / double($n)]
+
+    # First point
+    SET x $a
+    EVAL "SET fa \[EXPR $expr\]"
+
+    # Last point
+    SET x $b
+    EVAL "SET fb \[EXPR $expr\]"
+
+    # Sum middle points
+    SET sum 0.0
+    FOR 1 TO [EXPR $n - 1] DO
+        SET i $__FOR
+        SET x [EXPR $a + $i * $h]
+        EVAL "SET fx \[EXPR $expr\]"
+        SET sum [EXPR $sum + $fx]
+    END
+
+    # Calculate integral
+    SET integral [EXPR ($h / 2.0) * ($fa + 2.0 * $sum + $fb)]
+    EVAL "SET $result_var $integral"
+END
+
+# CALC_INTEGRATE_SIMPSON - Simpson's 1/3 rule (more accurate)
+# ∫f(x)dx ≈ h/3 * (f(a) + 4*Σf(x_odd) + 2*Σf(x_even) + f(b))
+# Usage: CALC_INTEGRATE_SIMPSON expr a b n result
+# Note: n must be even
+PROC CALC_INTEGRATE_SIMPSON WITH expr a b n result_var DO
+    # Ensure n is even
+    SET n_mod [EXPR $n % 2]
+    IF [EXPR $n_mod != 0] THEN
+        INCR n
+    END
+
+    SET h [EXPR ($b - $a) / double($n)]
+
+    # First and last points
+    SET x $a
+    EVAL "SET fa \[EXPR $expr\]"
+    SET x $b
+    EVAL "SET fb \[EXPR $expr\]"
+
+    # Sum odd and even middle points
+    SET sum_odd 0.0
+    SET sum_even 0.0
+
+    FOR 1 TO [EXPR $n - 1] DO
+        SET i $__FOR
+        SET x [EXPR $a + $i * $h]
+        EVAL "SET fx \[EXPR $expr\]"
+
+        SET i_mod [EXPR $i % 2]
+        IF [EXPR $i_mod == 1] THEN
+            # Odd index
+            SET sum_odd [EXPR $sum_odd + $fx]
+        ELSE
+            # Even index
+            SET sum_even [EXPR $sum_even + $fx]
+        END
+    END
+
+    # Calculate integral
+    SET integral [EXPR ($h / 3.0) * ($fa + 4.0 * $sum_odd + 2.0 * $sum_even + $fb)]
+    EVAL "SET $result_var $integral"
+END
+
+# CALC_INTEGRATE_MIDPOINT - Midpoint rule
+# ∫f(x)dx ≈ h * Σf(xi + h/2)
+# Usage: CALC_INTEGRATE_MIDPOINT expr a b n result
+PROC CALC_INTEGRATE_MIDPOINT WITH expr a b n result_var DO
+    SET h [EXPR ($b - $a) / double($n)]
+    SET half_h [EXPR $h / 2.0]
+
+    SET sum 0.0
+    FOR 0 TO [EXPR $n - 1] DO
+        SET i $__FOR
+        SET x [EXPR $a + $i * $h + $half_h]
+        EVAL "SET fx \[EXPR $expr\]"
+        SET sum [EXPR $sum + $fx]
+    END
+
+    SET integral [EXPR $h * $sum]
+    EVAL "SET $result_var $integral"
+END
+
+# ==============================================================================
+# DIFFERENTIAL EQUATION SOLVERS
+# ==============================================================================
+
+# CALC_EULER - Euler's method for ODEs
+# Solves dy/dx = f(x,y) with initial condition y(x0) = y0
+# Usage: CALC_EULER expr x0 y0 h n
+# Returns: Stores results in global arrays EULER_X and EULER_Y
+# Example: CALC_EULER "$y" 0 1 0.1 10  # Solves dy/dx = y, y(0)=1
+PROC CALC_EULER WITH expr x0 y0 h n DO
+    GLOBAL EULER_X EULER_Y
+
+    SET x $x0
+    SET y $y0
+    SET EULER_X(0) $x
+    SET EULER_Y(0) $y
+
+    FOR 1 TO $n DO
+        SET i $__FOR
+
+        # Calculate slope
+        EVAL "SET slope \[EXPR $expr\]"
+
+        # Update y
+        SET y [EXPR $y + $h * $slope]
+
+        # Update x
+        SET x [EXPR $x + $h]
+
+        # Store results
+        SET EULER_X($i) $x
+        SET EULER_Y($i) $y
+    END
+END
+
+# CALC_RK2 - Runge-Kutta 2nd order (improved Euler)
+# More accurate than Euler for dy/dx = f(x,y)
+# Usage: CALC_RK2 expr x0 y0 h n
+# Returns: Stores results in global arrays RK2_X and RK2_Y
+PROC CALC_RK2 WITH expr x0 y0 h n DO
+    GLOBAL RK2_X RK2_Y
+
+    SET x $x0
+    SET y $y0
+    SET RK2_X(0) $x
+    SET RK2_Y(0) $y
+
+    FOR 1 TO $n DO
+        SET i $__FOR
+
+        # k1 = f(x, y)
+        EVAL "SET k1 \[EXPR $expr\]"
+
+        # k2 = f(x + h, y + h*k1)
+        SET x_temp [EXPR $x + $h]
+        SET y_temp [EXPR $y + $h * $k1]
+        SET x $x_temp
+        SET y $y_temp
+        EVAL "SET k2 \[EXPR $expr\]"
+
+        # Restore x, update y
+        SET x [EXPR $x - $h]
+        SET y [EXPR $y - $h * $k1 + $h * ($k1 + $k2) / 2.0]
+
+        # Update x
+        SET x [EXPR $x + $h]
+
+        # Store results
+        SET RK2_X($i) $x
+        SET RK2_Y($i) $y
+    END
+END
+
+# CALC_RK4 - Runge-Kutta 4th order (most accurate)
+# High accuracy for dy/dx = f(x,y)
+# Usage: CALC_RK4 expr x0 y0 h n
+# Returns: Stores results in global arrays RK4_X and RK4_Y
+PROC CALC_RK4 WITH expr x0 y0 h n DO
+    GLOBAL RK4_X RK4_Y
+
+    SET x $x0
+    SET y $y0
+    SET RK4_X(0) $x
+    SET RK4_Y(0) $y
+
+    FOR 1 TO $n DO
+        SET i $__FOR
+
+        # k1 = f(x, y)
+        EVAL "SET k1 \[EXPR $expr\]"
+
+        # k2 = f(x + h/2, y + h*k1/2)
+        SET x [EXPR $x + $h / 2.0]
+        SET y [EXPR $y + $h * $k1 / 2.0]
+        EVAL "SET k2 \[EXPR $expr\]"
+
+        # k3 = f(x + h/2, y + h*k2/2)  (x already at x+h/2)
+        SET y [EXPR $y - $h * $k1 / 2.0 + $h * $k2 / 2.0]
+        EVAL "SET k3 \[EXPR $expr\]"
+
+        # k4 = f(x + h, y + h*k3)
+        SET x [EXPR $x + $h / 2.0]
+        SET y [EXPR $y - $h * $k2 / 2.0 + $h * $k3]
+        EVAL "SET k4 \[EXPR $expr\]"
+
+        # Update y: y_new = y_old + h*(k1 + 2k2 + 2k3 + k4)/6
+        SET y [EXPR $y - $h * $k3 + $h * ($k1 + 2.0*$k2 + 2.0*$k3 + $k4) / 6.0]
+
+        # Store results
+        SET RK4_X($i) $x
+        SET RK4_Y($i) $y
+    END
+END
+
+# ==============================================================================
+# ROOT FINDING
+# ==============================================================================
+
+# CALC_NEWTON - Newton-Raphson method for finding roots
+# Finds x such that f(x) = 0 using Newton's method
+# Usage: CALC_NEWTON f_expr df_expr x0 tol max_iter result
+# Example: CALC_NEWTON "$x*$x - 2" "2*$x" 1.0 1e-6 100 root
+PROC CALC_NEWTON WITH f_expr df_expr x0 tol max_iter result_var DO
+    SET x $x0
+    SET iter 0
+
+    WHILE [EXPR $iter < $max_iter] DO
+        # Evaluate f(x)
+        EVAL "SET fx \[EXPR $f_expr\]"
+
+        # Check convergence
+        SET abs_fx [EXPR abs($fx)]
+        IF [EXPR $abs_fx < $tol] THEN
+            EVAL "SET $result_var $x"
+            RETURN
+        END
+
+        # Evaluate f'(x)
+        EVAL "SET dfx \[EXPR $df_expr\]"
+
+        # Newton step: x = x - f(x)/f'(x)
+        IF [EXPR abs($dfx) < 1e-10] THEN
+            PUTS "Error: derivative too small in Newton method"
+            EVAL "SET $result_var $x"
+            RETURN
+        END
+
+        SET x [EXPR $x - $fx / $dfx]
+        INCR iter
+    END
+
+    PUTS "Warning: Newton method did not converge in $max_iter iterations"
+    EVAL "SET $result_var $x"
+END
+
+# CALC_BISECTION - Bisection method for root finding
+# Finds root in interval [a,b] where f(a)*f(b) < 0
+# Usage: CALC_BISECTION expr a b tol max_iter result
+PROC CALC_BISECTION WITH expr a b tol max_iter result_var DO
+    # Evaluate f(a) and f(b)
+    SET x $a
+    EVAL "SET fa \[EXPR $expr\]"
+    SET x $b
+    EVAL "SET fb \[EXPR $expr\]"
+
+    # Check that f(a) and f(b) have opposite signs
+    IF [EXPR $fa * $fb >= 0] THEN
+        PUTS "Error: f(a) and f(b) must have opposite signs"
+        EVAL "SET $result_var [EXPR ($a + $b) / 2.0]"
+        RETURN
+    END
+
+    SET iter 0
+    WHILE [EXPR $iter < $max_iter] DO
+        # Calculate midpoint
+        SET c [EXPR ($a + $b) / 2.0]
+
+        # Evaluate f(c)
+        SET x $c
+        EVAL "SET fc \[EXPR $expr\]"
+
+        # Check convergence
+        SET abs_fc [EXPR abs($fc)]
+        IF [EXPR $abs_fc < $tol] THEN
+            EVAL "SET $result_var $c"
+            RETURN
+        END
+
+        # Check interval width
+        IF [EXPR abs($b - $a) < $tol] THEN
+            EVAL "SET $result_var $c"
+            RETURN
+        END
+
+        # Update interval
+        IF [EXPR $fa * $fc < 0] THEN
+            SET b $c
+            SET fb $fc
+        ELSE
+            SET a $c
+            SET fa $fc
+        END
+
+        INCR iter
+    END
+
+    PUTS "Warning: Bisection did not converge in $max_iter iterations"
+    EVAL "SET $result_var [EXPR ($a + $b) / 2.0]"
+END
+
+# CALC_SECANT - Secant method for root finding
+# Similar to Newton but doesn't require derivative
+# Usage: CALC_SECANT expr x0 x1 tol max_iter result
+PROC CALC_SECANT WITH expr x0 x1 tol max_iter result_var DO
+    # Evaluate f(x0)
+    SET x $x0
+    EVAL "SET fx0 \[EXPR $expr\]"
+
+    # Evaluate f(x1)
+    SET x $x1
+    EVAL "SET fx1 \[EXPR $expr\]"
+
+    SET iter 0
+    WHILE [EXPR $iter < $max_iter] DO
+        # Check convergence
+        SET abs_fx1 [EXPR abs($fx1)]
+        IF [EXPR $abs_fx1 < $tol] THEN
+            EVAL "SET $result_var $x1"
+            RETURN
+        END
+
+        # Secant step
+        SET denom [EXPR $fx1 - $fx0]
+        IF [EXPR abs($denom) < 1e-10] THEN
+            PUTS "Error: denominator too small in secant method"
+            EVAL "SET $result_var $x1"
+            RETURN
+        END
+
+        SET x_new [EXPR $x1 - $fx1 * ($x1 - $x0) / $denom]
+
+        # Update for next iteration
+        SET x0 $x1
+        SET fx0 $fx1
+        SET x1 $x_new
+        SET x $x1
+        EVAL "SET fx1 \[EXPR $expr\]"
+
+        INCR iter
+    END
+
+    PUTS "Warning: Secant method did not converge in $max_iter iterations"
+    EVAL "SET $result_var $x1"
+END
+
+# ==============================================================================
+# POLYNOMIAL OPERATIONS
+# ==============================================================================
+
+# CALC_POLY_EVAL - Evaluate polynomial using Horner's method
+# P(x) = a0 + a1*x + a2*x^2 + ... + an*x^n
+# Coefficients stored in array: coeffs(0)=a0, coeffs(1)=a1, etc.
+# Usage: Requires GLOBAL coeffs; CALC_POLY_EVAL degree x result
+PROC CALC_POLY_EVAL WITH degree x result_var DO
+    GLOBAL coeffs
+
+    # Horner's method: b = an; for i=n-1 down to 0: b = b*x + ai
+    SET result $coeffs($degree)
+
+    SET i [EXPR $degree - 1]
+    WHILE [EXPR $i >= 0] DO
+        SET result [EXPR $result * $x + $coeffs($i)]
+        SET i [EXPR $i - 1]
+    END
+
+    EVAL "SET $result_var $result"
+END
+
+# CALC_POLY_ROOTS_QUAD - Find roots of quadratic ax^2 + bx + c = 0
+# Usage: CALC_POLY_ROOTS_QUAD a b c
+# Returns: Sets POLY_ROOT1, POLY_ROOT2, POLY_DISCRIMINANT
+PROC CALC_POLY_ROOTS_QUAD WITH a b c DO
+    GLOBAL POLY_ROOT1 POLY_ROOT2 POLY_DISCRIMINANT
+
+    # Calculate discriminant
+    SET POLY_DISCRIMINANT [EXPR $b * $b - 4.0 * $a * $c]
+
+    IF [EXPR $POLY_DISCRIMINANT < 0] THEN
+        PUTS "Warning: Complex roots (discriminant < 0)"
+        SET POLY_ROOT1 "NaN"
+        SET POLY_ROOT2 "NaN"
+        RETURN
+    END
+
+    # Calculate roots
+    SET sqrt_disc [EXPR sqrt($POLY_DISCRIMINANT)]
+    SET POLY_ROOT1 [EXPR (-$b + $sqrt_disc) / (2.0 * $a)]
+    SET POLY_ROOT2 [EXPR (-$b - $sqrt_disc) / (2.0 * $a)]
+END
+
+# ==============================================================================
+# LIMITS AND SEQUENCES
+# ==============================================================================
+
+# CALC_LIMIT - Numerical limit estimation
+# Estimates lim(x→x0) f(x) by evaluating f at points approaching x0
+# Usage: CALC_LIMIT expr x0 result
+PROC CALC_LIMIT WITH expr x0 result_var DO
+    # Evaluate at decreasing distances from x0
+    SET h 1.0
+
+    FOR 1 TO 10 DO
+        SET x [EXPR $x0 + $h]
+        EVAL "SET f_right \[EXPR $expr\]"
+
+        SET x [EXPR $x0 - $h]
+        EVAL "SET f_left \[EXPR $expr\]"
+
+        # Average left and right
+        SET limit [EXPR ($f_left + $f_right) / 2.0]
+
+        # Reduce h
+        SET h [EXPR $h / 10.0]
+    END
+
+    EVAL "SET $result_var $limit"
+END
+
+# CALC_SERIES_SUM - Sum of series with given formula
+# Sums expr(n) from n=start to n=end
+# Usage: CALC_SERIES_SUM expr_n start end result
+# Example: CALC_SERIES_SUM "1.0 / ($n * $n)" 1 100 sum
+PROC CALC_SERIES_SUM WITH expr start end result_var DO
+    SET sum 0.0
+
+    FOR $start TO $end DO
+        SET n $__FOR
+        EVAL "SET term \[EXPR $expr\]"
+        SET sum [EXPR $sum + $term]
+    END
+
+    EVAL "SET $result_var $sum"
+END
+
+# ==============================================================================
+# UTILITY FUNCTIONS
+# ==============================================================================
+
+# CALC_FACTORIAL - Calculate n!
+# Usage: CALC_FACTORIAL n result
+PROC CALC_FACTORIAL WITH n result_var DO
+    IF [EXPR $n <= 1] THEN
+        EVAL "SET $result_var 1"
+        RETURN
+    END
+
+    SET fact 1
+    FOR 2 TO $n DO
+        SET i $__FOR
+        SET fact [EXPR $fact * $i]
+    END
+
+    EVAL "SET $result_var $fact"
+END
+
+# CALC_COMBINATION - Calculate C(n,k) = n!/(k!(n-k)!)
+# Usage: CALC_COMBINATION n k result
+PROC CALC_COMBINATION WITH n k result_var DO
+    IF [EXPR $k > $n] THEN
+        EVAL "SET $result_var 0"
+        RETURN
+    END
+
+    IF [EXPR $k == 0 || $k == $n] THEN
+        EVAL "SET $result_var 1"
+        RETURN
+    END
+
+    # Use efficient formula: C(n,k) = n*(n-1)*...*(n-k+1) / k!
+    SET numerator 1
+    SET denominator 1
+
+    FOR 0 TO [EXPR $k - 1] DO
+        SET i $__FOR
+        SET numerator [EXPR $numerator * ($n - $i)]
+        SET denominator [EXPR $denominator * ($i + 1)]
+    END
+
+    EVAL "SET $result_var [EXPR $numerator / $denominator]"
+END
+
+# CALC_GCD - Greatest common divisor using Euclid's algorithm
+# Usage: CALC_GCD a b result
+PROC CALC_GCD WITH a b result_var DO
+    WHILE [EXPR $b != 0] DO
+        SET temp $b
+        SET b [EXPR $a % $b]
+        SET a $temp
+    END
+
+    EVAL "SET $result_var [EXPR abs($a)]"
+END
+
+################################################################################
+# END OF CALCULUS LIBRARY
+################################################################################

@@ -1,0 +1,127 @@
+\chapter{WINDOW - Gestión de Ventanas}
+\label{ch:window}
+
+\section{Introducción}
+
+Sistema completo de ventanas para terminal con soporte para menús, barras de progreso, botones y contenido scrollable.
+
+\begin{lstlisting}
+SOURCE "lib/WINDOW.BLB"    # Carga automáticamente ANSI.BLB
+WIN_INIT                   # Inicializar sistema
+\end{lstlisting}
+
+\section{Creación y Dibujo}
+
+\begin{lstlisting}
+WIN_CREATE id row col width height title
+WIN_DRAW id                           # Dibujar ventana
+WIN_CLEAR id                          # Limpiar contenido
+\end{lstlisting}
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+WIN_CREATE 0 5 10 50 15 "Mi Ventana"
+WIN_SET_BORDER_STYLE 0 1              # 0=simple, 1=doble, 2=redondo
+WIN_SET_COLOR 0 $ANSI_FG_WHITE $ANSI_BG_BLUE
+WIN_SET_BORDER_COLOR 0 $ANSI_FG_BRIGHT_CYAN $ANSI_BG_BLUE
+WIN_DRAW 0
+\end{lstlisting}
+
+\section{Contenido}
+
+\begin{lstlisting}
+WIN_PRINT id row text                 # Imprimir en fila
+WIN_PRINT_CENTER id row text          # Texto centrado
+WIN_HLINE id row                      # Línea horizontal
+\end{lstlisting}
+
+\section{Elementos Interactivos}
+
+\subsection{Menú}
+
+\begin{lstlisting}
+WIN_MENU id items selected
+\end{lstlisting}
+
+\textbf{Ejemplo:}
+\begin{lstlisting}
+SET menu "Nuevo|Abrir|Guardar|Salir"
+WIN_MENU 0 $menu 1                    # Item 1 seleccionado
+\end{lstlisting}
+
+\subsection{Barra de Progreso}
+
+\begin{lstlisting}
+WIN_PROGRESS id row percent
+
+FOR 0 TO 10 DO
+    SET pct [EXPR $__FOR * 10]
+    WIN_PROGRESS 0 5 $pct
+END
+\end{lstlisting}
+
+\subsection{Botones}
+
+\begin{lstlisting}
+WIN_BUTTON id row col label
+
+WIN_BUTTON 0 10 15 " Aceptar "
+WIN_BUTTON 0 10 30 " Cancelar "
+\end{lstlisting}
+
+\section{Contenido Scrollable}
+
+\begin{lstlisting}
+WIN_ADD_LINE id text                  # Añadir línea al buffer
+WIN_REDRAW_CONTENT id                 # Redibujar contenido visible
+WIN_SCROLL id direction               # -1=arriba, 1=abajo
+\end{lstlisting}
+
+\section{Gestión de Ventanas}
+
+\begin{lstlisting}
+WIN_HIDE id                           # Ocultar
+WIN_SHOW id                           # Mostrar y redibujar
+WIN_MOVE id new_row new_col           # Mover
+WIN_MESSAGE_BOX message               # Diálogo simple
+WIN_CLEANUP                           # Limpiar al salir
+\end{lstlisting}
+
+\section{Ejemplo Completo}
+
+\begin{lstlisting}
+#!/usr/bin/env bcl
+SOURCE "lib/WINDOW.BLB"
+
+WIN_INIT
+
+# Crear ventana principal
+WIN_CREATE 0 3 5 60 15 "Aplicación"
+WIN_SET_BORDER_STYLE 0 1
+WIN_SET_COLOR 0 $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLUE
+WIN_DRAW 0
+
+# Contenido
+WIN_PRINT_CENTER 0 2 "Bienvenido"
+WIN_PRINT 0 4 "  Seleccione opción:"
+
+# Menú
+SET menu "Nuevo|Abrir|Guardar|Salir"
+WIN_MENU 0 $menu 1
+
+# Barra de progreso
+WIN_PRINT 0 10 "  Cargando..."
+WIN_PROGRESS 0 11 75
+
+# Botones
+WIN_HLINE 0 12
+WIN_BUTTON 0 13 15 " OK "
+WIN_BUTTON 0 13 30 " Cancel "
+
+# Esperar
+ANSI_CURSOR_GOTO 24 1
+PUTS -NONEWLINE "Presione ENTER..."
+GETS input
+
+WIN_CLEANUP
+\end{lstlisting}

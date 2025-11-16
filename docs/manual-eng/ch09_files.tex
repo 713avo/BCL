@@ -89,3 +89,43 @@ PUTS "Text files: $txtfiles"
 \end{lstlisting}
 \end{examplebox}
 
+\section{File Positioning with SEEK}
+
+The \texttt{SEEK} command allows you to move the file pointer to a specific position within a file.
+
+\begin{syntaxbox}
+SEEK handle offset whence
+\end{syntaxbox}
+
+\begin{itemize}
+\item \textbf{handle} -- File handle from \texttt{OPEN}
+\item \textbf{offset} -- Byte offset (can be negative for \texttt{END})
+\item \textbf{whence} -- Reference point:
+  \begin{itemize}
+  \item \texttt{START} or \texttt{SET} -- From beginning of file
+  \item \texttt{CUR} or \texttt{CURRENT} -- From current position
+  \item \texttt{END} -- From end of file
+  \end{itemize}
+\end{itemize}
+
+\begin{examplebox}[title=Using SEEK]
+\begin{lstlisting}[language=BCL]
+# Open file for reading
+SET fh [OPEN "data.bin" R]
+
+# Read first 10 bytes
+SET header [READ $fh 10]
+
+# Go back to start
+SEEK $fh 0 START
+
+# Skip 100 bytes from current position
+SEEK $fh 100 CUR
+
+# Go to 10 bytes before end
+SEEK $fh -10 END
+
+CLOSE $fh
+\end{lstlisting}
+\end{examplebox}
+

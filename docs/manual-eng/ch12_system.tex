@@ -382,12 +382,14 @@ backup_file "important.txt"
 
 \subsection{ENV - Access Environment Variables}
 
-\cmd{ENV} reads environment variables from the operating system.
+\cmd{ENV} reads environment variables from the operating system. If the requested environment variable does not exist, ENV returns an empty string (not an error).
 
 \textbf{Syntax:}
 \begin{lstlisting}[language=BCL]
 ENV variable_name
 \end{lstlisting}
+
+\textbf{Return value:} The value of the environment variable, or empty string if not set.
 
 \begin{examplebox}[title=Reading Environment Variables]
 \begin{lstlisting}[language=BCL]
@@ -405,7 +407,7 @@ PUTS "PATH: $path"
 
 # Check if a variable exists
 SET editor [ENV EDITOR]
-IF [STRING LENGTH $editor] > 0 THEN
+IF ![STRING EQUAL $editor ""] THEN
   PUTS "Default editor: $editor"
 ELSE
   PUTS "No EDITOR set, using vi"

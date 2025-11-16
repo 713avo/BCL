@@ -65,6 +65,11 @@ SET last [LINDEX $names 3]
 PUTS "First: $first"
 PUTS "Second: $second"
 PUTS "Last: $last"
+
+# To get the last element, calculate the index
+SET len [LLENGTH $names]
+SET last_elem [LINDEX $names [EXPR $len - 1]]
+PUTS "Last element: $last_elem"
 \end{lstlisting}
 
 \textbf{Output:}
@@ -72,8 +77,13 @@ PUTS "Last: $last"
 First: Alice
 Second: Bob
 Last: Diana
+Last element: Diana
 \end{verbatim}
 \end{examplebox}
+
+\begin{notebox}
+\textbf{Limitation:} Negative indices (e.g., \texttt{-1} for last element) are not currently supported. Use \cmd{LLENGTH} and positive indices as shown above.
+\end{notebox}
 
 \subsection{LRANGE: Get Sublist}
 
@@ -121,18 +131,37 @@ END
 
 \subsection{LAPPEND: Add to End}
 
+\cmd{LAPPEND} modifies the variable in-place by appending elements to it. The variable is updated directly and the new value is also returned.
+
+\textbf{Syntax:}
+\begin{lstlisting}[language=BCL]
+LAPPEND varname element ?element ...?
+\end{lstlisting}
+
+\textbf{Note:} Unlike some list commands, LAPPEND modifies the variable directly -- you don't need to reassign the result.
+
 \begin{examplebox}[title=Appending to Lists]
 \begin{lstlisting}[language=BCL]
 SET fruits [LIST apple banana]
-SET fruits [LAPPEND $fruits cherry]
-SET fruits [LAPPEND $fruits date elderberry]
+
+# LAPPEND modifies fruits directly
+LAPPEND fruits cherry
+LAPPEND fruits date elderberry
 
 PUTS $fruits
+# Output: apple banana cherry date elderberry
+
+# You can also capture the return value if needed
+SET result [LAPPEND fruits fig]
+PUTS "Returned: $result"
+PUTS "Variable: $fruits"
 \end{lstlisting}
 
 \textbf{Output:}
 \begin{verbatim}
 apple banana cherry date elderberry
+Returned: apple banana cherry date elderberry fig
+Variable: apple banana cherry date elderberry fig
 \end{verbatim}
 \end{examplebox}
 
@@ -245,7 +274,7 @@ SET shopping_list [LIST]
 
 PROC add_item WITH item DO
   GLOBAL shopping_list
-  SET shopping_list [LAPPEND $shopping_list $item]
+  LAPPEND shopping_list $item
   PUTS "Added: $item"
 END
 

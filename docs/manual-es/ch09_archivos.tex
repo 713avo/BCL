@@ -93,3 +93,43 @@ SET txtfiles [GLOB "*.txt"]
 PUTS "Text files: $txtfiles"
 \end{lstlisting}
 \end{examplebox}
+
+\section{Posicionamiento en Archivos con SEEK}
+
+El comando \texttt{SEEK} permite mover el puntero del archivo a una posición específica dentro de un archivo.
+
+\begin{syntaxbox}
+SEEK handle offset whence
+\end{syntaxbox}
+
+\begin{itemize}
+\item \textbf{handle} -- Manejador de archivo desde \texttt{OPEN}
+\item \textbf{offset} -- Desplazamiento en bytes (puede ser negativo para \texttt{END})
+\item \textbf{whence} -- Punto de referencia:
+  \begin{itemize}
+  \item \texttt{START} o \texttt{SET} -- Desde el principio del archivo
+  \item \texttt{CUR} o \texttt{CURRENT} -- Desde la posición actual
+  \item \texttt{END} -- Desde el final del archivo
+  \end{itemize}
+\end{itemize}
+
+\begin{examplebox}[title=Uso de SEEK]
+\begin{lstlisting}[language=BCL]
+# Abrir archivo para lectura
+SET fh [OPEN "data.bin" R]
+
+# Leer primeros 10 bytes
+SET header [READ $fh 10]
+
+# Volver al principio
+SEEK $fh 0 START
+
+# Saltar 100 bytes desde la posición actual
+SEEK $fh 100 CUR
+
+# Ir a 10 bytes antes del final
+SEEK $fh -10 END
+
+CLOSE $fh
+\end{lstlisting}
+\end{examplebox}

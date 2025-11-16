@@ -97,7 +97,7 @@ END
 
 # Test REGEXP NOCASE option
 PUTS "\n[TEST] REGEXP - NOCASE option"
-IF [REGEXP NOCASE "HELLO" "hello world"] THEN
+IF [REGEXP "HELLO" "hello world" NOCASE] THEN
     PUTS "  PASS: REGEXP NOCASE ignores case"
 ELSE
     PUTS "  FAIL: REGEXP NOCASE"
@@ -114,7 +114,7 @@ END
 
 # Test REGSUB with ALL option
 PUTS "\n[TEST] REGSUB - ALL option"
-SET result [REGSUB ALL "o" "foo boo zoo" "X"]
+SET result [REGSUB "o" "foo boo zoo" "X" ALL]
 IF [STRING EQUAL $result "fXX bXX zXX"] THEN
     PUTS "  PASS: REGSUB ALL replaces all occurrences"
 ELSE
@@ -132,7 +132,7 @@ END
 
 # Test REGSUB NOCASE
 PUTS "\n[TEST] REGSUB - NOCASE option"
-SET result [REGSUB NOCASE "HELLO" "hello world" "hi"]
+SET result [REGSUB "HELLO" "hello world" "hi" NOCASE]
 IF [STRING EQUAL $result "hi world"] THEN
     PUTS "  PASS: REGSUB NOCASE ignores case"
 ELSE

@@ -52,6 +52,11 @@ IF [REGEXP "Cat" $text] THEN
 ELSE
   PUTS "'Cat' not found (wrong case)"
 END
+
+# Use NOCASE option for case-insensitive matching
+IF [REGEXP "Cat" $text NOCASE] THEN
+  PUTS "Found 'Cat' (case-insensitive)"
+END
 \end{lstlisting}
 
 \textbf{Output:}
@@ -59,8 +64,16 @@ END
 Found 'cat' in the text
 Found 'mat' in the text
 'Cat' not found (wrong case)
+Found 'Cat' (case-insensitive)
 \end{verbatim}
 \end{examplebox}
+
+\begin{tipbox}
+Use the \texttt{NOCASE} option to make patterns match regardless of upper/lowercase. Place \texttt{NOCASE} after the text argument:
+\begin{lstlisting}[language=BCL]
+REGEXP pattern text NOCASE
+\end{lstlisting}
+\end{tipbox}
 
 \subsection{Special Characters - The Wildcards}
 
@@ -420,10 +433,8 @@ Domain: example.com
 \toprule
 \textbf{Option} & \textbf{Description} \\
 \midrule
-\texttt{-nocase} & Case-insensitive matching \\
-\texttt{-line} & Treat string as multiple lines (\^{} and \$ match line starts/ends) \\
-\texttt{-lineanchor} & Similar to -line \\
-\texttt{-expanded} & Ignore whitespace in pattern (for readability) \\
+\texttt{NOCASE} & Case-insensitive matching \\
+\texttt{ALL} & Count/match all occurrences (returns count) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -440,15 +451,21 @@ ELSE
 END
 
 # Case-insensitive (will match)
-IF [REGEXP -nocase "hello" $text] THEN
+IF [REGEXP "hello" $text NOCASE] THEN
   PUTS "Found (insensitive)"
 END
+
+# Count all occurrences
+SET text2 "foo bar foo baz foo"
+SET count [REGEXP "foo" $text2 ALL]
+PUTS "Found 'foo' $count times"
 \end{lstlisting}
 
 \textbf{Output:}
 \begin{verbatim}
 Not found (sensitive)
 Found (insensitive)
+Found 'foo' 3 times
 \end{verbatim}
 \end{examplebox}
 
@@ -458,8 +475,10 @@ Found (insensitive)
 
 \textbf{Syntax:}
 \begin{lstlisting}[language=BCL]
-REGSUB pattern string replacement         # Replace first match
-REGSUB pattern string replacement ALL     # Replace all matches
+REGSUB pattern string replacement              # Replace first match
+REGSUB pattern string replacement ALL          # Replace all matches
+REGSUB pattern string replacement NOCASE       # Case-insensitive
+REGSUB pattern string replacement ALL NOCASE   # Both options
 \end{lstlisting}
 
 \subsection{Basic Replacement}

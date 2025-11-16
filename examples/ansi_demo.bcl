@@ -1,0 +1,257 @@
+#!/usr/bin/env bcl
+################################################################################
+# ansi_demo.bcl - Demonstration of enhanced ANSI.BLB v2.0.0 features
+################################################################################
+
+SOURCE "lib/ANSI.BLB"
+
+# Initialize
+ANSI_INIT_FULL
+
+# ==============================================================================
+# COLOR DEMO
+# ==============================================================================
+
+ANSI_HEADER "ANSI Library v2.0 - Enhanced Features"
+PUTS ""
+
+ANSI_PRINT_BOLD "Standard Colors:"
+ANSI_PRINT_COLOR $ANSI_FG_RED "  Red Text"
+ANSI_PRINT_COLOR $ANSI_FG_GREEN "  Green Text"
+ANSI_PRINT_COLOR $ANSI_FG_YELLOW "  Yellow Text"
+ANSI_PRINT_COLOR $ANSI_FG_BLUE "  Blue Text"
+ANSI_PRINT_COLOR $ANSI_FG_MAGENTA "  Magenta Text"
+ANSI_PRINT_COLOR $ANSI_FG_CYAN "  Cyan Text"
+PUTS ""
+
+ANSI_PRINT_BOLD "Bright Colors:"
+ANSI_PRINT_COLOR $ANSI_FG_BRIGHT_RED "  Bright Red"
+ANSI_PRINT_COLOR $ANSI_FG_BRIGHT_GREEN "  Bright Green"
+ANSI_PRINT_COLOR $ANSI_FG_BRIGHT_YELLOW "  Bright Yellow"
+ANSI_PRINT_COLOR $ANSI_FG_BRIGHT_CYAN "  Bright Cyan"
+PUTS ""
+
+# ==============================================================================
+# BOX DRAWING DEMO
+# ==============================================================================
+
+ANSI_HEADER "Box Drawing Styles"
+PUTS ""
+
+ANSI_CURSOR_GOTO 10 5
+ANSI_PRINT_BOLD "Single Line Box:"
+ANSI_BOX 11 5 30 5 "Single" 0
+
+ANSI_CURSOR_GOTO 10 40
+ANSI_PRINT_BOLD "Double Line Box:"
+ANSI_BOX 11 40 30 5 "Double" 1
+
+ANSI_CURSOR_GOTO 17 5
+ANSI_PRINT_BOLD "Rounded Box:"
+ANSI_BOX 18 5 30 5 "Rounded" 2
+
+ANSI_CURSOR_GOTO 17 40
+ANSI_PRINT_BOLD "With Title:"
+ANSI_BOX 18 40 30 5 "Example Title" 1
+
+AFTER 2000
+
+# ==============================================================================
+# PROGRESS BAR DEMO
+# ==============================================================================
+
+ANSI_CLEAR
+ANSI_HEADER "Progress Bar Demo"
+PUTS ""
+
+ANSI_CURSOR_GOTO 5 10
+ANSI_PRINT_BOLD "Processing tasks..."
+PUTS ""
+
+SET percent 0
+WHILE [EXPR $percent <= 100] DO
+    ANSI_PROGRESS_BAR 7 10 50 $percent
+    AFTER 50
+    SET percent [EXPR $percent + 5]
+END
+
+PUTS ""
+PUTS ""
+ANSI_CURSOR_GOTO 10 10
+ANSI_PRINT_COLOR $ANSI_FG_GREEN "✓ Complete!"
+
+AFTER 2000
+
+# ==============================================================================
+# SPINNER DEMO
+# ==============================================================================
+
+ANSI_CLEAR
+ANSI_HEADER "Spinner Animation"
+PUTS ""
+
+ANSI_CURSOR_GOTO 5 35
+ANSI_PRINT_BOLD "Loading"
+
+SET i 0
+WHILE [EXPR $i < 30] DO
+    ANSI_SPINNER 5 43
+    AFTER 100
+    INCR i
+END
+
+ANSI_CURSOR_GOTO 5 45
+ANSI_PRINT_COLOR $ANSI_FG_GREEN " Done!"
+
+AFTER 2000
+
+# ==============================================================================
+# 256-COLOR DEMO
+# ==============================================================================
+
+ANSI_CLEAR
+ANSI_HEADER "256-Color Palette (Sample)"
+PUTS ""
+
+SET row 5
+SET col 5
+
+PUTS ""
+PUTS "  Basic 16 colors:"
+SET c 0
+WHILE [EXPR $c < 16] DO
+    ANSI_CURSOR_GOTO $row $col
+    ANSI_SET_BG_256 $c
+    PUTS -NONEWLINE "   "
+    ANSI_RESET
+
+    SET col [EXPR $col + 4]
+    IF [EXPR $col > 60] THEN
+        SET col 5
+        INCR row
+    END
+    INCR c
+END
+
+ANSI_RESET
+INCR row
+INCR row
+SET col 5
+
+PUTS ""
+PUTS "  256-color gradient:"
+SET c 16
+WHILE [EXPR $c < 52] DO
+    ANSI_CURSOR_GOTO $row $col
+    ANSI_SET_BG_256 $c
+    PUTS -NONEWLINE "  "
+    ANSI_RESET
+
+    SET col [EXPR $col + 3]
+    IF [EXPR $col > 60] THEN
+        SET col 5
+        INCR row
+    END
+    INCR c
+END
+
+ANSI_RESET
+AFTER 3000
+
+# ==============================================================================
+# RGB COLOR DEMO
+# ==============================================================================
+
+ANSI_CLEAR
+ANSI_HEADER "RGB Color Support"
+PUTS ""
+
+ANSI_CURSOR_GOTO 5 10
+ANSI_SET_FG_RGB 255 100 100
+PUTS -NONEWLINE "RGB Red (255,100,100)"
+ANSI_RESET
+
+ANSI_CURSOR_GOTO 7 10
+ANSI_SET_FG_RGB 100 255 100
+PUTS -NONEWLINE "RGB Green (100,255,100)"
+ANSI_RESET
+
+ANSI_CURSOR_GOTO 9 10
+ANSI_SET_FG_RGB 100 100 255
+PUTS -NONEWLINE "RGB Blue (100,100,255)"
+ANSI_RESET
+
+ANSI_CURSOR_GOTO 11 10
+ANSI_SET_BG_RGB 200 150 100
+ANSI_SET_FG_RGB 50 50 50
+PUTS -NONEWLINE " Background RGB (200,150,100) "
+ANSI_RESET
+
+AFTER 3000
+
+# ==============================================================================
+# TEXT STYLES
+# ==============================================================================
+
+ANSI_CLEAR
+ANSI_HEADER "Text Styling"
+PUTS ""
+
+ANSI_CURSOR_GOTO 5 10
+ANSI_SET_STYLE $ANSI_BOLD
+PUTS "Bold Text"
+ANSI_RESET
+
+ANSI_CURSOR_GOTO 7 10
+ANSI_SET_STYLE $ANSI_UNDERLINE
+PUTS "Underlined Text"
+ANSI_RESET
+
+ANSI_CURSOR_GOTO 9 10
+ANSI_SET_STYLE $ANSI_ITALIC
+PUTS "Italic Text"
+ANSI_RESET
+
+ANSI_CURSOR_GOTO 11 10
+ANSI_SET_STYLE $ANSI_REVERSE
+PUTS "Reversed Text"
+ANSI_RESET
+
+ANSI_CURSOR_GOTO 13 10
+ANSI_SET_STYLE $ANSI_DIM
+PUTS "Dim Text"
+ANSI_RESET
+
+AFTER 3000
+
+# ==============================================================================
+# BANNER DEMO
+# ==============================================================================
+
+ANSI_CLEAR
+ANSI_BANNER "Welcome to BCL!"
+PUTS ""
+ANSI_HEADER "Enhanced ANSI Library"
+PUTS ""
+
+ANSI_CURSOR_GOTO 10 20
+ANSI_PRINT_BOLD "Features:"
+ANSI_CURSOR_GOTO 12 22
+PUTS "✓ 256-color support"
+ANSI_CURSOR_GOTO 13 22
+PUTS "✓ RGB colors"
+ANSI_CURSOR_GOTO 14 22
+PUTS "✓ Progress bars"
+ANSI_CURSOR_GOTO 15 22
+PUTS "✓ Spinners"
+ANSI_CURSOR_GOTO 16 22
+PUTS "✓ Box drawing"
+ANSI_CURSOR_GOTO 17 22
+PUTS "✓ Text styling"
+
+AFTER 3000
+
+# Cleanup
+ANSI_CLEANUP_FULL
+ANSI_CURSOR_GOTO 1 1
+PUTS "ANSI Demo Complete!"

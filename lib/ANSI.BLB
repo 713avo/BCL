@@ -1,33 +1,34 @@
 ################################################################################
-# ANSI.BLB - ANSI Escape Sequences Library for BCL
+# ANSI.BLB - Enhanced ANSI Escape Sequences Library for BCL
 ################################################################################
-# Version: 1.1.0
-# Date: 2025-10-22
-# Description: Pure BCL library for terminal control using ANSI escape sequences
-#              Works around BCL limitations by using direct string literals
+# Version: 2.0.0
+# Date: 2025-11-16
+# Description: Comprehensive ANSI terminal control library with 256-color support,
+#              box drawing, progress bars, and advanced text styling
 # Usage: SOURCE "lib/ANSI.BLB"
 ################################################################################
 
 # ==============================================================================
-# Helper procedure to output ANSI ESC character
+# HELPER PROCEDURES
 # ==============================================================================
 
-PROC ANSI_ESC DO
-    # ESC = ASCII 27, output using BINARY FORMAT
-    SET e [BINARY FORMAT c "27"]
-    PUTSN $e
+# Output ANSI escape character (ESC = ASCII 27)
+PROC _ANSI_ESC DO
+    SET esc [BINARY FORMAT "c" 27]
+    PUTS -NONEWLINE $esc
 END
 
-PROC ANSI_CSI DO
-    # CSI = ESC + "["
-    ANSI_ESC
-    PUTSN "["
+# Output CSI (Control Sequence Introducer = ESC + "[")
+PROC _ANSI_CSI DO
+    _ANSI_ESC
+    PUTS -NONEWLINE "["
 END
 
 # ==============================================================================
-# COLOR CODES - CONSTANTS
+# STANDARD COLOR CONSTANTS (16 colors)
 # ==============================================================================
 
+# Foreground colors (30-37)
 SET ANSI_FG_BLACK "30"
 SET ANSI_FG_RED "31"
 SET ANSI_FG_GREEN "32"
@@ -36,7 +37,9 @@ SET ANSI_FG_BLUE "34"
 SET ANSI_FG_MAGENTA "35"
 SET ANSI_FG_CYAN "36"
 SET ANSI_FG_WHITE "37"
+SET ANSI_FG_DEFAULT "39"
 
+# Bright foreground colors (90-97)
 SET ANSI_FG_BRIGHT_BLACK "90"
 SET ANSI_FG_BRIGHT_RED "91"
 SET ANSI_FG_BRIGHT_GREEN "92"
@@ -46,6 +49,7 @@ SET ANSI_FG_BRIGHT_MAGENTA "95"
 SET ANSI_FG_BRIGHT_CYAN "96"
 SET ANSI_FG_BRIGHT_WHITE "97"
 
+# Background colors (40-47)
 SET ANSI_BG_BLACK "40"
 SET ANSI_BG_RED "41"
 SET ANSI_BG_GREEN "42"
@@ -54,7 +58,9 @@ SET ANSI_BG_BLUE "44"
 SET ANSI_BG_MAGENTA "45"
 SET ANSI_BG_CYAN "46"
 SET ANSI_BG_WHITE "47"
+SET ANSI_BG_DEFAULT "49"
 
+# Bright background colors (100-107)
 SET ANSI_BG_BRIGHT_BLACK "100"
 SET ANSI_BG_BRIGHT_RED "101"
 SET ANSI_BG_BRIGHT_GREEN "102"
@@ -64,29 +70,69 @@ SET ANSI_BG_BRIGHT_MAGENTA "105"
 SET ANSI_BG_BRIGHT_CYAN "106"
 SET ANSI_BG_BRIGHT_WHITE "107"
 
+# ==============================================================================
+# TEXT STYLE CONSTANTS
+# ==============================================================================
+
 SET ANSI_RESET "0"
 SET ANSI_BOLD "1"
 SET ANSI_DIM "2"
 SET ANSI_ITALIC "3"
 SET ANSI_UNDERLINE "4"
 SET ANSI_BLINK "5"
+SET ANSI_BLINK_FAST "6"
 SET ANSI_REVERSE "7"
 SET ANSI_HIDDEN "8"
+SET ANSI_STRIKETHROUGH "9"
+
+# Reset styles
+SET ANSI_RESET_BOLD "22"
+SET ANSI_RESET_UNDERLINE "24"
+SET ANSI_RESET_BLINK "25"
+SET ANSI_RESET_REVERSE "27"
 
 # ==============================================================================
 # SCREEN CONTROL
 # ==============================================================================
 
 PROC ANSI_CLEAR DO
-    ANSI_ESC
-    PUTSN "["
-    PUTSN "2J"
+    _ANSI_ESC
+    PUTS "[2J"
 END
 
 PROC ANSI_CLEAR_LINE DO
-    ANSI_ESC
-    PUTSN "["
-    PUTSN "2K"
+    _ANSI_ESC
+    PUTS "[2K"
+END
+
+PROC ANSI_CLEAR_LINE_TO_END DO
+    _ANSI_ESC
+    PUTS "[0K"
+END
+
+PROC ANSI_CLEAR_LINE_TO_START DO
+    _ANSI_ESC
+    PUTS "[1K"
+END
+
+PROC ANSI_CLEAR_TO_END DO
+    _ANSI_ESC
+    PUTS "[0J"
+END
+
+PROC ANSI_CLEAR_TO_START DO
+    _ANSI_ESC
+    PUTS "[1J"
+END
+
+PROC ANSI_SAVE_SCREEN DO
+    _ANSI_ESC
+    PUTS "[?47h"
+END
+
+PROC ANSI_RESTORE_SCREEN DO
+    _ANSI_ESC
+    PUTS "[?47l"
 END
 
 # ==============================================================================
@@ -94,74 +140,169 @@ END
 # ==============================================================================
 
 PROC ANSI_CURSOR_HOME DO
-    ANSI_ESC
-    PUTSN "["
-    PUTSN "H"
+    _ANSI_ESC
+    PUTS "[H"
 END
 
 PROC ANSI_CURSOR_GOTO WITH row col DO
-    ANSI_ESC
-    PUTSN "["
-    PUTSN "$row"
-    PUTSN ";"
-    PUTSN "$col"
-    PUTSN "H"
+    _ANSI_CSI
+    PUTS -NONEWLINE $row
+    PUTS -NONEWLINE ";"
+    PUTS -NONEWLINE $col
+    PUTS "H"
+END
+
+PROC ANSI_CURSOR_UP WITH n DO
+    _ANSI_CSI
+    PUTS -NONEWLINE $n
+    PUTS "A"
+END
+
+PROC ANSI_CURSOR_DOWN WITH n DO
+    _ANSI_CSI
+    PUTS -NONEWLINE $n
+    PUTS "B"
+END
+
+PROC ANSI_CURSOR_FORWARD WITH n DO
+    _ANSI_CSI
+    PUTS -NONEWLINE $n
+    PUTS "C"
+END
+
+PROC ANSI_CURSOR_BACK WITH n DO
+    _ANSI_CSI
+    PUTS -NONEWLINE $n
+    PUTS "D"
+END
+
+PROC ANSI_CURSOR_SAVE DO
+    _ANSI_ESC
+    PUTS "[s"
+END
+
+PROC ANSI_CURSOR_RESTORE DO
+    _ANSI_ESC
+    PUTS "[u"
 END
 
 PROC ANSI_CURSOR_HIDE DO
-    ANSI_ESC
-    PUTSN "["
-    PUTSN "?25l"
+    _ANSI_ESC
+    PUTS "[?25l"
 END
 
 PROC ANSI_CURSOR_SHOW DO
-    ANSI_ESC
-    PUTSN "["
-    PUTSN "?25h"
+    _ANSI_ESC
+    PUTS "[?25h"
 END
 
 # ==============================================================================
-# COLOR AND STYLE
+# SCROLLING
+# ==============================================================================
+
+PROC ANSI_SCROLL_UP WITH n DO
+    _ANSI_CSI
+    PUTS -NONEWLINE $n
+    PUTS "S"
+END
+
+PROC ANSI_SCROLL_DOWN WITH n DO
+    _ANSI_CSI
+    PUTS -NONEWLINE $n
+    PUTS "T"
+END
+
+# ==============================================================================
+# COLOR AND STYLE CONTROL
 # ==============================================================================
 
 PROC ANSI_RESET DO
-    ANSI_ESC
-    PUTSN "["
-    PUTSN "0m"
+    _ANSI_ESC
+    PUTS "[0m"
 END
 
 PROC ANSI_SET_FG WITH color DO
-    ANSI_ESC
-    PUTSN "["
-    PUTSN "$color"
-    PUTSN "m"
+    _ANSI_CSI
+    PUTS -NONEWLINE $color
+    PUTS "m"
 END
 
 PROC ANSI_SET_BG WITH color DO
-    ANSI_ESC
-    PUTSN "["
-    PUTSN "$color"
-    PUTSN "m"
+    _ANSI_CSI
+    PUTS -NONEWLINE $color
+    PUTS "m"
 END
 
 PROC ANSI_SET_STYLE WITH style DO
-    ANSI_ESC
-    PUTSN "["
-    PUTSN "$style"
-    PUTSN "m"
+    _ANSI_CSI
+    PUTS -NONEWLINE $style
+    PUTS "m"
 END
 
 PROC ANSI_SET_COLOR WITH fg bg DO
-    ANSI_ESC
-    PUTSN "["
-    PUTSN "$fg"
-    PUTSN ";"
-    PUTSN "$bg"
-    PUTSN "m"
+    _ANSI_CSI
+    PUTS -NONEWLINE $fg
+    PUTS -NONEWLINE ";"
+    PUTS -NONEWLINE $bg
+    PUTS "m"
+END
+
+PROC ANSI_SET_FULL WITH fg bg style DO
+    _ANSI_CSI
+    PUTS -NONEWLINE $style
+    PUTS -NONEWLINE ";"
+    PUTS -NONEWLINE $fg
+    PUTS -NONEWLINE ";"
+    PUTS -NONEWLINE $bg
+    PUTS "m"
 END
 
 # ==============================================================================
-# HIGH-LEVEL FUNCTIONS
+# 256-COLOR SUPPORT
+# ==============================================================================
+
+# Set foreground to 256-color (0-255)
+PROC ANSI_SET_FG_256 WITH color DO
+    _ANSI_CSI
+    PUTS -NONEWLINE "38;5;"
+    PUTS -NONEWLINE $color
+    PUTS "m"
+END
+
+# Set background to 256-color (0-255)
+PROC ANSI_SET_BG_256 WITH color DO
+    _ANSI_CSI
+    PUTS -NONEWLINE "48;5;"
+    PUTS -NONEWLINE $color
+    PUTS "m"
+END
+
+# Set RGB foreground (r, g, b: 0-255)
+PROC ANSI_SET_FG_RGB WITH r g b DO
+    _ANSI_CSI
+    PUTS -NONEWLINE "38;2;"
+    PUTS -NONEWLINE $r
+    PUTS -NONEWLINE ";"
+    PUTS -NONEWLINE $g
+    PUTS -NONEWLINE ";"
+    PUTS -NONEWLINE $b
+    PUTS "m"
+END
+
+# Set RGB background (r, g, b: 0-255)
+PROC ANSI_SET_BG_RGB WITH r g b DO
+    _ANSI_CSI
+    PUTS -NONEWLINE "48;2;"
+    PUTS -NONEWLINE $r
+    PUTS -NONEWLINE ";"
+    PUTS -NONEWLINE $g
+    PUTS -NONEWLINE ";"
+    PUTS -NONEWLINE $b
+    PUTS "m"
+END
+
+# ==============================================================================
+# HIGH-LEVEL TEXT FUNCTIONS
 # ==============================================================================
 
 PROC ANSI_PRINT_COLOR WITH color text DO
@@ -188,6 +329,155 @@ PROC ANSI_PRINT_UNDERLINE WITH text DO
     ANSI_RESET
 END
 
+PROC ANSI_PRINT_AT WITH row col text DO
+    ANSI_CURSOR_GOTO $row $col
+    PUTS -NONEWLINE $text
+END
+
+PROC ANSI_PRINT_AT_COLOR WITH row col fg bg text DO
+    ANSI_CURSOR_GOTO $row $col
+    ANSI_SET_COLOR $fg $bg
+    PUTS -NONEWLINE $text
+    ANSI_RESET
+END
+
+# ==============================================================================
+# BOX DRAWING
+# ==============================================================================
+
+# Draw a box using box-drawing characters
+# box_type: 0=single, 1=double, 2=rounded
+PROC ANSI_BOX WITH row col width height title box_type DO
+    # Box drawing characters
+    IF [EXPR $box_type == 0] THEN
+        # Single line box
+        SET tl "┌"
+        SET tr "┐"
+        SET bl "└"
+        SET br "┘"
+        SET hz "─"
+        SET vt "│"
+    ELSEIF [EXPR $box_type == 1] THEN
+        # Double line box
+        SET tl "╔"
+        SET tr "╗"
+        SET bl "╚"
+        SET br "╝"
+        SET hz "═"
+        SET vt "║"
+    ELSE
+        # Rounded box
+        SET tl "╭"
+        SET tr "╮"
+        SET bl "╰"
+        SET br "╯"
+        SET hz "─"
+        SET vt "│"
+    END
+
+    # Draw top border
+    ANSI_CURSOR_GOTO $row $col
+    PUTS -NONEWLINE $tl
+    SET i 1
+    WHILE [EXPR $i < $width - 1] DO
+        PUTS -NONEWLINE $hz
+        INCR i
+    END
+    PUTS -NONEWLINE $tr
+
+    # Draw title if provided
+    IF [EXPR [STRING LENGTH $title] > 0] THEN
+        SET title_col [EXPR $col + 2]
+        ANSI_CURSOR_GOTO $row $title_col
+        ANSI_SET_STYLE $ANSI_BOLD
+        PUTS -NONEWLINE " "
+        PUTS -NONEWLINE $title
+        PUTS -NONEWLINE " "
+        ANSI_RESET
+    END
+
+    # Draw sides
+    SET r [EXPR $row + 1]
+    SET end_row [EXPR $row + $height - 1]
+    WHILE [EXPR $r < $end_row] DO
+        ANSI_CURSOR_GOTO $r $col
+        PUTS -NONEWLINE $vt
+        SET c [EXPR $col + $width - 1]
+        ANSI_CURSOR_GOTO $r $c
+        PUTS -NONEWLINE $vt
+        INCR r
+    END
+
+    # Draw bottom border
+    ANSI_CURSOR_GOTO $end_row $col
+    PUTS -NONEWLINE $bl
+    SET i 1
+    WHILE [EXPR $i < $width - 1] DO
+        PUTS -NONEWLINE $hz
+        INCR i
+    END
+    PUTS -NONEWLINE $br
+END
+
+# Draw horizontal line
+PROC ANSI_HLINE WITH row col length char DO
+    ANSI_CURSOR_GOTO $row $col
+    SET i 0
+    WHILE [EXPR $i < $length] DO
+        PUTS -NONEWLINE $char
+        INCR i
+    END
+END
+
+# Draw vertical line
+PROC ANSI_VLINE WITH row col length char DO
+    SET i 0
+    WHILE [EXPR $i < $length] DO
+        SET r [EXPR $row + $i]
+        ANSI_CURSOR_GOTO $r $col
+        PUTS -NONEWLINE $char
+        INCR i
+    END
+END
+
+# ==============================================================================
+# PROGRESS BAR
+# ==============================================================================
+
+PROC ANSI_PROGRESS_BAR WITH row col width percent DO
+    ANSI_CURSOR_GOTO $row $col
+    PUTS -NONEWLINE "["
+
+    # Calculate filled width
+    SET filled [EXPR ($width - 2) * $percent / 100]
+    SET empty [EXPR $width - 2 - $filled]
+
+    # Draw filled portion
+    ANSI_SET_FG $ANSI_FG_GREEN
+    SET i 0
+    WHILE [EXPR $i < $filled] DO
+        PUTS -NONEWLINE "█"
+        INCR i
+    END
+
+    # Draw empty portion
+    ANSI_SET_FG $ANSI_FG_BRIGHT_BLACK
+    SET i 0
+    WHILE [EXPR $i < $empty] DO
+        PUTS -NONEWLINE "░"
+        INCR i
+    END
+
+    ANSI_RESET
+    PUTS -NONEWLINE "] "
+    PUTS -NONEWLINE $percent
+    PUTS -NONEWLINE "%"
+END
+
+# ==============================================================================
+# BANNERS AND HEADERS
+# ==============================================================================
+
 PROC ANSI_BANNER WITH text DO
     SET len [STRING LENGTH $text]
     SET padding [EXPR (80 - $len) / 2]
@@ -198,7 +488,7 @@ PROC ANSI_BANNER WITH text DO
 
     SET i 0
     WHILE [EXPR $i < $padding] DO
-        PUTSN " "
+        PUTS -NONEWLINE " "
         INCR i
     END
 
@@ -206,6 +496,86 @@ PROC ANSI_BANNER WITH text DO
     ANSI_RESET
     PUTS ""
 END
+
+PROC ANSI_HEADER WITH text DO
+    SET len [STRING LENGTH $text]
+    SET sep_len [EXPR (80 - $len - 2) / 2]
+
+    ANSI_SET_FG $ANSI_FG_BRIGHT_BLUE
+    SET i 0
+    WHILE [EXPR $i < $sep_len] DO
+        PUTS -NONEWLINE "═"
+        INCR i
+    END
+
+    PUTS -NONEWLINE " "
+    ANSI_SET_STYLE $ANSI_BOLD
+    PUTS -NONEWLINE $text
+    ANSI_SET_STYLE $ANSI_RESET_BOLD
+    PUTS -NONEWLINE " "
+
+    SET i 0
+    WHILE [EXPR $i < $sep_len] DO
+        PUTS -NONEWLINE "═"
+        INCR i
+    END
+
+    ANSI_RESET
+    PUTS ""
+END
+
+# ==============================================================================
+# TABLES
+# ==============================================================================
+
+# Print a table row
+PROC ANSI_TABLE_ROW WITH cols DO
+    PUTS -NONEWLINE "│ "
+    FOREACH col IN $cols DO
+        PUTS -NONEWLINE $col
+        PUTS -NONEWLINE " │ "
+    END
+    PUTS ""
+END
+
+# Print table separator
+PROC ANSI_TABLE_SEP WITH widths DO
+    PUTS -NONEWLINE "├"
+    FOREACH width IN $widths DO
+        SET i 0
+        WHILE [EXPR $i < $width + 2] DO
+            PUTS -NONEWLINE "─"
+            INCR i
+        END
+        PUTS -NONEWLINE "┼"
+    END
+    PUTS ""
+END
+
+# ==============================================================================
+# SPINNER/LOADING ANIMATION
+# ==============================================================================
+
+# Global spinner state
+SET _ANSI_SPINNER_STATE 0
+
+PROC ANSI_SPINNER WITH row col DO
+    GLOBAL _ANSI_SPINNER_STATE
+
+    SET chars [LIST "⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏"]
+    SET char [LINDEX $chars $_ANSI_SPINNER_STATE]
+
+    ANSI_CURSOR_GOTO $row $col
+    ANSI_SET_FG $ANSI_FG_CYAN
+    PUTS -NONEWLINE $char
+    ANSI_RESET
+
+    SET _ANSI_SPINNER_STATE [EXPR ($_ANSI_SPINNER_STATE + 1) % 10]
+END
+
+# ==============================================================================
+# INITIALIZATION AND CLEANUP
+# ==============================================================================
 
 PROC ANSI_INIT DO
     ANSI_CLEAR
@@ -218,6 +588,19 @@ PROC ANSI_CLEANUP DO
     ANSI_CURSOR_SHOW
 END
 
+PROC ANSI_INIT_FULL DO
+    ANSI_SAVE_SCREEN
+    ANSI_CLEAR
+    ANSI_CURSOR_HOME
+    ANSI_CURSOR_HIDE
+END
+
+PROC ANSI_CLEANUP_FULL DO
+    ANSI_RESET
+    ANSI_CURSOR_SHOW
+    ANSI_RESTORE_SCREEN
+END
+
 ################################################################################
-# END OF ANSI.BLB
+# END OF ANSI.BLB v2.0.0
 ################################################################################

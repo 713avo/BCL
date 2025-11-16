@@ -1,0 +1,267 @@
+#!/usr/bin/env bcl
+################################################################################
+# roman_demo.bcl - Demostración de la biblioteca ROMAN
+################################################################################
+
+SOURCE "lib/ROMAN.BLB"
+SOURCE "lib/ANSI.BLB"
+
+ANSI_CLEAR
+ANSI_CURSOR_HOME
+
+# ==============================================================================
+# BANNER
+# ==============================================================================
+
+ANSI_SET_FG $ANSI_FG_BRIGHT_CYAN
+ANSI_SET_STYLE $ANSI_BOLD
+PUTS "╔═══════════════════════════════════════════════════════════════════╗"
+PUTS "║            BIBLIOTECA ROMAN - Números Romanos en BCL             ║"
+PUTS "╚═══════════════════════════════════════════════════════════════════╝"
+ANSI_RESET
+PUTS ""
+
+# ==============================================================================
+# DEMO 1: Conversiones Básicas
+# ==============================================================================
+
+ANSI_SET_FG $ANSI_FG_YELLOW
+PUTS "═══ Demo 1: Conversiones Básicas ═══"
+ANSI_RESET
+PUTS ""
+
+# Decimal a Romano
+SET year 2025
+DECIMAL_TO_ROMAN $year roman_year
+ANSI_SET_FG $ANSI_FG_GREEN
+PUTS "  $year → $roman_year"
+ANSI_RESET
+
+# Romano a Decimal
+SET roman "MCMXCIV"
+ROMAN_TO_DECIMAL $roman decimal
+ANSI_SET_FG $ANSI_FG_GREEN
+PUTS "  $roman → $decimal"
+ANSI_RESET
+
+PUTS ""
+
+# ==============================================================================
+# DEMO 2: Números Famosos
+# ==============================================================================
+
+ANSI_SET_FG $ANSI_FG_YELLOW
+PUTS "═══ Demo 2: Números Históricos Famosos ═══"
+ANSI_RESET
+PUTS ""
+
+# Año de fundación de Roma
+SET rome_founded 753
+DECIMAL_TO_ROMAN $rome_founded roman_rome
+PUTS "  Fundación de Roma (753 a.C.): $roman_rome"
+
+# Batalla de Hastings
+SET hastings 1066
+DECIMAL_TO_ROMAN $hastings roman_hastings
+PUTS "  Batalla de Hastings: $roman_hastings"
+
+# Descubrimiento de América
+SET america 1492
+DECIMAL_TO_ROMAN $america roman_america
+PUTS "  Descubrimiento de América: $roman_america"
+
+# Revolución Francesa
+SET french_rev 1789
+DECIMAL_TO_ROMAN $french_rev roman_french
+PUTS "  Revolución Francesa: $roman_french"
+
+PUTS ""
+
+# ==============================================================================
+# DEMO 3: Aritmética Romana
+# ==============================================================================
+
+ANSI_SET_FG $ANSI_FG_YELLOW
+PUTS "═══ Demo 3: Aritmética con Números Romanos ═══"
+ANSI_RESET
+PUTS ""
+
+# Suma
+ROMAN_ADD "X" "V" sum
+PUTS "  X + V = $sum (10 + 5 = 15)"
+
+# Resta
+ROMAN_SUB "XX" "VII" diff
+PUTS "  XX - VII = $diff (20 - 7 = 13)"
+
+# Multiplicación
+ROMAN_MULTIPLY "V" "IV" prod
+PUTS "  V × IV = $prod (5 × 4 = 20)"
+
+# División
+ROMAN_DIVIDE "C" "V" quot
+PUTS "  C ÷ V = $quot (100 ÷ 5 = 20)"
+
+PUTS ""
+
+# ==============================================================================
+# DEMO 4: Validación
+# ==============================================================================
+
+ANSI_SET_FG $ANSI_FG_YELLOW
+PUTS "═══ Demo 4: Validación de Números Romanos ═══"
+ANSI_RESET
+PUTS ""
+
+SET test_values [LIST "XIV" "IIII" "VV" "IC" "MCMXC" "MMMCMXCIX"]
+
+FOREACH roman IN $test_values DO
+    SET valid [ROMAN_VALIDATE $roman]
+    IF [EXPR $valid == 1] THEN
+        ROMAN_TO_DECIMAL $roman dec
+        ANSI_SET_FG $ANSI_FG_GREEN
+        PUTS "  ✓ $roman es válido ($dec)"
+        ANSI_RESET
+    ELSE
+        ANSI_SET_FG $ANSI_FG_RED
+        PUTS "  ✗ $roman es inválido"
+        ANSI_RESET
+    END
+END
+
+PUTS ""
+
+# ==============================================================================
+# DEMO 5: Comparación
+# ==============================================================================
+
+ANSI_SET_FG $ANSI_FG_YELLOW
+PUTS "═══ Demo 5: Comparación de Números ═══"
+ANSI_RESET
+PUTS ""
+
+SET roman1 "XXX"
+SET roman2 "XX"
+SET cmp [ROMAN_COMPARE $roman1 $roman2]
+
+PUTS "  Comparando $roman1 con $roman2:"
+IF [EXPR $cmp > 0] THEN
+    PUTS "  $roman1 es mayor que $roman2"
+ELSEIF [EXPR $cmp < 0] THEN
+    PUTS "  $roman1 es menor que $roman2"
+ELSE
+    PUTS "  $roman1 es igual a $roman2"
+END
+
+PUTS ""
+
+# ==============================================================================
+# DEMO 6: Generación de Rangos
+# ==============================================================================
+
+ANSI_SET_FG $ANSI_FG_YELLOW
+PUTS "═══ Demo 6: Primeros 20 Números Romanos ═══"
+ANSI_RESET
+PUTS ""
+
+ROMAN_RANGE 1 20 numbers
+PUTS "  $numbers"
+PUTS ""
+
+# ==============================================================================
+# DEMO 7: Diferentes Estilos de Formato
+# ==============================================================================
+
+ANSI_SET_FG $ANSI_FG_YELLOW
+PUTS "═══ Demo 7: Estilos de Formato ═══"
+ANSI_RESET
+PUTS ""
+
+SET num 1994
+
+ROMAN_FORMAT $num "upper" upper
+PUTS "  Mayúsculas: $upper"
+
+ROMAN_FORMAT $num "lower" lower
+PUTS "  Minúsculas: $lower"
+
+ROMAN_FORMAT $num "title" title
+PUTS "  Título:     $title"
+
+PUTS ""
+
+# ==============================================================================
+# DEMO 8: Tabla de Conversión
+# ==============================================================================
+
+ANSI_SET_FG $ANSI_FG_YELLOW
+PUTS "═══ Demo 8: Tabla de Conversión (1-25) ═══"
+ANSI_RESET
+PUTS ""
+
+ROMAN_TABLE 1 25
+
+PUTS ""
+
+# ==============================================================================
+# DEMO 9: Casos Especiales
+# ==============================================================================
+
+ANSI_SET_FG $ANSI_FG_YELLOW
+PUTS "═══ Demo 9: Casos Especiales ═══"
+ANSI_RESET
+PUTS ""
+
+# Número más pequeño
+DECIMAL_TO_ROMAN 1 min
+PUTS "  Mínimo (1): $min"
+
+# Número más grande
+DECIMAL_TO_ROMAN 3999 max
+PUTS "  Máximo (3999): $max"
+
+# Números con substracciones
+DECIMAL_TO_ROMAN 4 four
+PUTS "  Cuatro (4): $four (subtracción)"
+
+DECIMAL_TO_ROMAN 9 nine
+PUTS "  Nueve (9): $nine (subtracción)"
+
+DECIMAL_TO_ROMAN 90 ninety
+PUTS "  Noventa (90): $ninety (subtracción)"
+
+DECIMAL_TO_ROMAN 900 ninehundred
+PUTS "  Novecientos (900): $ninehundred (subtracción)"
+
+PUTS ""
+
+# ==============================================================================
+# DEMO 10: Aplicación Práctica - Capítulos de Libro
+# ==============================================================================
+
+ANSI_SET_FG $ANSI_FG_YELLOW
+PUTS "═══ Demo 10: Numeración de Capítulos ═══"
+ANSI_RESET
+PUTS ""
+
+SET chapters [LIST "Introducción" "Desarrollo" "Metodología" "Resultados" "Conclusiones"]
+SET chapter_num 1
+
+FOREACH chapter IN $chapters DO
+    DECIMAL_TO_ROMAN $chapter_num roman_chapter
+    PUTS "  Capítulo $roman_chapter: $chapter"
+    INCR chapter_num
+END
+
+PUTS ""
+
+# ==============================================================================
+# FINAL
+# ==============================================================================
+
+ANSI_SET_FG $ANSI_FG_BRIGHT_CYAN
+ANSI_SET_STYLE $ANSI_BOLD
+PUTS "╔═══════════════════════════════════════════════════════════════════╗"
+PUTS "║              Demostración completada exitosamente                ║"
+PUTS "╚═══════════════════════════════════════════════════════════════════╝"
+ANSI_RESET

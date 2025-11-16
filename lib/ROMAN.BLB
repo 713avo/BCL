@@ -1,0 +1,432 @@
+################################################################################
+# ROMAN.BLB - Roman Numeral Conversion Library for BCL
+################################################################################
+# Version: 1.0.0
+# Date: 2025-11-16
+# Description: Complete library for converting between Roman numerals and
+#              decimal numbers, with validation and formatting.
+#
+# Features:
+#   - Convert Roman numerals to decimal (I-MMMCMXCIX / 1-3999)
+#   - Convert decimal numbers to Roman numerals
+#   - Validate Roman numeral strings
+#   - Support for both uppercase and lowercase input
+#   - Proper subtraction rules (IV, IX, XL, XC, CD, CM)
+#
+# Usage: SOURCE "lib/ROMAN.BLB"
+# Requires: BCL 2.0+
+################################################################################
+
+PUTS "ROMAN Library v1.0.0 loaded - Roman numeral conversion functions available"
+
+# ==============================================================================
+# CONSTANTS - Roman Numeral Values
+# ==============================================================================
+
+# Valid range
+SET ROMAN_MIN 1
+SET ROMAN_MAX 3999
+
+# ==============================================================================
+# HELPER PROCEDURES
+# ==============================================================================
+
+# Get value of a single Roman numeral character
+# Usage: SET val [_ROMAN_CHAR_VALUE "I"]
+PROC _ROMAN_CHAR_VALUE WITH char DO
+    # Convert to uppercase
+    SET char_upper [STRING TOUPPER $char]
+
+    IF [STRING EQUAL $char_upper "I"] THEN
+        RETURN 1
+    ELSEIF [STRING EQUAL $char_upper "V"] THEN
+        RETURN 5
+    ELSEIF [STRING EQUAL $char_upper "X"] THEN
+        RETURN 10
+    ELSEIF [STRING EQUAL $char_upper "L"] THEN
+        RETURN 50
+    ELSEIF [STRING EQUAL $char_upper "C"] THEN
+        RETURN 100
+    ELSEIF [STRING EQUAL $char_upper "D"] THEN
+        RETURN 500
+    ELSEIF [STRING EQUAL $char_upper "M"] THEN
+        RETURN 1000
+    ELSE
+        RETURN 0
+    END
+END
+
+# ==============================================================================
+# ROMAN TO DECIMAL CONVERSION
+# ==============================================================================
+
+# ROMAN_TO_DECIMAL - Convert Roman numeral to decimal number
+# Usage: SET num [ROMAN_TO_DECIMAL "MCMXCIV"]
+# Returns: Decimal number, or 0 if invalid
+PROC ROMAN_TO_DECIMAL WITH roman DO
+    # Validate input
+    IF [EXPR [STRING LENGTH $roman] == 0] THEN
+        RETURN 0
+    END
+
+    # Convert to uppercase
+    SET roman [STRING TOUPPER $roman]
+    SET length [STRING LENGTH $roman]
+    SET total 0
+    SET i 0
+
+    WHILE [EXPR $i < $length] DO
+        # Get current character value
+        SET current_char [STRING INDEX $roman $i]
+        SET current_val [_ROMAN_CHAR_VALUE $current_char]
+
+        IF [EXPR $current_val == 0] THEN
+            # Invalid character
+            RETURN 0
+        END
+
+        # Look ahead to next character
+        SET next_i [EXPR $i + 1]
+        IF [EXPR $next_i < $length] THEN
+            SET next_char [STRING INDEX $roman $next_i]
+            SET next_val [_ROMAN_CHAR_VALUE $next_char]
+
+            # If current value is less than next, it's a subtraction pair (IV, IX, etc.)
+            # Add (next - current) and skip the next character
+            IF [EXPR $current_val < $next_val] THEN
+                SET diff [EXPR $next_val - $current_val]
+                SET total [EXPR $total + $diff]
+                # Skip next character since we've processed it
+                INCR i
+            ELSE
+                SET total [EXPR $total + $current_val]
+            END
+        ELSE
+            # Last character, always add
+            SET total [EXPR $total + $current_val]
+        END
+
+        INCR i
+    END
+
+    RETURN $total
+END
+
+# ==============================================================================
+# DECIMAL TO ROMAN CONVERSION
+# ==============================================================================
+
+# DECIMAL_TO_ROMAN - Convert decimal number to Roman numeral
+# Usage: SET roman [DECIMAL_TO_ROMAN 1994]
+# Returns: Roman numeral string, or empty if out of range
+PROC DECIMAL_TO_ROMAN WITH number DO
+    # Validate range
+    IF [EXPR $number < 1 || $number > 3999] THEN
+        PUTS "ERROR: Number must be between 1 and 3999"
+        RETURN ""
+    END
+
+    GLOBAL _temp_result
+    SET _temp_result ""
+    SET num $number
+
+    # Process thousands (M)
+    WHILE [EXPR $num >= 1000] DO
+        APPEND _temp_result "M"
+        SET num [EXPR $num - 1000]
+    END
+
+    # Process 900 (CM)
+    IF [EXPR $num >= 900] THEN
+        APPEND _temp_result "CM"
+        SET num [EXPR $num - 900]
+    END
+
+    # Process 500 (D)
+    IF [EXPR $num >= 500] THEN
+        APPEND _temp_result "D"
+        SET num [EXPR $num - 500]
+    END
+
+    # Process 400 (CD)
+    IF [EXPR $num >= 400] THEN
+        APPEND _temp_result "CD"
+        SET num [EXPR $num - 400]
+    END
+
+    # Process hundreds (C)
+    WHILE [EXPR $num >= 100] DO
+        APPEND _temp_result "C"
+        SET num [EXPR $num - 100]
+    END
+
+    # Process 90 (XC)
+    IF [EXPR $num >= 90] THEN
+        APPEND _temp_result "XC"
+        SET num [EXPR $num - 90]
+    END
+
+    # Process 50 (L)
+    IF [EXPR $num >= 50] THEN
+        APPEND _temp_result "L"
+        SET num [EXPR $num - 50]
+    END
+
+    # Process 40 (XL)
+    IF [EXPR $num >= 40] THEN
+        APPEND _temp_result "XL"
+        SET num [EXPR $num - 40]
+    END
+
+    # Process tens (X)
+    WHILE [EXPR $num >= 10] DO
+        APPEND _temp_result "X"
+        SET num [EXPR $num - 10]
+    END
+
+    # Process 9 (IX)
+    IF [EXPR $num >= 9] THEN
+        APPEND _temp_result "IX"
+        SET num [EXPR $num - 9]
+    END
+
+    # Process 5 (V)
+    IF [EXPR $num >= 5] THEN
+        APPEND _temp_result "V"
+        SET num [EXPR $num - 5]
+    END
+
+    # Process 4 (IV)
+    IF [EXPR $num >= 4] THEN
+        APPEND _temp_result "IV"
+        SET num [EXPR $num - 4]
+    END
+
+    # Process ones (I)
+    WHILE [EXPR $num >= 1] DO
+        APPEND _temp_result "I"
+        SET num [EXPR $num - 1]
+    END
+
+    RETURN $_temp_result
+END
+
+# ==============================================================================
+# VALIDATION
+# ==============================================================================
+
+# ROMAN_VALIDATE - Validate if a string is a valid Roman numeral
+# Usage: IF [ROMAN_VALIDATE "XIV"] THEN ... END
+# Returns: 1 if valid, 0 if invalid
+PROC ROMAN_VALIDATE WITH roman DO
+    # Empty string is invalid
+    IF [EXPR [STRING LENGTH $roman] == 0] THEN
+        RETURN 0
+    END
+
+    # Convert to uppercase
+    SET roman [STRING TOUPPER $roman]
+    SET length [STRING LENGTH $roman]
+
+    # Check each character is valid
+    SET i 0
+    WHILE [EXPR $i < $length] DO
+        SET char [STRING INDEX $roman $i]
+        SET val [_ROMAN_CHAR_VALUE $char]
+
+        IF [EXPR $val == 0] THEN
+            RETURN 0
+        END
+
+        INCR i
+    END
+
+    # Convert to decimal and back to check if it's canonical
+    SET decimal [ROMAN_TO_DECIMAL $roman]
+
+    IF [EXPR $decimal == 0] THEN
+        RETURN 0
+    END
+
+    SET canonical [DECIMAL_TO_ROMAN $decimal]
+
+    # Check if matches canonical form
+    IF [STRING EQUAL $roman $canonical] THEN
+        RETURN 1
+    ELSE
+        RETURN 0
+    END
+END
+
+# ==============================================================================
+# UTILITY FUNCTIONS
+# ==============================================================================
+
+# ROMAN_ADD - Add two Roman numerals
+# Usage: SET sum [ROMAN_ADD "X" "V"]
+PROC ROMAN_ADD WITH roman1 roman2 DO
+    SET num1 [ROMAN_TO_DECIMAL $roman1]
+    SET num2 [ROMAN_TO_DECIMAL $roman2]
+
+    SET sum [EXPR $num1 + $num2]
+
+    IF [EXPR $sum > 3999] THEN
+        PUTS "ERROR: Result exceeds maximum (3999)"
+        RETURN ""
+    END
+
+    SET result [DECIMAL_TO_ROMAN $sum]
+    RETURN $result
+END
+
+# ROMAN_SUB - Subtract two Roman numerals
+# Usage: SET diff [ROMAN_SUB "XX" "V"]
+PROC ROMAN_SUB WITH roman1 roman2 DO
+    SET num1 [ROMAN_TO_DECIMAL $roman1]
+    SET num2 [ROMAN_TO_DECIMAL $roman2]
+
+    SET diff [EXPR $num1 - $num2]
+
+    IF [EXPR $diff < 1] THEN
+        PUTS "ERROR: Result must be positive"
+        RETURN ""
+    END
+
+    SET result [DECIMAL_TO_ROMAN $diff]
+    RETURN $result
+END
+
+# ROMAN_MULTIPLY - Multiply two Roman numerals
+# Usage: SET prod [ROMAN_MULTIPLY "V" "IV"]
+PROC ROMAN_MULTIPLY WITH roman1 roman2 DO
+    SET num1 [ROMAN_TO_DECIMAL $roman1]
+    SET num2 [ROMAN_TO_DECIMAL $roman2]
+
+    SET prod [EXPR $num1 * $num2]
+
+    IF [EXPR $prod > 3999] THEN
+        PUTS "ERROR: Result exceeds maximum (3999)"
+        RETURN ""
+    END
+
+    SET result [DECIMAL_TO_ROMAN $prod]
+    RETURN $result
+END
+
+# ROMAN_DIVIDE - Divide two Roman numerals (integer division)
+# Usage: SET quot [ROMAN_DIVIDE "XX" "IV"]
+PROC ROMAN_DIVIDE WITH roman1 roman2 DO
+    SET num1 [ROMAN_TO_DECIMAL $roman1]
+    SET num2 [ROMAN_TO_DECIMAL $roman2]
+
+    IF [EXPR $num2 == 0] THEN
+        PUTS "ERROR: Division by zero"
+        RETURN ""
+    END
+
+    SET quot [EXPR $num1 / $num2]
+
+    IF [EXPR $quot < 1] THEN
+        PUTS "ERROR: Result must be at least 1"
+        RETURN ""
+    END
+
+    SET result [DECIMAL_TO_ROMAN $quot]
+    RETURN $result
+END
+
+# ROMAN_COMPARE - Compare two Roman numerals
+# Usage: SET cmp [ROMAN_COMPARE "X" "V"]
+# Returns: -1 if roman1 < roman2, 0 if equal, 1 if roman1 > roman2
+PROC ROMAN_COMPARE WITH roman1 roman2 DO
+    SET num1 [ROMAN_TO_DECIMAL $roman1]
+    SET num2 [ROMAN_TO_DECIMAL $roman2]
+
+    IF [EXPR $num1 < $num2] THEN
+        RETURN -1
+    ELSEIF [EXPR $num1 > $num2] THEN
+        RETURN 1
+    ELSE
+        RETURN 0
+    END
+END
+
+# ROMAN_RANGE - Generate a list of Roman numerals in a range
+# Usage: SET list [ROMAN_RANGE 1 10]
+PROC ROMAN_RANGE WITH start end DO
+    IF [EXPR $start < 1 || $end > 3999 || $start > $end] THEN
+        PUTS "ERROR: Invalid range"
+        RETURN ""
+    END
+
+    SET result [LIST]
+
+    FOR $start TO $end DO
+        SET i $__FOR
+        SET roman [DECIMAL_TO_ROMAN $i]
+        SET result [LAPPEND $result $roman]
+    END
+
+    RETURN $result
+END
+
+# ==============================================================================
+# FORMATTING AND DISPLAY
+# ==============================================================================
+
+# ROMAN_FORMAT - Format a number with Roman numerals in different styles
+# Usage: SET formatted [ROMAN_FORMAT 1994 "lower"]
+# Styles: "upper" (default), "lower", "title"
+PROC ROMAN_FORMAT WITH number style DO
+    SET roman [DECIMAL_TO_ROMAN $number]
+
+    IF [STRING EQUAL $style "lower"] THEN
+        SET roman [STRING TOLOWER $roman]
+    ELSEIF [STRING EQUAL $style "title"] THEN
+        SET first [STRING INDEX $roman 0]
+        SET rest [STRING RANGE $roman 1 end]
+        SET rest [STRING TOLOWER $rest]
+        SET roman "$first$rest"
+    END
+
+    RETURN $roman
+END
+
+# ROMAN_TABLE - Display a conversion table
+# Usage: ROMAN_TABLE 1 20
+PROC ROMAN_TABLE WITH start end DO
+    IF [EXPR $start < 1 || $end > 3999 || $start > $end] THEN
+        PUTS "ERROR: Invalid range (1-3999)"
+        RETURN
+    END
+
+    PUTS "╔══════════════════════════════╗"
+    PUTS "║  Decimal  │  Roman Numeral  ║"
+    PUTS "╠══════════════════════════════╣"
+
+    FOR $start TO $end DO
+        SET i $__FOR
+        SET roman [DECIMAL_TO_ROMAN $i]
+
+        # Format decimal with padding
+        SET dec_str [FORMAT "%4d" $i]
+
+        # Format roman with padding
+        SET roman_len [STRING LENGTH $roman]
+        SET padding [EXPR 15 - $roman_len]
+        SET roman_padded $roman
+        SET p 0
+        WHILE [EXPR $p < $padding] DO
+            APPEND roman_padded " "
+            INCR p
+        END
+
+        PUTS "║   $dec_str    │  $roman_padded║"
+    END
+
+    PUTS "╚══════════════════════════════╝"
+END
+
+################################################################################
+# END OF ROMAN LIBRARY v1.0.0
+################################################################################

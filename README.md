@@ -245,7 +245,8 @@ BCL/
 │   ├── ANSI.BLB           # Terminal control & Unicode graphics
 │   ├── WINDOW.BLB         # Window management system
 │   ├── MATRIX.BLB         # MATLAB-style matrix operations
-│   └── CALCULUS.BLB       # Numerical calculus library
+│   ├── CALCULUS.BLB       # Numerical calculus library
+│   └── ROMAN.BLB          # Roman numeral conversion (v2.0)
 ├── extensions/             # Dynamic extensions (v2.0+)
 │   ├── socket.c           # SOCKET extension source
 │   ├── socket.so          # Compiled extension (generated)
@@ -489,6 +490,45 @@ CALC_NEWTON "$x*$x - 2" "2*$x" 1.0 1e-6 100 root  # Find √2
 # Differential equations
 CALC_RK4 "$y" 0 1 0.1 10  # Solve dy/dx=y with RK4
 ```
+
+### ROMAN.BLB - Roman Numeral Conversion
+Complete bidirectional Roman numeral library (1-3999):
+```bcl
+SOURCE "lib/ROMAN.BLB"
+
+# Conversions
+SET roman [DECIMAL_TO_ROMAN 1994]   # Returns "MCMXCIV"
+SET num [ROMAN_TO_DECIMAL "XIV"]    # Returns 14
+
+# Validation
+IF [ROMAN_VALIDATE "XIV"] THEN
+    PUTS "Valid Roman numeral"
+END
+
+# Arithmetic operations
+SET sum [ROMAN_ADD "X" "V"]         # Returns "XV" (15)
+SET diff [ROMAN_SUB "XX" "V"]       # Returns "XV" (15)
+SET prod [ROMAN_MULTIPLY "V" "IV"]  # Returns "XX" (20)
+SET quot [ROMAN_DIVIDE "C" "V"]     # Returns "XX" (20)
+
+# Comparison
+SET cmp [ROMAN_COMPARE "X" "V"]     # Returns 1 (X > V)
+
+# Formatting
+SET lower [ROMAN_FORMAT 1994 "lower"]  # Returns "mcmxciv"
+SET upper [ROMAN_FORMAT 1994 "upper"]  # Returns "MCMXCIV"
+
+# Display tables
+ROMAN_TABLE 1 25                    # Print conversion table
+```
+
+Features:
+- Bidirectional conversion (Roman ↔ Decimal)
+- Range: I to MMMCMXCIX (1 to 3999)
+- Supports all subtraction rules (IV, IX, XL, XC, CD, CM)
+- Validates canonical form (rejects IIII, VV, IC, etc.)
+- Arithmetic operations (+, -, ×, ÷)
+- Comparison and formatting utilities
 
 ## Event System (v2.0+)
 

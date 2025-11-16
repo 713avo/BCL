@@ -1,0 +1,388 @@
+#!/usr/bin/env bcl
+################################################################################
+# test_roman.bcl - Tests para la biblioteca ROMAN
+################################################################################
+
+SOURCE "lib/ROMAN.BLB"
+
+GLOBAL test_count pass_count fail_count
+SET test_count 0
+SET pass_count 0
+SET fail_count 0
+
+PROC TEST_START WITH name DO
+    GLOBAL test_count
+    INCR test_count
+    PUTS ""
+    PUTS "Test $test_count: $name"
+END
+
+PROC TEST_PASS WITH msg DO
+    GLOBAL pass_count
+    INCR pass_count
+    PUTS "  ✓ PASS: $msg"
+END
+
+PROC TEST_FAIL WITH msg DO
+    GLOBAL fail_count
+    INCR fail_count
+    PUTS "  ✗ FAIL: $msg"
+END
+
+# ==============================================================================
+# TEST 1: Conversión Decimal a Romano - Casos Básicos
+# ==============================================================================
+
+TEST_START "Decimal a Romano - Números básicos"
+
+SET result [DECIMAL_TO_ROMAN 1]
+IF [STRING EQUAL $result "I"] THEN
+    TEST_PASS "1 → I"
+ELSE
+    TEST_FAIL "1 → $result (esperado: I)"
+END
+
+SET result [DECIMAL_TO_ROMAN 5]
+IF [STRING EQUAL $result "V"] THEN
+    TEST_PASS "5 → V"
+ELSE
+    TEST_FAIL "5 → $result (esperado: V)"
+END
+
+SET result [DECIMAL_TO_ROMAN 10]
+IF [STRING EQUAL $result "X"] THEN
+    TEST_PASS "10 → X"
+ELSE
+    TEST_FAIL "10 → $result (esperado: X)"
+END
+
+SET result [DECIMAL_TO_ROMAN 50]
+IF [STRING EQUAL $result "L"] THEN
+    TEST_PASS "50 → L"
+ELSE
+    TEST_FAIL "50 → $result (esperado: L)"
+END
+
+SET result [DECIMAL_TO_ROMAN 100]
+IF [STRING EQUAL $result "C"] THEN
+    TEST_PASS "100 → C"
+ELSE
+    TEST_FAIL "100 → $result (esperado: C)"
+END
+
+SET result [DECIMAL_TO_ROMAN 500]
+IF [STRING EQUAL $result "D"] THEN
+    TEST_PASS "500 → D"
+ELSE
+    TEST_FAIL "500 → $result (esperado: D)"
+END
+
+SET result [DECIMAL_TO_ROMAN 1000]
+IF [STRING EQUAL $result "M"] THEN
+    TEST_PASS "1000 → M"
+ELSE
+    TEST_FAIL "1000 → $result (esperado: M)"
+END
+
+# ==============================================================================
+# TEST 2: Conversión con Substracción
+# ==============================================================================
+
+TEST_START "Decimal a Romano - Reglas de substracción"
+
+SET result [DECIMAL_TO_ROMAN 4]
+IF [STRING EQUAL $result "IV"] THEN
+    TEST_PASS "4 → IV"
+ELSE
+    TEST_FAIL "4 → $result (esperado: IV)"
+END
+
+SET result [DECIMAL_TO_ROMAN 9]
+IF [STRING EQUAL $result "IX"] THEN
+    TEST_PASS "9 → IX"
+ELSE
+    TEST_FAIL "9 → $result (esperado: IX)"
+END
+
+SET result [DECIMAL_TO_ROMAN 40]
+IF [STRING EQUAL $result "XL"] THEN
+    TEST_PASS "40 → XL"
+ELSE
+    TEST_FAIL "40 → $result (esperado: XL)"
+END
+
+SET result [DECIMAL_TO_ROMAN 90]
+IF [STRING EQUAL $result "XC"] THEN
+    TEST_PASS "90 → XC"
+ELSE
+    TEST_FAIL "90 → $result (esperado: XC)"
+END
+
+SET result [DECIMAL_TO_ROMAN 400]
+IF [STRING EQUAL $result "CD"] THEN
+    TEST_PASS "400 → CD"
+ELSE
+    TEST_FAIL "400 → $result (esperado: CD)"
+END
+
+SET result [DECIMAL_TO_ROMAN 900]
+IF [STRING EQUAL $result "CM"] THEN
+    TEST_PASS "900 → CM"
+ELSE
+    TEST_FAIL "900 → $result (esperado: CM)"
+END
+
+# ==============================================================================
+# TEST 3: Números Complejos
+# ==============================================================================
+
+TEST_START "Decimal a Romano - Números complejos"
+
+SET result [DECIMAL_TO_ROMAN 1994]
+IF [STRING EQUAL $result "MCMXCIV"] THEN
+    TEST_PASS "1994 → MCMXCIV"
+ELSE
+    TEST_FAIL "1994 → $result (esperado: MCMXCIV)"
+END
+
+SET result [DECIMAL_TO_ROMAN 2025]
+IF [STRING EQUAL $result "MMXXV"] THEN
+    TEST_PASS "2025 → MMXXV"
+ELSE
+    TEST_FAIL "2025 → $result (esperado: MMXXV)"
+END
+
+SET result [DECIMAL_TO_ROMAN 3999]
+IF [STRING EQUAL $result "MMMCMXCIX"] THEN
+    TEST_PASS "3999 → MMMCMXCIX"
+ELSE
+    TEST_FAIL "3999 → $result (esperado: MMMCMXCIX)"
+END
+
+# ==============================================================================
+# TEST 4: Romano a Decimal
+# ==============================================================================
+
+TEST_START "Romano a Decimal - Conversión inversa"
+
+SET result [ROMAN_TO_DECIMAL "I"]
+IF [EXPR $result == 1] THEN
+    TEST_PASS "I → 1"
+ELSE
+    TEST_FAIL "I → $result (esperado: 1)"
+END
+
+SET result [ROMAN_TO_DECIMAL "IV"]
+IF [EXPR $result == 4] THEN
+    TEST_PASS "IV → 4"
+ELSE
+    TEST_FAIL "IV → $result (esperado: 4)"
+END
+
+SET result [ROMAN_TO_DECIMAL "IX"]
+IF [EXPR $result == 9] THEN
+    TEST_PASS "IX → 9"
+ELSE
+    TEST_FAIL "IX → $result (esperado: 9)"
+END
+
+SET result [ROMAN_TO_DECIMAL "MCMXCIV"]
+IF [EXPR $result == 1994] THEN
+    TEST_PASS "MCMXCIV → 1994"
+ELSE
+    TEST_FAIL "MCMXCIV → $result (esperado: 1994)"
+END
+
+SET result [ROMAN_TO_DECIMAL "MMXXV"]
+IF [EXPR $result == 2025] THEN
+    TEST_PASS "MMXXV → 2025"
+ELSE
+    TEST_FAIL "MMXXV → $result (esperado: 2025)"
+END
+
+# ==============================================================================
+# TEST 5: Validación
+# ==============================================================================
+
+TEST_START "Validación de números romanos"
+
+SET valid [ROMAN_VALIDATE "XIV"]
+IF [EXPR $valid == 1] THEN
+    TEST_PASS "XIV es válido"
+ELSE
+    TEST_FAIL "XIV debería ser válido"
+END
+
+SET valid [ROMAN_VALIDATE "IIII"]
+IF [EXPR $valid == 0] THEN
+    TEST_PASS "IIII es inválido (no canónico)"
+ELSE
+    TEST_FAIL "IIII debería ser inválido"
+END
+
+SET valid [ROMAN_VALIDATE "VV"]
+IF [EXPR $valid == 0] THEN
+    TEST_PASS "VV es inválido"
+ELSE
+    TEST_FAIL "VV debería ser inválido"
+END
+
+SET valid [ROMAN_VALIDATE "IC"]
+IF [EXPR $valid == 0] THEN
+    TEST_PASS "IC es inválido"
+ELSE
+    TEST_FAIL "IC debería ser inválido"
+END
+
+# ==============================================================================
+# TEST 6: Aritmética
+# ==============================================================================
+
+TEST_START "Aritmética con números romanos"
+
+SET result [ROMAN_ADD "X" "V"]
+IF [STRING EQUAL $result "XV"] THEN
+    TEST_PASS "X + V = XV"
+ELSE
+    TEST_FAIL "X + V = $result (esperado: XV)"
+END
+
+SET result [ROMAN_SUB "XX" "V"]
+IF [STRING EQUAL $result "XV"] THEN
+    TEST_PASS "XX - V = XV"
+ELSE
+    TEST_FAIL "XX - V = $result (esperado: XV)"
+END
+
+SET result [ROMAN_MULTIPLY "V" "IV"]
+IF [STRING EQUAL $result "XX"] THEN
+    TEST_PASS "V × IV = XX"
+ELSE
+    TEST_FAIL "V × IV = $result (esperado: XX)"
+END
+
+SET result [ROMAN_DIVIDE "C" "V"]
+IF [STRING EQUAL $result "XX"] THEN
+    TEST_PASS "C ÷ V = XX"
+ELSE
+    TEST_FAIL "C ÷ V = $result (esperado: XX)"
+END
+
+# ==============================================================================
+# TEST 7: Comparación
+# ==============================================================================
+
+TEST_START "Comparación de números romanos"
+
+SET cmp [ROMAN_COMPARE "X" "V"]
+IF [EXPR $cmp > 0] THEN
+    TEST_PASS "X > V"
+ELSE
+    TEST_FAIL "X debería ser mayor que V"
+END
+
+SET cmp [ROMAN_COMPARE "V" "X"]
+IF [EXPR 0 > $cmp] THEN
+    TEST_PASS "V < X"
+ELSE
+    TEST_FAIL "V debería ser menor que X"
+END
+
+SET cmp [ROMAN_COMPARE "X" "X"]
+IF [EXPR $cmp == 0] THEN
+    TEST_PASS "X == X"
+ELSE
+    TEST_FAIL "X debería ser igual a X"
+END
+
+# ==============================================================================
+# TEST 8: Casos límite
+# ==============================================================================
+
+TEST_START "Casos límite"
+
+SET result [DECIMAL_TO_ROMAN 1]
+IF [STRING EQUAL $result "I"] THEN
+    TEST_PASS "Mínimo (1) → I"
+ELSE
+    TEST_FAIL "Mínimo falló"
+END
+
+SET result [DECIMAL_TO_ROMAN 3999]
+IF [STRING EQUAL $result "MMMCMXCIX"] THEN
+    TEST_PASS "Máximo (3999) → MMMCMXCIX"
+ELSE
+    TEST_FAIL "Máximo falló"
+END
+
+# ==============================================================================
+# TEST 9: Formato
+# ==============================================================================
+
+TEST_START "Formato de números"
+
+SET result [ROMAN_FORMAT 1994 "upper"]
+IF [STRING EQUAL $result "MCMXCIV"] THEN
+    TEST_PASS "Formato upper: MCMXCIV"
+ELSE
+    TEST_FAIL "Formato upper falló"
+END
+
+SET result [ROMAN_FORMAT 1994 "lower"]
+IF [STRING EQUAL $result "mcmxciv"] THEN
+    TEST_PASS "Formato lower: mcmxciv"
+ELSE
+    TEST_FAIL "Formato lower falló: $result"
+END
+
+# ==============================================================================
+# TEST 10: Bidireccionalidad
+# ==============================================================================
+
+TEST_START "Conversión bidireccional"
+
+# Convertir varios números y verificar ida y vuelta
+FOR 1 TO 100 DO
+    SET num $__FOR
+    SET roman [DECIMAL_TO_ROMAN $num]
+    SET back [ROMAN_TO_DECIMAL $roman]
+
+    IF [EXPR $back == $num] THEN
+        # OK
+    ELSE
+        TEST_FAIL "Bidireccional falló para $num"
+    END
+END
+
+TEST_PASS "100 conversiones bidireccionales correctas"
+
+# ==============================================================================
+# RESUMEN
+# ==============================================================================
+
+PUTS ""
+PUTS "════════════════════════════════════════════════════════════"
+PUTS "                    RESUMEN DE TESTS"
+PUTS "════════════════════════════════════════════════════════════"
+
+PUTS "Total de tests:    $test_count"
+PUTS "Tests pasados:     $pass_count"
+PUTS "Tests fallidos:    $fail_count"
+
+SET total_assertions [EXPR $pass_count + $fail_count]
+SET percent [EXPR ($pass_count * 100.0) / $total_assertions]
+PUTS "Porcentaje éxito:  [FORMAT "%.1f" $percent]%"
+
+PUTS "════════════════════════════════════════════════════════════"
+
+IF [EXPR $fail_count == 0] THEN
+    PUTS ""
+    PUTS "✓ TODOS LOS TESTS PASARON"
+    PUTS ""
+    EXIT 0
+ELSE
+    PUTS ""
+    PUTS "✗ ALGUNOS TESTS FALLARON"
+    PUTS ""
+    EXIT 1
+END

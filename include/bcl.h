@@ -25,6 +25,8 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <math.h>
+#include <time.h>
+#include <sys/time.h>
 
 /* ========================================================================== */
 /* CONFIGURACIÓN Y VERSIÓN                                                   */
@@ -256,6 +258,62 @@ typedef struct bcl_extension {
 } bcl_extension_t;
 
 /* ========================================================================== */
+/* SISTEMA DE EVENTOS                                                        */
+/* ========================================================================== */
+
+/**
+ * @brief Tipos de eventos
+ */
+typedef enum {
+    BCL_EVENT_READABLE   = 0x01,        /**< Descriptor listo para lectura */
+    BCL_EVENT_WRITABLE   = 0x02,        /**< Descriptor listo para escritura */
+    BCL_EVENT_EXCEPTION  = 0x04         /**< Condición excepcional */
+} bcl_event_type_t;
+
+/**
+ * @brief Fuente del evento
+ */
+typedef enum {
+    BCL_EVENT_SOURCE_FD,                /**< File descriptor (socket, file, stdin) */
+    BCL_EVENT_SOURCE_TIMER              /**< Timer callback */
+} bcl_event_source_t;
+
+/**
+ * @brief Entrada de evento registrado
+ */
+typedef struct bcl_event {
+    bcl_event_source_t source;          /**< Tipo de fuente */
+
+    union {
+        struct {
+            int fd;                     /**< File descriptor */
+            bcl_event_type_t types;     /**< Tipos de eventos (OR de flags) */
+        } fd_event;
+
+        struct {
+            uint64_t expire_time_ms;    /**< Cuándo disparar (ms desde epoch) */
+            uint32_t interval_ms;       /**< Intervalo de repetición (0 = one-shot) */
+        } timer_event;
+    };
+
+    char *callback;                     /**< Nombre del procedimiento BCL */
+    struct bcl_event *next;             /**< Siguiente en lista */
+} bcl_event_t;
+
+/**
+ * @brief Estado del event loop
+ */
+typedef struct bcl_event_loop {
+    bcl_event_t *events;                /**< Lista de eventos registrados */
+    bool running;                       /**< true si event loop está activo */
+    int max_fd;                         /**< FD más alto (para select) */
+    size_t event_count;                 /**< Número de eventos registrados */
+} bcl_event_loop_t;
+
+/* Forward declaration del intérprete */
+struct bcl_interp;
+
+/* ========================================================================== */
 /* INTÉRPRETE PRINCIPAL                                                      */
 /* ========================================================================== */
 
@@ -280,6 +338,9 @@ typedef struct bcl_interp {
     /* Extensiones dinámicas */
     bcl_extension_t *extensions;        /**< Lista de extensiones cargadas */
     bcl_hash_table_t *extension_cmds;   /**< Comandos registrados por extensiones */
+
+    /* Sistema de eventos */
+    struct bcl_event_loop *event_loop;  /**< Event loop (NULL si no inicializado) */
 
     /* Estado de control de flujo */
     bcl_result_t flow_result;           /**< Resultado de flujo (BREAK, etc.) */

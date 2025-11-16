@@ -411,6 +411,13 @@ bcl_result_t bcl_cmd_env(bcl_interp_t *interp, int argc, char **argv,
 bcl_result_t bcl_cmd_argv(bcl_interp_t *interp, int argc, char **argv,
                           bcl_value_t **result);
 
+/**
+ * EVENT subcomando ...
+ * Sistema de eventos asíncrono
+ */
+bcl_result_t bcl_cmd_event(bcl_interp_t *interp, int argc, char **argv,
+                           bcl_value_t **result);
+
 /* ========================================================================== */
 /* DISPATCHER DE COMANDOS                                                    */
 /* ========================================================================== */

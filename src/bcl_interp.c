@@ -13,6 +13,10 @@
 void bcl_extensions_init(bcl_interp_t *interp);
 void bcl_extensions_cleanup(bcl_interp_t *interp);
 
+/* Forward declarations for event system */
+bcl_event_loop_t *bcl_event_loop_create(void);
+void bcl_event_loop_destroy(bcl_event_loop_t *loop);
+
 /* ========================================================================== */
 /* INTÉRPRETE - CREACIÓN Y DESTRUCCIÓN                                       */
 /* ========================================================================== */
@@ -74,6 +78,9 @@ bcl_interp_t *bcl_interp_create(void) {
     /* Inicializar sistema de extensiones */
     bcl_extensions_init(interp);
 
+    /* Inicializar event loop (on-demand, NULL hasta primer uso) */
+    interp->event_loop = NULL;
+
     return interp;
 }
 
@@ -82,6 +89,11 @@ void bcl_interp_destroy(bcl_interp_t *interp) {
 
     /* Limpiar sistema de extensiones */
     bcl_extensions_cleanup(interp);
+
+    /* Limpiar event loop si existe */
+    if (interp->event_loop) {
+        bcl_event_loop_destroy(interp->event_loop);
+    }
 
     bcl_hash_destroy(interp->global_vars);
     bcl_hash_destroy(interp->procedures);

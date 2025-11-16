@@ -139,12 +139,12 @@ LOAD "extensions/socket.so"
 
 GLOBAL server clients
 
-# Callback cuando llega conexión
-PROC ON_ACCEPT DO
-    GLOBAL server clients client_count
+# Callback cuando llega conexión (recibe handle del servidor)
+PROC ON_ACCEPT WITH server_handle DO
+    GLOBAL clients client_count
 
     # Aceptar nueva conexión
-    SET client [SOCKET ACCEPT $server]
+    SET client [SOCKET ACCEPT $server_handle]
 
     # Registrar evento de lectura para el cliente
     EVENT CREATE $client READABLE ON_CLIENT_READ
@@ -158,31 +158,28 @@ PROC ON_ACCEPT DO
     ANSI_RESET
 END
 
-# Callback cuando hay datos del cliente
-PROC ON_CLIENT_READ DO
+# Callback cuando hay datos del cliente (recibe handle del cliente)
+PROC ON_CLIENT_READ WITH client_handle DO
     GLOBAL clients
 
-    # $EVENT_HANDLE contiene el handle que disparó el evento
-    SET client $EVENT_HANDLE
-
     # Recibir datos
-    SET data [SOCKET RECV $client 1024]
+    SET data [SOCKET RECV $client_handle 1024]
 
     # Si no hay datos, cliente desconectado
     IF [EXPR [STRING LENGTH $data] == 0] THEN
-        EVENT DELETE $client
-        SOCKET CLOSE $client
-        UNSET clients($client)
+        EVENT DELETE $client_handle
+        SOCKET CLOSE $client_handle
+        UNSET clients($client_handle)
 
         ANSI_SET_COLOR $ANSI_FG_RED $ANSI_BG_BLACK
-        PUTS "Cliente desconectado: $client"
+        PUTS "Cliente desconectado: $client_handle"
         ANSI_RESET
         RETURN
     END
 
     # Echo de vuelta
-    PUTS "[$client] $data"
-    SOCKET SEND $client "Echo: $data"
+    PUTS "[$client_handle] $data"
+    SOCKET SEND $client_handle "Echo: $data"
 END
 
 # Timer periódico cada 5 segundos
@@ -215,9 +212,10 @@ EVENT LOOP
 ```bcl
 #!/usr/bin/env bcl
 
-PROC ON_KEYBOARD DO
-    # $EVENT_DATA contiene la tecla presionada
-    SET key $EVENT_DATA
+# Callback recibe el handle (stdin) como parámetro
+PROC ON_KEYBOARD WITH handle DO
+    # Leer desde stdin
+    SET key [GETS $handle]
 
     IF [STRING EQUAL $key "q"] THEN
         PUTS "Saliendo..."
@@ -242,7 +240,11 @@ EVENT LOOP
 # Cargar extensión GPIO (solo en embedded)
 LOAD "extensions/gpio.so"
 
-PROC ON_BUTTON_PRESS DO
+GLOBAL led_state
+SET led_state 0
+
+# Callback recibe pin y estado como parámetros
+PROC ON_BUTTON_PRESS WITH pin state DO
     GLOBAL led_state
 
     # Toggle LED
@@ -254,17 +256,16 @@ PROC ON_BUTTON_PRESS DO
         SET led_state 0
     END
 
-    PUTS "LED toggled"
+    PUTS "LED toggled (pin $pin, estado: $state)"
 END
 
 # Configurar GPIO
 GPIO_MODE 13 OUTPUT  ;# LED
 GPIO_MODE 2 INPUT    ;# Botón
 
-# Registrar evento de interrupción
-EVENT GPIO 2 FALLING ON_BUTTON_PRESS
+# Registrar evento de interrupción (GPIO extensión usa EVENT internamente)
+GPIO_INTERRUPT 2 FALLING ON_BUTTON_PRESS
 
-SET led_state 0
 EVENT LOOP
 ```
 
@@ -429,17 +430,32 @@ int bcl_extension_init(bcl_extension_api_t *api) {
 
 ---
 
-## Variables de Evento Automáticas
+## Parámetros de Callbacks
 
-Cuando se ejecuta un callback, BCL establece variables automáticas:
+Los callbacks de eventos reciben parámetros según el tipo de evento:
 
+### Eventos I/O (READABLE/WRITABLE)
 ```bcl
-PROC ON_EVENT DO
-    # Variables automáticas disponibles:
-    PUTS "Handle: $EVENT_HANDLE"      # El handle que disparó (socket, file, etc)
-    PUTS "Type: $EVENT_TYPE"          # READABLE, WRITABLE, EXCEPTION, TIMER
-    PUTS "Data: $EVENT_DATA"          # Datos específicos del evento
-    PUTS "Time: $EVENT_TIME"          # Timestamp del evento
+PROC ON_IO_EVENT WITH handle DO
+    # handle = socket/file/stdin que disparó el evento
+    SET data [SOCKET RECV $handle 1024]
+    PUTS "Recibido de $handle: $data"
+END
+```
+
+### Eventos TIMER
+```bcl
+PROC ON_TIMER_EVENT DO
+    # Timers no reciben parámetros (son one-shot o periódicos)
+    PUTS "Timer disparado"
+END
+```
+
+### Eventos Personalizados (extensiones)
+```bcl
+PROC ON_CUSTOM_EVENT WITH param1 param2 DO
+    # Parámetros definidos por la extensión
+    PUTS "Custom: $param1, $param2"
 END
 ```
 

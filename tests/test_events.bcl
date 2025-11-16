@@ -1,0 +1,82 @@
+#!/usr/bin/env bcl
+# Test del sistema de eventos BCL
+
+PUTS "=== Test del Sistema de Eventos BCL ==="
+PUTS ""
+
+# Test 1: Timer simple
+PUTS "Test 1: Timer simple (1000ms)"
+GLOBAL timer_fired
+SET timer_fired 0
+
+PROC ON_TIMER_1 DO
+    GLOBAL timer_fired
+    SET timer_fired 1
+    PUTS "  ✓ Timer 1 disparado"
+END
+
+EVENT TIMER 1000 ON_TIMER_1
+EVENT PROCESS 1500
+IF [EXPR $timer_fired == 1] THEN
+    PUTS "  PASS: Timer se disparó correctamente"
+ELSE
+    PUTS "  FAIL: Timer no se disparó"
+END
+PUTS ""
+
+# Test 2: Múltiples timers
+PUTS "Test 2: Múltiples timers"
+GLOBAL timer1
+GLOBAL timer2
+SET timer1 0
+SET timer2 0
+
+PROC ON_TIMER_A DO
+    GLOBAL timer1
+    SET timer1 1
+    PUTS "  ✓ Timer A disparado (500ms)"
+END
+
+PROC ON_TIMER_B DO
+    GLOBAL timer2
+    SET timer2 1
+    PUTS "  ✓ Timer B disparado (1000ms)"
+END
+
+EVENT TIMER 500 ON_TIMER_A
+EVENT TIMER 1000 ON_TIMER_B
+EVENT PROCESS 1500
+
+IF [EXPR $timer1 == 1 && $timer2 == 1] THEN
+    PUTS "  PASS: Ambos timers se dispararon"
+ELSE
+    PUTS "  FAIL: Al menos un timer falló"
+END
+PUTS ""
+
+# Test 3: EVENT INFO (debe funcionar sin errores)
+PUTS "Test 3: EVENT INFO"
+EVENT INFO
+PUTS "  PASS: EVENT INFO ejecutado sin errores"
+PUTS ""
+
+# Test 4: Timer con timeout corto (no debería dispararse)
+PUTS "Test 4: Timer con timeout insuficiente"
+GLOBAL timer3
+SET timer3 0
+
+PROC ON_TIMER_C DO
+    GLOBAL timer3
+    SET timer3 1
+END
+
+EVENT TIMER 2000 ON_TIMER_C
+EVENT PROCESS 500
+IF [EXPR $timer3 == 0] THEN
+    PUTS "  PASS: Timer no se disparó (timeout insuficiente)"
+ELSE
+    PUTS "  FAIL: Timer se disparó prematuramente"
+END
+PUTS ""
+
+PUTS "=== Todos los tests completados ==="

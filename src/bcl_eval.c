@@ -103,6 +103,7 @@ static const bcl_command_entry_t command_table[] = {
     {"ARGV",     bcl_cmd_argv},
     {"EXEC",     bcl_cmd_exec},
     {"AFTER",    bcl_cmd_after},
+    {"EVENT",    bcl_cmd_event},
 
     /* Fin de tabla */
     {NULL, NULL}

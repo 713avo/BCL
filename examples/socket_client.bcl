@@ -56,7 +56,7 @@ PROC SEND_AND_RECEIVE WITH message DO
 
     # Send message
     ANSI_SET_COLOR $ANSI_FG_WHITE $ANSI_BG_BLACK
-    PUTS -NONEWLINE "Sending: "
+    PUTSN "Sending: "
     ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
     PUTS "$message"
     ANSI_RESET
@@ -69,7 +69,7 @@ PROC SEND_AND_RECEIVE WITH message DO
     # Receive echo
     SET response [SOCKET RECV $client 1024]
     ANSI_SET_COLOR $ANSI_FG_YELLOW $ANSI_BG_BLACK
-    PUTS -NONEWLINE "  ← Received: "
+    PUTSN "  ← Received: "
     ANSI_SET_COLOR $ANSI_FG_BRIGHT_YELLOW $ANSI_BG_BLACK
     PUTS "$response"
     ANSI_RESET

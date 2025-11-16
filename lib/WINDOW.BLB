@@ -93,22 +93,22 @@ PROC WIN_DRAW WITH id DO
 
     # Draw top border
     ANSI_CURSOR_GOTO $row $col
-    PUTS -NONEWLINE $tl
+    PUTSN $tl
     SET i 1
     WHILE [EXPR $i < $width - 1] DO
-        PUTS -NONEWLINE $h
+        PUTSN $h
         INCR i
     END
-    PUTS -NONEWLINE $tr
+    PUTSN $tr
 
     # Draw title if provided
     IF [EXPR [STRING LENGTH $title] > 0] THEN
         SET title_col [EXPR $col + 2]
         ANSI_CURSOR_GOTO $row $title_col
         ANSI_SET_STYLE $ANSI_BOLD
-        PUTS -NONEWLINE " "
-        PUTS -NONEWLINE $title
-        PUTS -NONEWLINE " "
+        PUTSN " "
+        PUTSN $title
+        PUTSN " "
         ANSI_SET_COLOR $win_id($id.border_fg) $win_id($id.border_bg)
     END
 
@@ -117,30 +117,30 @@ PROC WIN_DRAW WITH id DO
     SET end_row [EXPR $row + $height - 1]
     WHILE [EXPR $r < $end_row] DO
         ANSI_CURSOR_GOTO $r $col
-        PUTS -NONEWLINE $v
+        PUTSN $v
 
         # Fill with background color
         ANSI_SET_COLOR $win_id($id.fg) $win_id($id.bg)
         SET i 1
         WHILE [EXPR $i < $width - 1] DO
-            PUTS -NONEWLINE " "
+            PUTSN " "
             INCR i
         END
 
         ANSI_SET_COLOR $win_id($id.border_fg) $win_id($id.border_bg)
-        PUTS -NONEWLINE $v
+        PUTSN $v
         INCR r
     END
 
     # Draw bottom border
     ANSI_CURSOR_GOTO $end_row $col
-    PUTS -NONEWLINE $bl
+    PUTSN $bl
     SET i 1
     WHILE [EXPR $i < $width - 1] DO
-        PUTS -NONEWLINE $h
+        PUTSN $h
         INCR i
     END
-    PUTS -NONEWLINE $br
+    PUTSN $br
 
     ANSI_RESET
 END
@@ -167,7 +167,7 @@ PROC WIN_PRINT WITH id row text DO
         SET text [STRING RANGE $text 0 [EXPR $max_len - 1]]
     END
 
-    PUTS -NONEWLINE $text
+    PUTSN $text
     ANSI_RESET
 END
 
@@ -265,7 +265,7 @@ PROC WIN_CLEAR WITH id DO
         ANSI_CURSOR_GOTO $r [EXPR $col + 1]
         SET i 1
         WHILE [EXPR $i < $width - 1] DO
-            PUTS -NONEWLINE " "
+            PUTSN " "
             INCR i
         END
         INCR r
@@ -357,7 +357,7 @@ PROC WIN_MENU WITH id items selected DO
 
             ANSI_CURSOR_GOTO $print_row $print_col
             ANSI_SET_COLOR $win_id($id.bg) $win_id($id.fg)
-            PUTS -NONEWLINE " $ANSI_ARROW_RIGHT $item "
+            PUTSN " $ANSI_ARROW_RIGHT $item "
             ANSI_RESET
         ELSE
             WIN_PRINT $id $idx "  $item"
@@ -410,9 +410,9 @@ PROC WIN_BUTTON WITH id row col label DO
 
     ANSI_CURSOR_GOTO $btn_row $btn_col
     ANSI_SET_COLOR $ANSI_FG_BLACK $ANSI_BG_BRIGHT_WHITE
-    PUTS -NONEWLINE " [ "
-    PUTS -NONEWLINE $label
-    PUTS -NONEWLINE " ] "
+    PUTSN " [ "
+    PUTSN $label
+    PUTSN " ] "
     ANSI_RESET
 END
 
@@ -469,7 +469,7 @@ PROC WIN_CLEAR_SCREEN DO
     FOR 0 TO 24 DO
         SET i 0
         WHILE [EXPR $i < 80] DO
-            PUTS -NONEWLINE " "
+            PUTSN " "
             INCR i
         END
     END

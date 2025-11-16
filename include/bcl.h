@@ -174,6 +174,9 @@ typedef struct {
 /* EXTENSIONES DINÁMICAS                                                     */
 /* ========================================================================== */
 
+/* Forward declaration para bcl_interp */
+struct bcl_interp;
+
 /**
  * @brief Tipo de función para comandos de extensión
  */

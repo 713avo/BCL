@@ -46,7 +46,7 @@ WIN_PRINT 2 5 "Soft and modern"
 # Wait for user
 ANSI_CURSOR_GOTO 22 1
 ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
-PUTS -NONEWLINE "Press ENTER to continue to menu demo..."
+PUTSN "Press ENTER to continue to menu demo..."
 ANSI_RESET
 GETS input
 
@@ -77,7 +77,7 @@ WIN_PRINT_CENTER 3 10 "[ OK ]"
 # Wait for user
 ANSI_CURSOR_GOTO 22 1
 ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
-PUTS -NONEWLINE "Press ENTER to continue to progress demo..."
+PUTSN "Press ENTER to continue to progress demo..."
 ANSI_RESET
 GETS input
 
@@ -117,7 +117,7 @@ WIN_PRINT_CENTER 4 7 "[ Close ]"
 # Wait for user
 ANSI_CURSOR_GOTO 22 1
 ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
-PUTS -NONEWLINE "Press ENTER to continue to scrolling demo..."
+PUTSN "Press ENTER to continue to scrolling demo..."
 ANSI_RESET
 GETS input
 
@@ -166,7 +166,7 @@ PUTS "  WIN_SCROLL 5 1   (scroll down)"
 # Wait for user
 ANSI_CURSOR_GOTO 24 1
 ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
-PUTS -NONEWLINE "Press ENTER to continue to dialog demo..."
+PUTSN "Press ENTER to continue to dialog demo..."
 ANSI_RESET
 GETS input
 
@@ -199,7 +199,7 @@ WIN_BUTTON 6 9 24 " Cancel "
 # Wait for user
 ANSI_CURSOR_GOTO 24 1
 ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
-PUTS -NONEWLINE "Press ENTER to continue to final demo..."
+PUTSN "Press ENTER to continue to final demo..."
 ANSI_RESET
 GETS input
 
@@ -256,7 +256,7 @@ WIN_PRINT 10 1 " Line 7, Col 1 | UTF-8 | BCL | Modified"
 # Final message
 ANSI_CURSOR_GOTO 24 1
 ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
-PUTS -NONEWLINE "Press ENTER to exit demo..."
+PUTSN "Press ENTER to exit demo..."
 ANSI_RESET
 GETS input
 

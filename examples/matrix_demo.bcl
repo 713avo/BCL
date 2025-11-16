@@ -153,14 +153,14 @@ MAT_PRINT D
 PUTS "\n  Row 1 of D:"
 MAT_GET_ROW D 1 row_data
 FOREACH val IN $row_data DO
-    PUTS -NONEWLINE "  $val"
+    PUTSN "  $val"
 END
 PUTS ""
 
 PUTS "\n  Column 2 of D:"
 MAT_GET_COL D 2 col_data
 FOREACH val IN $col_data DO
-    PUTS -NONEWLINE "  $val"
+    PUTSN "  $val"
 END
 PUTS ""
 

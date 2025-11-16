@@ -88,7 +88,7 @@ PROC ECHO_LOOP DO
 
         # Display received message
         ANSI_SET_COLOR $ANSI_FG_WHITE $ANSI_BG_BLACK
-        PUTS -NONEWLINE "[$message_count] Received: "
+        PUTSN "[$message_count] Received: "
         ANSI_SET_COLOR $ANSI_FG_BRIGHT_WHITE $ANSI_BG_BLACK
         PUTS "$data"
         ANSI_RESET

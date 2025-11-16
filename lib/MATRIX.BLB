@@ -150,16 +150,16 @@ PROC MAT_PRINT WITH name DO
 
     FOR 0 TO [EXPR $rows - 1] DO
         SET r $__FOR
-        PUTS -NONEWLINE "  ["
+        PUTSN "  ["
 
         FOR 0 TO [EXPR $cols - 1] DO
             SET c $__FOR
             EVAL "SET val \$${name}($r,$c)"
             SET formatted [FORMAT "%8.4f" $val]
-            PUTS -NONEWLINE $formatted
+            PUTSN $formatted
 
             IF [EXPR $c < $cols - 1] THEN
-                PUTS -NONEWLINE " "
+                PUTSN " "
             END
         END
 

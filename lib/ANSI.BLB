@@ -15,13 +15,13 @@
 # Output ANSI escape character (ESC = ASCII 27)
 PROC _ANSI_ESC DO
     SET esc [BINARY FORMAT "c" 27]
-    PUTS -NONEWLINE $esc
+    PUTSN $esc
 END
 
 # Output CSI (Control Sequence Introducer = ESC + "[")
 PROC _ANSI_CSI DO
     _ANSI_ESC
-    PUTS -NONEWLINE "["
+    PUTSN "["
 END
 
 # ==============================================================================
@@ -146,33 +146,33 @@ END
 
 PROC ANSI_CURSOR_GOTO WITH row col DO
     _ANSI_CSI
-    PUTS -NONEWLINE $row
-    PUTS -NONEWLINE ";"
-    PUTS -NONEWLINE $col
+    PUTSN $row
+    PUTSN ";"
+    PUTSN $col
     PUTS "H"
 END
 
 PROC ANSI_CURSOR_UP WITH n DO
     _ANSI_CSI
-    PUTS -NONEWLINE $n
+    PUTSN $n
     PUTS "A"
 END
 
 PROC ANSI_CURSOR_DOWN WITH n DO
     _ANSI_CSI
-    PUTS -NONEWLINE $n
+    PUTSN $n
     PUTS "B"
 END
 
 PROC ANSI_CURSOR_FORWARD WITH n DO
     _ANSI_CSI
-    PUTS -NONEWLINE $n
+    PUTSN $n
     PUTS "C"
 END
 
 PROC ANSI_CURSOR_BACK WITH n DO
     _ANSI_CSI
-    PUTS -NONEWLINE $n
+    PUTSN $n
     PUTS "D"
 END
 
@@ -202,13 +202,13 @@ END
 
 PROC ANSI_SCROLL_UP WITH n DO
     _ANSI_CSI
-    PUTS -NONEWLINE $n
+    PUTSN $n
     PUTS "S"
 END
 
 PROC ANSI_SCROLL_DOWN WITH n DO
     _ANSI_CSI
-    PUTS -NONEWLINE $n
+    PUTSN $n
     PUTS "T"
 END
 
@@ -223,37 +223,37 @@ END
 
 PROC ANSI_SET_FG WITH color DO
     _ANSI_CSI
-    PUTS -NONEWLINE $color
+    PUTSN $color
     PUTS "m"
 END
 
 PROC ANSI_SET_BG WITH color DO
     _ANSI_CSI
-    PUTS -NONEWLINE $color
+    PUTSN $color
     PUTS "m"
 END
 
 PROC ANSI_SET_STYLE WITH style DO
     _ANSI_CSI
-    PUTS -NONEWLINE $style
+    PUTSN $style
     PUTS "m"
 END
 
 PROC ANSI_SET_COLOR WITH fg bg DO
     _ANSI_CSI
-    PUTS -NONEWLINE $fg
-    PUTS -NONEWLINE ";"
-    PUTS -NONEWLINE $bg
+    PUTSN $fg
+    PUTSN ";"
+    PUTSN $bg
     PUTS "m"
 END
 
 PROC ANSI_SET_FULL WITH fg bg style DO
     _ANSI_CSI
-    PUTS -NONEWLINE $style
-    PUTS -NONEWLINE ";"
-    PUTS -NONEWLINE $fg
-    PUTS -NONEWLINE ";"
-    PUTS -NONEWLINE $bg
+    PUTSN $style
+    PUTSN ";"
+    PUTSN $fg
+    PUTSN ";"
+    PUTSN $bg
     PUTS "m"
 END
 
@@ -264,40 +264,40 @@ END
 # Set foreground to 256-color (0-255)
 PROC ANSI_SET_FG_256 WITH color DO
     _ANSI_CSI
-    PUTS -NONEWLINE "38;5;"
-    PUTS -NONEWLINE $color
+    PUTSN "38;5;"
+    PUTSN $color
     PUTS "m"
 END
 
 # Set background to 256-color (0-255)
 PROC ANSI_SET_BG_256 WITH color DO
     _ANSI_CSI
-    PUTS -NONEWLINE "48;5;"
-    PUTS -NONEWLINE $color
+    PUTSN "48;5;"
+    PUTSN $color
     PUTS "m"
 END
 
 # Set RGB foreground (r, g, b: 0-255)
 PROC ANSI_SET_FG_RGB WITH r g b DO
     _ANSI_CSI
-    PUTS -NONEWLINE "38;2;"
-    PUTS -NONEWLINE $r
-    PUTS -NONEWLINE ";"
-    PUTS -NONEWLINE $g
-    PUTS -NONEWLINE ";"
-    PUTS -NONEWLINE $b
+    PUTSN "38;2;"
+    PUTSN $r
+    PUTSN ";"
+    PUTSN $g
+    PUTSN ";"
+    PUTSN $b
     PUTS "m"
 END
 
 # Set RGB background (r, g, b: 0-255)
 PROC ANSI_SET_BG_RGB WITH r g b DO
     _ANSI_CSI
-    PUTS -NONEWLINE "48;2;"
-    PUTS -NONEWLINE $r
-    PUTS -NONEWLINE ";"
-    PUTS -NONEWLINE $g
-    PUTS -NONEWLINE ";"
-    PUTS -NONEWLINE $b
+    PUTSN "48;2;"
+    PUTSN $r
+    PUTSN ";"
+    PUTSN $g
+    PUTSN ";"
+    PUTSN $b
     PUTS "m"
 END
 
@@ -331,13 +331,13 @@ END
 
 PROC ANSI_PRINT_AT WITH row col text DO
     ANSI_CURSOR_GOTO $row $col
-    PUTS -NONEWLINE $text
+    PUTSN $text
 END
 
 PROC ANSI_PRINT_AT_COLOR WITH row col fg bg text DO
     ANSI_CURSOR_GOTO $row $col
     ANSI_SET_COLOR $fg $bg
-    PUTS -NONEWLINE $text
+    PUTSN $text
     ANSI_RESET
 END
 
@@ -377,22 +377,22 @@ PROC ANSI_BOX WITH row col width height title box_type DO
 
     # Draw top border
     ANSI_CURSOR_GOTO $row $col
-    PUTS -NONEWLINE $tl
+    PUTSN $tl
     SET i 1
     WHILE [EXPR $i < $width - 1] DO
-        PUTS -NONEWLINE $hz
+        PUTSN $hz
         INCR i
     END
-    PUTS -NONEWLINE $tr
+    PUTSN $tr
 
     # Draw title if provided
     IF [EXPR [STRING LENGTH $title] > 0] THEN
         SET title_col [EXPR $col + 2]
         ANSI_CURSOR_GOTO $row $title_col
         ANSI_SET_STYLE $ANSI_BOLD
-        PUTS -NONEWLINE " "
-        PUTS -NONEWLINE $title
-        PUTS -NONEWLINE " "
+        PUTSN " "
+        PUTSN $title
+        PUTSN " "
         ANSI_RESET
     END
 
@@ -401,22 +401,22 @@ PROC ANSI_BOX WITH row col width height title box_type DO
     SET end_row [EXPR $row + $height - 1]
     WHILE [EXPR $r < $end_row] DO
         ANSI_CURSOR_GOTO $r $col
-        PUTS -NONEWLINE $vt
+        PUTSN $vt
         SET c [EXPR $col + $width - 1]
         ANSI_CURSOR_GOTO $r $c
-        PUTS -NONEWLINE $vt
+        PUTSN $vt
         INCR r
     END
 
     # Draw bottom border
     ANSI_CURSOR_GOTO $end_row $col
-    PUTS -NONEWLINE $bl
+    PUTSN $bl
     SET i 1
     WHILE [EXPR $i < $width - 1] DO
-        PUTS -NONEWLINE $hz
+        PUTSN $hz
         INCR i
     END
-    PUTS -NONEWLINE $br
+    PUTSN $br
 END
 
 # Draw horizontal line
@@ -424,7 +424,7 @@ PROC ANSI_HLINE WITH row col length char DO
     ANSI_CURSOR_GOTO $row $col
     SET i 0
     WHILE [EXPR $i < $length] DO
-        PUTS -NONEWLINE $char
+        PUTSN $char
         INCR i
     END
 END
@@ -435,7 +435,7 @@ PROC ANSI_VLINE WITH row col length char DO
     WHILE [EXPR $i < $length] DO
         SET r [EXPR $row + $i]
         ANSI_CURSOR_GOTO $r $col
-        PUTS -NONEWLINE $char
+        PUTSN $char
         INCR i
     END
 END
@@ -446,7 +446,7 @@ END
 
 PROC ANSI_PROGRESS_BAR WITH row col width percent DO
     ANSI_CURSOR_GOTO $row $col
-    PUTS -NONEWLINE "["
+    PUTSN "["
 
     # Calculate filled width
     SET filled [EXPR ($width - 2) * $percent / 100]
@@ -456,7 +456,7 @@ PROC ANSI_PROGRESS_BAR WITH row col width percent DO
     ANSI_SET_FG $ANSI_FG_GREEN
     SET i 0
     WHILE [EXPR $i < $filled] DO
-        PUTS -NONEWLINE "█"
+        PUTSN "█"
         INCR i
     END
 
@@ -464,14 +464,14 @@ PROC ANSI_PROGRESS_BAR WITH row col width percent DO
     ANSI_SET_FG $ANSI_FG_BRIGHT_BLACK
     SET i 0
     WHILE [EXPR $i < $empty] DO
-        PUTS -NONEWLINE "░"
+        PUTSN "░"
         INCR i
     END
 
     ANSI_RESET
-    PUTS -NONEWLINE "] "
-    PUTS -NONEWLINE $percent
-    PUTS -NONEWLINE "%"
+    PUTSN "] "
+    PUTSN $percent
+    PUTSN "%"
 END
 
 # ==============================================================================
@@ -488,7 +488,7 @@ PROC ANSI_BANNER WITH text DO
 
     SET i 0
     WHILE [EXPR $i < $padding] DO
-        PUTS -NONEWLINE " "
+        PUTSN " "
         INCR i
     END
 
@@ -504,19 +504,19 @@ PROC ANSI_HEADER WITH text DO
     ANSI_SET_FG $ANSI_FG_BRIGHT_BLUE
     SET i 0
     WHILE [EXPR $i < $sep_len] DO
-        PUTS -NONEWLINE "═"
+        PUTSN "═"
         INCR i
     END
 
-    PUTS -NONEWLINE " "
+    PUTSN " "
     ANSI_SET_STYLE $ANSI_BOLD
-    PUTS -NONEWLINE $text
+    PUTSN $text
     ANSI_SET_STYLE $ANSI_RESET_BOLD
-    PUTS -NONEWLINE " "
+    PUTSN " "
 
     SET i 0
     WHILE [EXPR $i < $sep_len] DO
-        PUTS -NONEWLINE "═"
+        PUTSN "═"
         INCR i
     END
 
@@ -530,24 +530,24 @@ END
 
 # Print a table row
 PROC ANSI_TABLE_ROW WITH cols DO
-    PUTS -NONEWLINE "│ "
+    PUTSN "│ "
     FOREACH col IN $cols DO
-        PUTS -NONEWLINE $col
-        PUTS -NONEWLINE " │ "
+        PUTSN $col
+        PUTSN " │ "
     END
     PUTS ""
 END
 
 # Print table separator
 PROC ANSI_TABLE_SEP WITH widths DO
-    PUTS -NONEWLINE "├"
+    PUTSN "├"
     FOREACH width IN $widths DO
         SET i 0
         WHILE [EXPR $i < $width + 2] DO
-            PUTS -NONEWLINE "─"
+            PUTSN "─"
             INCR i
         END
-        PUTS -NONEWLINE "┼"
+        PUTSN "┼"
     END
     PUTS ""
 END
@@ -567,7 +567,7 @@ PROC ANSI_SPINNER WITH row col DO
 
     ANSI_CURSOR_GOTO $row $col
     ANSI_SET_FG $ANSI_FG_CYAN
-    PUTS -NONEWLINE $char
+    PUTSN $char
     ANSI_RESET
 
     SET _ANSI_SPINNER_STATE [EXPR ($_ANSI_SPINNER_STATE + 1) % 10]
